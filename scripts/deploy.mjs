@@ -38,6 +38,9 @@ if (env === "dev") {
   const count = JSON.parse(out.slice(out.search(/^[[{]/m)))[0].results[0].n;
   if (count === 0) run("npx", ["wrangler", "d1", "execute", "DB", "--remote", "--yes", "--file", "scripts/seed.sql"]);
   else console.log("Database already has content, skipped.");
+
+  step("Add free construction photos to empty picture slots (only while the demo has none)");
+  run("node", ["scripts/demo-photos.mjs", "dev"]);
 }
 
 step("Build");
