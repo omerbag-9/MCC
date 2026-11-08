@@ -18,14 +18,17 @@ export default async function ProjectsPage() {
   const [projects, mediaBase] = await Promise.all([getPublishedProjects(), getMediaBase()]);
 
   return (
-    <section className="pt-16 pb-24 lg:pt-24 lg:pb-36">
+    <>
+    <section className="bg-ink text-paper">
+      <Reveal className="container-x grid gap-6 py-14 lg:grid-cols-12 lg:items-end lg:py-20">
+        <h1 className="text-display font-semibold lg:col-span-6">Our projects</h1>
+        <p className="max-w-xl text-lead text-on-navy-muted lg:col-span-6 lg:justify-self-end">
+          Homes, offices, warehouses and renovations we have designed and built.
+        </p>
+      </Reveal>
+    </section>
+    <section className="section-y">
       <div className="container-x">
-        <Reveal className="mb-12 grid gap-6 lg:grid-cols-12 lg:items-end">
-          <h1 className="text-display font-semibold lg:col-span-6">Our projects</h1>
-          <p className="max-w-xl text-lead lg:col-span-6 lg:justify-self-end">
-            Homes, offices, warehouses and renovations we have designed and built.
-          </p>
-        </Reveal>
         {projects.length === 0 ? (
           <p className="text-muted">Projects will be published here soon.</p>
         ) : (
@@ -39,5 +42,6 @@ export default async function ProjectsPage() {
         )}
       </div>
     </section>
+    </>
   );
 }

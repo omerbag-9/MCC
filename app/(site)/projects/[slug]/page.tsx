@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { Gallery, type GalleryItem } from "@/components/site/gallery";
 import { ArrowRightIcon, WhatsAppIcon } from "@/components/site/icons";
 import { Photo } from "@/components/site/photo";
+import { ProjectCard } from "@/components/site/project-card";
 import { Reveal } from "@/components/site/reveal";
 import { WhatsAppLink } from "@/components/site/whatsapp";
-import { getPublishedProjectBySlug, getSettings } from "@/lib/db/queries";
+import { getPublishedProjectBySlug, getPublishedProjects, getSettings } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl } from "@/lib/env";
 import { paragraphs } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
@@ -38,13 +39,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
-  const [project, settings, mediaBase, siteUrl] = await Promise.all([
+  const [project, settings, mediaBase, siteUrl, allProjects] = await Promise.all([
     getPublishedProjectBySlug(slug),
     getSettings(),
     getMediaBase(),
     getSiteUrl(),
+    getPublishedProjects(),
   ]);
   if (!project) notFound();
+  const more = allProjects.filter((p) => p.id !== project.id).slice(0, 3);
 
   const gallery: GalleryItem[] = project.media
     .filter((m) => m.key !== project.coverKey)
@@ -75,19 +78,24 @@ export default async function ProjectPage({ params }: Props) {
         dangerouslySetInnerHTML={jsonLdScript(projectJsonLd(project, siteUrl, cover && (cover.startsWith("http") ? cover : `${siteUrl}${cover}`)))}
       />
 
-      <section className="pt-12 lg:pt-16">
+      <section className="bg-ink pt-10 pb-28 text-paper lg:pt-14 lg:pb-40">
         <div className="container-x">
-          <nav aria-label="Breadcrumb" className="text-small text-muted">
-            <Link href="/projects" className="inline-flex items-center gap-1.5 hover:text-ink">
+          <nav aria-label="Breadcrumb" className="text-small text-on-navy-muted">
+            <Link href="/projects" className="inline-flex items-center gap-1.5 hover:text-paper">
               <ArrowRightIcon className="rotate-180" width={16} height={16} /> All projects
             </Link>
           </nav>
           <Reveal className="mt-8 grid gap-6 lg:grid-cols-12 lg:items-end">
             <h1 className="text-display font-semibold lg:col-span-7">{project.title}</h1>
-            {project.summary && <p className="text-lead text-muted lg:col-span-5">{project.summary}</p>}
+            <div className="lg:col-span-5">
+              {project.summary && <p className="text-lead text-on-navy-muted">{project.summary}</p>}
+              <Link href="/contact" className="btn-light mt-6">Request a quote</Link>
+            </div>
           </Reveal>
         </div>
-        <div className="container-x mt-12">
+      </section>
+      <section>
+        <div className="container-x -mt-20 lg:-mt-28">
           <div className="aspect-[4/3] overflow-hidden bg-ink sm:aspect-[16/8]">
             <Photo mediaBase={mediaBase} src={project.coverKey} alt={project.title} sizes="100vw" priority className="hero-photo" />
           </div>
@@ -136,6 +144,23 @@ export default async function ProjectPage({ params }: Props) {
           <div className="container-x">
             <h2 className="mb-10 text-head font-semibold">Photos and video</h2>
             <Gallery items={gallery} />
+          </div>
+        </section>
+      )}
+      {more.length > 0 && (
+        <section className="section-y bg-sand">
+          <div className="container-x">
+            <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+              <h2 className="text-head font-semibold">More projects</h2>
+              <Link href="/projects" className="link-arrow">
+                All projects <ArrowRightIcon width={18} height={18} />
+              </Link>
+            </div>
+            <Reveal className="grid gap-x-8 gap-y-12 md:grid-cols-3" stagger={0.1}>
+              {more.map((p) => (
+                <ProjectCard key={p.id} project={p} mediaBase={mediaBase} />
+              ))}
+            </Reveal>
           </div>
         </section>
       )}

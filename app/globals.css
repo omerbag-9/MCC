@@ -14,6 +14,7 @@
   --color-navy-2: #132b4d; /* one tone step up from the navy field */
   --color-muted: #52627b; /* secondary text on white (AA) */
   --color-on-navy-muted: #b4c0d3; /* secondary text on navy (AA) */
+  --color-steel: #7fa3d1; /* small marks on navy only: rules under labels, step numbers */
 
   /* White and its steps */
   --color-paper: #ffffff;
@@ -36,6 +37,7 @@
 @layer base {
   html {
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-paper text-ink antialiased;
@@ -57,19 +59,20 @@
     background: var(--color-ink);
     color: var(--color-paper);
   }
+  /* Sections land below the sticky header when scrolled to. */
   [id] {
-    scroll-margin-top: 5rem;
+    scroll-margin-top: 4.5rem;
   }
 }
 
 /* Page frame: one pair of margins everywhere. */
 @utility container-x {
-  @apply mx-auto w-full max-w-[90rem] px-5 sm:px-8 lg:px-12;
+  @apply mx-auto w-full max-w-[84rem] px-5 sm:px-8 lg:px-10;
 }
 
 /* Section rhythm: clearly larger than any gap inside a section. */
 @utility section-y {
-  @apply py-24 lg:py-36;
+  @apply py-16 lg:py-24;
 }
 
 /* Buttons: square corners, flat fill. */

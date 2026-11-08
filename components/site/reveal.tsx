@@ -1,23 +1,40 @@
-import FadeContent from "@/components/reactbits/FadeContent";
+import AnimatedContent from "@/components/reactbits/AnimatedContent";
 
 /**
- * Quiet entrance for a section's parts (React Bits FadeContent): children fade in one after
- * another, once, as they enter the view. No movement, honours reduced motion.
+ * Entrance for a section's parts (React Bits AnimatedContent): each child rises 24px and fades in,
+ * one after another, once, as it enters the view. Honours reduced motion.
  */
 export function Reveal({
   children,
   className,
   stagger = 0.08,
   delay = 0,
+  id,
+  onLoad = false,
 }: {
   children: React.ReactNode;
   className?: string;
   stagger?: number;
   delay?: number;
+  id?: string;
+  /** Play on page load instead of when scrolled into view (for things at the bottom of the first screen). */
+  onLoad?: boolean;
 }) {
   return (
-    <FadeContent className={className} duration={0.7} stagger={stagger} delay={delay} threshold={0.15}>
+    <AnimatedContent
+      id={id}
+      className={className}
+      distance={24}
+      duration={0.8}
+      ease="power3.out"
+      initialOpacity={0}
+      animateOpacity
+      stagger={stagger}
+      delay={delay}
+      threshold={0.15}
+      trigger={onLoad ? "mount" : "scroll"}
+    >
       {children}
-    </FadeContent>
+    </AnimatedContent>
   );
 }
