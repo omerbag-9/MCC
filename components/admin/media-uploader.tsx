@@ -5,12 +5,20 @@ import { useRef, useState } from "react";
 import { addProjectMedia } from "@/lib/actions/admin";
 import { uploadMedia, type UploadedMedia } from "@/lib/client/upload";
 
-export function MediaUploader({ projectId }: { projectId: number }) {
+export function MediaUploader({ projectId, enabled = true }: { projectId: number; enabled?: boolean }) {
   const router = useRouter();
   const input = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  if (!enabled) {
+    return (
+      <p className="rounded-md bg-sand px-4 py-3 text-sm text-ink-soft">
+        Photo and video uploads are turned off in this environment (it has no R2 storage). They work on staging and production.
+      </p>
+    );
+  }
 
   async function onFiles(files: FileList | null) {
     if (!files || files.length === 0) return;

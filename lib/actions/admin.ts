@@ -15,7 +15,7 @@ import {
   settings,
   testimonials,
 } from "@/lib/db/schema";
-import { getBindings } from "@/lib/env";
+import { getMediaBucket } from "@/lib/env";
 import { slugify } from "@/lib/format";
 import { MEDIA_KEY_PATTERN } from "@/lib/media";
 import { revalidateSite } from "@/lib/revalidate";
@@ -53,8 +53,8 @@ async function deleteObjects(keys: (string | null | undefined)[]) {
   const valid = keys.filter((k): k is string => !!k && MEDIA_KEY_PATTERN.test(k));
   if (valid.length === 0) return;
   try {
-    const env = await getBindings();
-    await env.MEDIA.delete(valid);
+    const bucket = await getMediaBucket();
+    if (bucket) await bucket.delete(valid);
   } catch (error) {
     console.error("Failed to delete media", error);
   }

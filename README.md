@@ -54,19 +54,45 @@ Other scripts: `npm run lint`, `npm run typecheck`, `npm run db:generate` (creat
 
 | Branch | Cloudflare environment | Worker | Database / buckets | URL | Indexed by Google |
 |---|---|---|---|---|---|
-| `dev` (default) | top level of `wrangler.jsonc` | `mcc-dev` | `mcc-db-dev`, `mcc-media-dev`, `mcc-cache-dev` | `https://mcc-dev.<account>.workers.dev` | no |
+| `dev` (default) | top level of `wrangler.jsonc` | `mcc-dev` | `mcc-db-dev` + KV page cache (no R2) | `https://mcc-dev.<account>.workers.dev` | no |
 | `staging` | `env.staging` | `mcc-staging` | `mcc-db-staging`, `mcc-media-staging`, `mcc-cache-staging` | `https://staging.example.com` | no |
 | `production` | `env.production` | `mcc` | `mcc-db`, `mcc-media`, `mcc-cache` | `https://example.com` | yes |
 
-Each environment has its own data, so testing on dev or staging never touches the live site. Dev and staging send `noindex` and a `Disallow: /` robots.txt (driven by `APP_ENV`).
+Each environment has its own data, so testing on dev or staging never touches the live site.
+
+**Dev runs without R2**, so it can live on any free Cloudflare account without a payment card (R2 asks for one even on the free tier). Its page cache is in Workers KV (`open-next.config.dev.ts`), and photo/video uploads are turned off. Everything else works. Dev also offers a password login for the admin until Cloudflare Access is set up (see below). Dev and staging send `noindex` and a `Disallow: /` robots.txt (driven by `APP_ENV`).
 
 **Workflow:** branch off `dev` → pull request into `dev` (deploys to dev) → pull request `dev` → `staging` (deploys to staging, where you check it) → pull request `staging` → `production` (deploys the live site). Every pull request runs lint, typecheck and a build. See `.github/workflows/ci-deploy.yml`.
 
 Everything stays on the free tier. D1 allows 10 databases and R2's 10 GB is shared by all buckets, so keep dev and staging media small.
 
-## First deployment
+## Setting up the dev environment (browser only, no card)
 
-All commands run from the project folder. Log in once with `npx wrangler login`. Repeat steps 2–7 for each environment you want: `dev`, `staging`, `production`. Pass `--env staging` or `--env production` to wrangler for those two; dev uses no `--env`.
+Dev deploys automatically from the `dev` branch to `https://mcc-dev.<your-subdomain>.workers.dev`. You can use any Cloudflare account, including a personal one, and move to the company account later by swapping the ids and secrets below.
+
+1. **Cloudflare account:** sign up (free) and open **Workers & Pages** once, which creates your `workers.dev` subdomain.
+2. **D1 database:** **Storage & Databases → D1 → Create** → `mcc-db-dev`. Put its id in both D1 entries at the top level of `wrangler.jsonc`.
+3. **KV namespace (page cache):** **Storage & Databases → KV → Create** → `mcc-cache-dev`. Put its id in `kv_namespaces` at the top level of `wrangler.jsonc`.
+4. **API token:** **My Profile → API Tokens → Create Token** → template **Edit Cloudflare Workers**, then add **Account → D1 → Edit**. Also copy the **Account ID** shown on the Workers & Pages overview.
+5. **GitHub:** **Settings → Environments → New environment** → `dev`, and add these secrets:
+
+   | Secret | Value |
+   |---|---|
+   | `CLOUDFLARE_API_TOKEN` | the token from step 4 |
+   | `CLOUDFLARE_ACCOUNT_ID` | the account id from step 4 |
+   | `REVALIDATE_SECRET` | any long random string |
+   | `ADMIN_PASSWORD` | the dev admin password, at least 8 characters |
+   | `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY` | optional, when you have them |
+
+6. **Push to `dev`.** The workflow creates the tables, loads the demo content (only while the database is empty), deploys, copies the secrets to the Worker and refreshes the pages. The address appears in the run summary.
+
+Open `/admin` on the dev address and sign in with `ADMIN_PASSWORD`. The password login exists **only on dev** and only while Cloudflare Access isn't configured there; staging and production always require Access.
+
+Until ids and secrets are filled in, the workflow skips the deploy with a warning instead of failing.
+
+## First deployment (staging / production)
+
+These need the company Cloudflare account (the domain's DNS lives there). The dashboard steps can be done in the browser; commands run from the project folder after `npx wrangler login`. Pass `--env staging` or `--env production` to wrangler.
 
 ### 1. Move the domain's DNS to Cloudflare
 
@@ -82,7 +108,7 @@ npx wrangler r2 bucket create mcc-media-staging
 npx wrangler r2 bucket create mcc-cache-staging
 ```
 
-(For dev: `mcc-db-dev`, `mcc-media-dev`, `mcc-cache-dev`. For production: `mcc-db`, `mcc-media`, `mcc-cache`.)
+(For production: `mcc-db`, `mcc-media`, `mcc-cache`.) You can also create these in the dashboard.
 
 Copy the printed `database_id` into **both** D1 entries of that environment in `wrangler.jsonc` (`DB` and `NEXT_TAG_CACHE_D1` point at the same database). Then create the tables:
 
@@ -92,7 +118,7 @@ npm run db:migrate:staging
 
 ### 3. Configure the environment in `wrangler.jsonc`
 
-- Replace `example.com` in `routes` and `SITE_URL` with your domain. For dev, set `SITE_URL` to the `workers.dev` address printed by the first deploy.
+- Replace `example.com` in `routes` and `SITE_URL` with your domain.
 - Set `EMAIL_FROM` and `LEADS_NOTIFY_TO` (comma-separated addresses that receive new leads).
 
 ### 4. Serve media from your own subdomain (recommended for production)
@@ -101,7 +127,7 @@ R2 → `mcc-media` → **Settings → Custom Domains → Connect domain** → `m
 
 ### 5. Turnstile (spam protection)
 
-Dashboard → **Turnstile → Add widget** → add all hostnames (`example.com`, `staging.example.com`, the dev `workers.dev` host) → choose **Managed**. Put the site key in each environment's `TURNSTILE_SITE_KEY` and store the secret:
+Dashboard → **Turnstile → Add widget** → add all hostnames (`example.com`, `staging.example.com`, the dev `workers.dev` host) → choose **Managed**. Put the site key in each environment's `TURNSTILE_SITE_KEY` and add the secret key as the GitHub environment secret `TURNSTILE_SECRET_KEY` (the deploy copies it to the Worker), or set it directly:
 
 ```bash
 npx wrangler secret put TURNSTILE_SECRET_KEY --env staging
@@ -109,7 +135,7 @@ npx wrangler secret put TURNSTILE_SECRET_KEY --env staging
 
 ### 6. Email (Resend)
 
-Create a free Resend account, add and verify your domain (Resend shows the DNS records; add them in Cloudflare DNS), create an API key, then:
+Create a free Resend account, add and verify your domain (Resend shows the DNS records; add them in Cloudflare DNS), create an API key, and add it as the GitHub environment secret `RESEND_API_KEY`, or set it directly:
 
 ```bash
 npx wrangler secret put RESEND_API_KEY --env staging
@@ -119,11 +145,7 @@ npx wrangler secret put RESEND_API_KEY --env staging
 
 ### 7. Revalidation secret
 
-Use a different long random string per environment:
-
-```bash
-npx wrangler secret put REVALIDATE_SECRET --env staging
-```
+Use a different long random string per environment, stored as the GitHub environment secret `REVALIDATE_SECRET` (copied to the Worker on deploy).
 
 ### 8. Deploy
 
@@ -150,17 +172,18 @@ To keep the **whole** staging site private (not just `/admin`), make the staging
 
 ### 10. Automatic deploys from GitHub
 
-Pushing to `dev`, `staging` or `production` runs `.github/workflows/ci-deploy.yml`, which applies database migrations and deploys to the matching environment.
+Pushing to `dev`, `staging` or `production` runs `.github/workflows/ci-deploy.yml`, which applies database migrations, deploys to the matching environment, copies the GitHub environment secrets to the Worker (`scripts/sync-secrets.mjs`) and refreshes the pages.
 
 1. Cloudflare → **My Profile → API Tokens → Create Token** → template **Edit Cloudflare Workers**, then add the permission **Account → D1 → Edit**. Copy the token and your **Account ID** (shown on the Workers overview page).
 2. GitHub → repository **Settings → Environments** → create `dev`, `staging` and `production`. In each, add these secrets:
    - `CLOUDFLARE_API_TOKEN`
    - `CLOUDFLARE_ACCOUNT_ID`
-   - `REVALIDATE_SECRET`: the value you set with `wrangler secret put` for that environment
+   - `REVALIDATE_SECRET`
+   - optional: `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
 3. Optional: in the `production` environment, add **Required reviewers** so live deploys need approval.
 4. Optional: **Settings → Branches → Add rule** for `staging` and `production` with **Require a pull request before merging**.
 
-Until the secrets exist, the workflow still runs checks and skips the deploy with a warning.
+Until the secrets exist and the ids in `wrangler.jsonc` are real, the workflow still runs checks and skips the deploy with a warning.
 
 ### 11. Analytics and Search Console (optional, production)
 
@@ -215,6 +238,6 @@ lib/
   uploads.ts           R2 keys + presigned URLs
   client/upload.ts     browser-side resize + upload
 drizzle/               SQL migrations (applied with wrangler)
-scripts/               seed data, post-deploy cache refresh
+scripts/               seed data, deploy helpers (config check, secret sync, demo seed, cache refresh)
 .github/workflows/     CI checks + per-branch deploys
 ```

@@ -3,7 +3,7 @@
   /*
    * Three environments, each with its own Worker, D1 database and R2 buckets:
    *
-   *   dev        (top level)        npm run deploy:dev         https://mcc-dev.<account>.workers.dev
+   *   dev        (top level)        npm run deploy:dev         https://mcc-dev.<account>.workers.dev  (no R2: KV page cache, uploads off)
    *   staging    (env.staging)      npm run deploy:staging     https://staging.example.com
    *   production (env.production)   npm run deploy:production  https://example.com
    *
@@ -11,7 +11,7 @@
    * locally by Wrangler. Bindings, vars and routes are NOT inherited by environments, so each
    * environment repeats them in full.
    *
-   * Replace every 00000000-... database_id with the ids printed by `wrangler d1 create` (see README).
+   * Replace every 00000000... id with the real D1 database / KV namespace ids (see README).
    */
 
   // ---------------------------------------------------------------- shared settings (inherited)
@@ -33,15 +33,14 @@
   ],
   "d1_databases": [
     // App data: projects, services, leads, ...
-    { "binding": "DB", "database_name": "mcc-db-dev", "database_id": "00000000-0000-0000-0000-000000000001", "migrations_dir": "drizzle" },
+    { "binding": "DB", "database_name": "mcc-db-dev", "database_id": "852c51bb-2ce9-45bd-8543-c8283f4ef951", "migrations_dir": "drizzle" },
     // Same database, used by OpenNext to track page revalidations.
-    { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc-db-dev", "database_id": "00000000-0000-0000-0000-000000000001" }
+    { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc-db-dev", "database_id": "852c51bb-2ce9-45bd-8543-c8283f4ef951" }
   ],
-  "r2_buckets": [
-    // Uploaded images and videos
-    { "binding": "MEDIA", "bucket_name": "mcc-media-dev" },
-    // OpenNext page cache
-    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "mcc-cache-dev" }
+  // Dev runs without R2 (R2 needs a payment card on file): the page cache lives in KV instead and
+  // photo/video uploads are disabled. Staging and production use R2 below.
+  "kv_namespaces": [
+    { "binding": "NEXT_INC_CACHE_KV", "id": "00000000000000000000000000000001" }
   ],
   // Non-secret configuration. Secrets: `wrangler secret put NAME [--env ...]` (remote) or .dev.vars (local).
   "vars": {
@@ -53,7 +52,7 @@
     "CF_ACCESS_TEAM_DOMAIN": "",
     "CF_ACCESS_AUD": "",
     "R2_ACCOUNT_ID": "",
-    "R2_BUCKET_NAME": "mcc-media-dev",
+    "R2_BUCKET_NAME": "",
     "TURNSTILE_SITE_KEY": "",
     "CF_ANALYTICS_TOKEN": ""
   },

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ensureAdmin } from "@/lib/auth";
+import { adminLogout } from "@/lib/actions/login";
+import { ensureAdmin, isPasswordLoginEnabled } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s | Admin" },
@@ -19,6 +20,7 @@ const NAV = [
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await ensureAdmin();
+  const passwordLogin = await isPasswordLoginEnabled();
   return (
     <div className="min-h-dvh bg-paper lg:flex">
       <aside className="bg-ink text-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-60 lg:shrink-0 lg:flex-col">
@@ -36,6 +38,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="hidden border-t border-white/10 px-5 py-4 text-xs text-white/60 lg:block">
           <p className="truncate">{admin.email}</p>
           <Link href="/" target="_blank" className="mt-2 inline-block hover:text-white">View site ↗</Link>
+          {passwordLogin && (
+            <form action={adminLogout} className="mt-2">
+              <button className="hover:text-white">Sign out</button>
+            </form>
+          )}
         </div>
       </aside>
       <div className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">{children}</div>

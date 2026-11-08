@@ -12,6 +12,7 @@ export function ImageField({
   defaultKey,
   mediaBase,
   hint,
+  enabled = true,
 }: {
   name: string;
   label: string;
@@ -19,6 +20,7 @@ export function ImageField({
   defaultKey: string | null;
   mediaBase: string;
   hint?: string;
+  enabled?: boolean;
 }) {
   const [key, setKey] = useState(defaultKey ?? "");
   const [busy, setBusy] = useState(false);
@@ -54,10 +56,11 @@ export function ImageField({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
-          <label htmlFor={id} className={`btn border border-line bg-white py-2 text-ink hover:bg-sand ${busy ? "pointer-events-none opacity-60" : "cursor-pointer"}`}>
+          {!enabled && <span className="text-xs text-muted">Uploads are turned off in this environment.</span>}
+          {enabled && <label htmlFor={id} className={`btn border border-line bg-white py-2 text-ink hover:bg-sand ${busy ? "pointer-events-none opacity-60" : "cursor-pointer"}`}>
             {busy ? "Uploading…" : key ? "Replace" : "Upload"}
-          </label>
-          <input id={id} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />
+          </label>}
+          {enabled && <input id={id} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />}
           {key && (
             <button type="button" className="btn py-2 text-red-700 hover:bg-red-50" onClick={() => setKey("")}>
               Remove

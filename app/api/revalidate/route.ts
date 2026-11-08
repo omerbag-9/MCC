@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "@/lib/auth";
 import { getVar } from "@/lib/env";
 import { revalidateSite } from "@/lib/revalidate";
 
@@ -15,9 +16,3 @@ export async function POST(request: Request) {
   return Response.json({ ok: true });
 }
 
-function timingSafeEqual(a: string, b: string) {
-  if (a.length !== b.length) return false;
-  let diff = 0;
-  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return diff === 0;
-}

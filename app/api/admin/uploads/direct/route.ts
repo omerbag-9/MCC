@@ -1,5 +1,5 @@
 import { getAdmin } from "@/lib/auth";
-import { getBindings } from "@/lib/env";
+import { getMediaBucket } from "@/lib/env";
 import { MEDIA_KEY_PATTERN } from "@/lib/media";
 import { ALLOWED_TYPES, DIRECT_UPLOAD_MAX_BYTES } from "@/lib/uploads";
 
@@ -19,7 +19,8 @@ export async function PUT(request: Request) {
     return Response.json({ error: "Invalid file size" }, { status: 400 });
   }
 
-  const env = await getBindings();
-  await env.MEDIA.put(key, body, { httpMetadata: { contentType, cacheControl: "public, max-age=31536000, immutable" } });
+  const bucket = await getMediaBucket();
+  if (!bucket) return Response.json({ error: "Uploads are turned off in this environment" }, { status: 503 });
+  await bucket.put(key, body, { httpMetadata: { contentType, cacheControl: "public, max-age=31536000, immutable" } });
   return Response.json({ ok: true, key });
 }

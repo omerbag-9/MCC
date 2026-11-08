@@ -1,4 +1,4 @@
-import { getBindings } from "@/lib/env";
+import { getMediaBucket } from "@/lib/env";
 import { MEDIA_KEY_PATTERN } from "@/lib/media";
 
 /**
@@ -10,9 +10,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ key:
   const key = parts.map(decodeURIComponent).join("/");
   if (!MEDIA_KEY_PATTERN.test(key)) return new Response("Not found", { status: 404 });
 
-  const env = await getBindings();
+  const bucket = await getMediaBucket();
+  if (!bucket) return new Response("Not found", { status: 404 });
   const range = request.headers.get("range");
-  const object = await env.MEDIA.get(key, {
+  const object = await bucket.get(key, {
     range: range ? request.headers : undefined,
     onlyIf: request.headers,
   });

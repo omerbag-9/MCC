@@ -19,3 +19,7 @@ R2_SECRET_ACCESS_KEY=
 ADMIN_DEV_BYPASS=1
 SITE_URL=http://localhost:8787
 APP_ENV=dev
+
+# Dev-environment admin password (only used on APP_ENV=dev when Cloudflare Access isn't set up;
+# localhost never needs it). In CI it comes from the GitHub "dev" environment secret ADMIN_PASSWORD.
+# ADMIN_PASSWORD=

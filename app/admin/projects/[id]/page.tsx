@@ -9,7 +9,7 @@ import { deleteMedia, deleteProject, moveMedia, setCover, updateMediaAlt, update
 import { ensureAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import { projectMedia, projects } from "@/lib/db/schema";
-import { getMediaBase } from "@/lib/env";
+import { getMediaBase, getMediaBucket } from "@/lib/env";
 import { mediaUrl } from "@/lib/media";
 
 export const metadata = { title: "Edit project" };
@@ -25,10 +25,11 @@ export default async function EditProject({
   const id = Number((await params).id);
   if (!Number.isInteger(id)) notFound();
   const db = await getDb();
-  const [project, media, mediaBase] = await Promise.all([
+  const [project, media, mediaBase, bucket] = await Promise.all([
     db.query.projects.findFirst({ where: eq(projects.id, id) }),
     db.query.projectMedia.findMany({ where: eq(projectMedia.projectId, id), orderBy: [asc(projectMedia.sortOrder), asc(projectMedia.id)] }),
     getMediaBase(),
+    getMediaBucket(),
   ]);
   if (!project) notFound();
 
@@ -52,7 +53,7 @@ export default async function EditProject({
 
         <section id="media" className="space-y-4">
           <h2 className="text-lg font-semibold">Photos & videos</h2>
-          <MediaUploader projectId={project.id} />
+          <MediaUploader projectId={project.id} enabled={!!bucket} />
           {media.length > 0 && (
             <ul className="space-y-3">
               {media.map((m, i) => {

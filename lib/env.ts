@@ -26,7 +26,8 @@ type StringVar =
   | "TURNSTILE_SECRET_KEY"
   | "REVALIDATE_SECRET"
   | "CF_ANALYTICS_TOKEN"
-  | "ADMIN_DEV_BYPASS";
+  | "ADMIN_DEV_BYPASS"
+  | "ADMIN_PASSWORD";
 
 /**
  * Reads a configuration value from the Worker environment (wrangler vars / secrets / .dev.vars),
@@ -60,4 +61,14 @@ export type AppEnv = "dev" | "staging" | "production";
 export async function getAppEnv(): Promise<AppEnv> {
   const value = await getVar("APP_ENV");
   return value === "production" || value === "staging" ? value : "dev";
+}
+
+/** The media bucket, or null where R2 isn't configured (dev runs without R2). */
+export async function getMediaBucket(): Promise<R2Bucket | null> {
+  if (isBuildPhase()) return null;
+  try {
+    return (await getBindings()).MEDIA ?? null;
+  } catch {
+    return null;
+  }
 }

@@ -6,12 +6,12 @@ import { deleteClient, saveClient } from "@/lib/actions/admin";
 import { ensureAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import { clients, type Client } from "@/lib/db/schema";
-import { getMediaBase } from "@/lib/env";
+import { getMediaBase, getMediaBucket } from "@/lib/env";
 import { mediaUrl } from "@/lib/media";
 
 export const metadata = { title: "Clients" };
 
-function Fields({ c, mediaBase }: { c?: Client; mediaBase: string }) {
+function Fields({ c, mediaBase, uploads }: { c?: Client; mediaBase: string; uploads: boolean }) {
   const p = c ? `c${c.id}-` : "new-";
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -24,7 +24,7 @@ function Fields({ c, mediaBase }: { c?: Client; mediaBase: string }) {
         <input id={`${p}url`} name="url" type="url" defaultValue={c?.url} placeholder="https://" className="field" />
       </div>
       <div className="sm:col-span-2">
-        <ImageField name="logoKey" label="Logo" folder="clients" defaultKey={c?.logoKey ?? null} mediaBase={mediaBase} hint="PNG with a transparent background works best." />
+        <ImageField name="logoKey" label="Logo" folder="clients" defaultKey={c?.logoKey ?? null} mediaBase={mediaBase} enabled={uploads} hint="PNG with a transparent background works best." />
       </div>
       <div>
         <label htmlFor={`${p}sortOrder`} className="label">Sort order</label>
@@ -37,10 +37,12 @@ function Fields({ c, mediaBase }: { c?: Client; mediaBase: string }) {
 export default async function ClientsAdmin({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await ensureAdmin();
   const db = await getDb();
-  const [rows, mediaBase] = await Promise.all([
+  const [rows, mediaBase, bucket] = await Promise.all([
     db.query.clients.findMany({ orderBy: [asc(clients.sortOrder), asc(clients.id)] }),
     getMediaBase(),
+    getMediaBucket(),
   ]);
+  const uploads = !!bucket;
 
   return (
     <>
@@ -62,7 +64,7 @@ export default async function ClientsAdmin({ searchParams }: { searchParams: Pro
               </summary>
               <div className="border-t border-line px-5 py-5">
                 <form action={saveClient.bind(null, c.id)} className="space-y-4">
-                  <Fields c={c} mediaBase={mediaBase} />
+                  <Fields c={c} mediaBase={mediaBase} uploads={uploads} />
                   <button className="btn-primary py-2">Save</button>
                 </form>
                 <form action={deleteClient.bind(null, c.id)} className="mt-3">
@@ -76,7 +78,7 @@ export default async function ClientsAdmin({ searchParams }: { searchParams: Pro
       <Card className="mt-8">
         <h2 className="mb-4 font-semibold">Add a client</h2>
         <form action={saveClient.bind(null, null)} className="space-y-4">
-          <Fields mediaBase={mediaBase} />
+          <Fields mediaBase={mediaBase} uploads={uploads} />
           <button className="btn-primary py-2">Add client</button>
         </form>
       </Card>

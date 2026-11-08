@@ -4,14 +4,14 @@ import { saveSettings } from "@/lib/actions/admin";
 import { ensureAdmin } from "@/lib/auth";
 import { DEFAULT_SETTINGS } from "@/lib/db/queries";
 import { getDb } from "@/lib/db/client";
-import { getMediaBase } from "@/lib/env";
+import { getMediaBase, getMediaBucket } from "@/lib/env";
 
 export const metadata = { title: "Settings" };
 
 export default async function SettingsAdmin({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await ensureAdmin();
   const db = await getDb();
-  const [row, mediaBase] = await Promise.all([db.query.settings.findFirst(), getMediaBase()]);
+  const [row, mediaBase, bucket] = await Promise.all([db.query.settings.findFirst(), getMediaBase(), getMediaBucket()]);
   const s = row ?? DEFAULT_SETTINGS;
   const stats = [...s.stats, ...Array(4).fill({ value: "", label: "" })].slice(0, 4) as { value: string; label: string }[];
 
@@ -34,7 +34,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
           <Card className="space-y-5">
             <TextField name="heroTitle" label="Hero title" defaultValue={s.heroTitle} />
             <TextArea name="heroSubtitle" label="Hero subtitle" defaultValue={s.heroSubtitle} rows={2} />
-            <ImageField name="heroImageKey" label="Hero background image" folder="site" defaultKey={s.heroImageKey} mediaBase={mediaBase} hint="Wide photo, at least 1920px. If empty, the first featured project's cover is used." />
+            <ImageField name="heroImageKey" label="Hero background image" folder="site" defaultKey={s.heroImageKey} mediaBase={mediaBase} enabled={!!bucket} hint="Wide photo, at least 1920px. If empty, the first featured project's cover is used." />
             <div>
               <span className="label">Stats strip (up to 4)</span>
               <div className="grid gap-3 sm:grid-cols-2">
