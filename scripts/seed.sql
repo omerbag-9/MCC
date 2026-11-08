@@ -11,7 +11,7 @@ INSERT INTO settings (id, company_name, tagline, hero_title, hero_subtitle, abou
 VALUES (1,
   'Atlas Build Co.',
   'Building with integrity since 1998',
-  'We build homes, offices and landmarks that last',
+  'Building what lasts since 1998',
   'Design-build, general contracting and renovation, delivered on time, on budget and to the highest safety standards.',
   'Over two decades of building trust',
   'We are a full-service construction company delivering residential, commercial and industrial projects from first sketch to final handover.

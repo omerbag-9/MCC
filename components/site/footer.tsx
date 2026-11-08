@@ -1,84 +1,85 @@
 import Link from "next/link";
 import type { Settings } from "@/lib/db/schema";
-import { ClockIcon, MailIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
+import { SocialIcon } from "./icons";
+import { Photo } from "./photo";
 
-export function Footer({ settings }: { settings: Settings }) {
-  const socials = [
-    ["facebook", settings.facebookUrl],
-    ["instagram", settings.instagramUrl],
-    ["linkedin", settings.linkedinUrl],
-    ["youtube", settings.youtubeUrl],
-    ["tiktok", settings.tiktokUrl],
-  ].filter(([, url]) => url) as [string, string][];
+const MENU = [
+  { href: "/#services", label: "Services" },
+  { href: "/projects", label: "Projects" },
+  { href: "/#about", label: "About" },
+  { href: "/contact", label: "Request a quote" },
+];
+
+export function Footer({ settings, photo, mediaBase }: { settings: Settings; photo: string | null; mediaBase: string }) {
+  const socials = (
+    [
+      ["facebook", settings.facebookUrl],
+      ["instagram", settings.instagramUrl],
+      ["linkedin", settings.linkedinUrl],
+      ["youtube", settings.youtubeUrl],
+      ["tiktok", settings.tiktokUrl],
+    ] as const
+  ).filter(([, url]) => url);
 
   return (
-    <footer className="bg-ink text-white/75">
-      <div className="container-x grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="lg:col-span-2">
-          <p className="text-lg font-bold text-white">{settings.companyName}</p>
-          {settings.tagline && <p className="mt-2 max-w-sm text-sm">{settings.tagline}</p>}
-          {socials.length > 0 && (
-            <div className="mt-5 flex gap-2">
-              {socials.map(([network, url]) => (
-                <a
-                  key={network}
-                  href={url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex size-9 items-center justify-center rounded-md bg-white/10 hover:bg-brand hover:text-white"
-                  aria-label={network}
+    <footer className="grid bg-ink text-paper lg:min-h-[640px] lg:grid-cols-2">
+      <div className="relative h-[44svh] overflow-hidden lg:h-auto">
+        <Photo mediaBase={mediaBase} src={photo} alt={`${settings.companyName} on site`} sizes="(min-width: 1024px) 50vw, 100vw" className="absolute inset-0" />
+      </div>
+
+      <div className="flex flex-col px-5 pt-14 pb-8 sm:px-8 lg:px-16 lg:pt-20">
+        <p className="text-body font-semibold">{settings.companyName}</p>
+
+        <nav aria-label="Footer" className="mt-10">
+          <ul className="space-y-3">
+            {MENU.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="inline-block text-head font-semibold tracking-tight transition-transform duration-200 hover:translate-x-2"
                 >
-                  <SocialIcon network={network} width={18} height={18} />
-                </a>
-              ))}
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
+        <div className="mt-14 grid gap-8 text-[15px] sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <p className="font-semibold">Contact</p>
+            {settings.phone && (
+              <p><a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="text-on-navy-muted hover:text-paper">{settings.phone}</a></p>
+            )}
+            {settings.email && (
+              <p><a href={`mailto:${settings.email}`} className="break-all text-on-navy-muted hover:text-paper">{settings.email}</a></p>
+            )}
+            {settings.address && <p className="text-on-navy-muted">{settings.address}</p>}
+          </div>
+          {socials.length > 0 && (
+            <div>
+              <p className="font-semibold">Follow us</p>
+              <div className="mt-3 flex gap-2">
+                {socials.map(([network, url]) => (
+                  <a
+                    key={network}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={network}
+                    className="flex size-10 items-center justify-center bg-navy-2 transition-colors hover:bg-paper hover:text-ink"
+                  >
+                    <SocialIcon network={network} width={18} height={18} />
+                  </a>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        <div>
-          <p className="text-sm font-semibold text-white">Explore</p>
-          <ul className="mt-4 space-y-2.5 text-sm">
-            <li><Link href="/#services" className="hover:text-white">Services</Link></li>
-            <li><Link href="/projects" className="hover:text-white">Projects</Link></li>
-            <li><Link href="/#about" className="hover:text-white">About</Link></li>
-            <li><Link href="/contact" className="hover:text-white">Contact</Link></li>
-          </ul>
-        </div>
-
-        <div>
-          <p className="text-sm font-semibold text-white">Contact</p>
-          <ul className="mt-4 space-y-3 text-sm">
-            {settings.phone && (
-              <li className="flex gap-2.5">
-                <PhoneIcon width={18} height={18} className="shrink-0 text-brand" />
-                <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="hover:text-white">{settings.phone}</a>
-              </li>
-            )}
-            {settings.email && (
-              <li className="flex gap-2.5">
-                <MailIcon width={18} height={18} className="shrink-0 text-brand" />
-                <a href={`mailto:${settings.email}`} className="break-all hover:text-white">{settings.email}</a>
-              </li>
-            )}
-            {settings.address && (
-              <li className="flex gap-2.5">
-                <PinIcon width={18} height={18} className="shrink-0 text-brand" />
-                <span>{settings.address}</span>
-              </li>
-            )}
-            {settings.workingHours && (
-              <li className="flex gap-2.5">
-                <ClockIcon width={18} height={18} className="shrink-0 text-brand" />
-                <span>{settings.workingHours}</span>
-              </li>
-            )}
-          </ul>
-        </div>
-      </div>
-      <div className="border-t border-white/10">
-        <div className="container-x py-5 text-xs text-white/50">
+        <p className="mt-auto pt-14 text-small text-on-navy-muted">
           © {new Date().getFullYear()} {settings.companyName}. All rights reserved.
-        </div>
+        </p>
       </div>
     </footer>
   );

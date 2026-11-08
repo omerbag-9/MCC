@@ -32,7 +32,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
         <section>
           <h2 className="mb-3 font-semibold">Home page</h2>
           <Card className="space-y-5">
-            <TextField name="heroTitle" label="Hero title" defaultValue={s.heroTitle} />
+            <TextField name="heroTitle" label="Hero title" defaultValue={s.heroTitle} hint="Keep it short, about 35 characters, so it fits on two lines on phones." />
             <TextArea name="heroSubtitle" label="Hero subtitle" defaultValue={s.heroSubtitle} rows={2} />
             <ImageField name="heroImageKey" label="Hero background image" folder="site" defaultKey={s.heroImageKey} mediaBase={mediaBase} enabled={!!bucket} hint="Wide photo, at least 1920px. If empty, the first featured project's cover is used." />
             <div>

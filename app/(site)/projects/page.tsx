@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ProjectCard } from "@/components/site/project-card";
 import { ProjectsBrowser } from "@/components/site/projects-browser";
+import { Reveal } from "@/components/site/reveal";
 import { getPublishedProjects, getSettings } from "@/lib/db/queries";
 import { getMediaBase } from "@/lib/env";
 
@@ -17,29 +18,26 @@ export default async function ProjectsPage() {
   const [projects, mediaBase] = await Promise.all([getPublishedProjects(), getMediaBase()]);
 
   return (
-    <>
-      <section className="bg-ink py-16 text-white sm:py-20">
-        <div className="container-x">
-          <p className="eyebrow text-brand">Portfolio</p>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Our projects</h1>
-          <p className="mt-4 max-w-2xl text-white/75">A selection of the work we&apos;re proud of.</p>
-        </div>
-      </section>
-      <section className="py-14 sm:py-20">
-        <div className="container-x">
-          {projects.length === 0 ? (
-            <p className="text-muted">Projects will be published here soon.</p>
-          ) : (
-            <ProjectsBrowser
-              items={projects.map((p) => ({
-                id: p.id,
-                category: p.category,
-                node: <ProjectCard project={p} mediaBase={mediaBase} />,
-              }))}
-            />
-          )}
-        </div>
-      </section>
-    </>
+    <section className="pt-16 pb-24 lg:pt-24 lg:pb-36">
+      <div className="container-x">
+        <Reveal className="mb-12 grid gap-6 lg:grid-cols-12 lg:items-end">
+          <h1 className="text-display font-semibold lg:col-span-6">Our projects</h1>
+          <p className="max-w-xl text-lead lg:col-span-6 lg:justify-self-end">
+            Homes, offices, warehouses and renovations we have designed and built.
+          </p>
+        </Reveal>
+        {projects.length === 0 ? (
+          <p className="text-muted">Projects will be published here soon.</p>
+        ) : (
+          <ProjectsBrowser
+            items={projects.map((p) => ({
+              id: p.id,
+              category: p.category,
+              node: <ProjectCard project={p} mediaBase={mediaBase} />,
+            }))}
+          />
+        )}
+      </div>
+    </section>
   );
 }

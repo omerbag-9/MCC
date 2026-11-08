@@ -5,7 +5,8 @@ const config = [
   ...nextVitals,
   ...nextTs,
   {
-    ignores: [".next/**", ".open-next/**", ".wrangler/**", "node_modules/**", "cloudflare-env.d.ts", "next-env.d.ts"],
+    // components/reactbits: third-party code vendored as published (see file headers).
+    ignores: ["components/reactbits/**", ".next/**", ".open-next/**", ".wrangler/**", "node_modules/**", "cloudflare-env.d.ts", "next-env.d.ts"],
   },
 ];
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import FadeContent from "@/components/reactbits/FadeContent";
 
 /**
  * Category filter that runs in the browser, so /projects stays a single cached page
@@ -18,25 +19,28 @@ export function ProjectsBrowser({
   return (
     <>
       {categories.length > 1 && (
-        <div className="mb-8 flex flex-wrap gap-2" role="group" aria-label="Filter by category">
+        <FadeContent className="mb-14 flex flex-wrap gap-2" role="group" aria-label="Filter by category" duration={0.7}>
           {["", ...categories].map((c) => (
             <button
               key={c || "all"}
               type="button"
               onClick={() => setActive(c)}
               aria-pressed={active === c}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                active === c ? "bg-ink text-white" : "bg-white text-ink-soft ring-1 ring-line hover:ring-ink/40"
+              className={`min-h-11 px-5 text-[15px] font-medium transition-colors ${
+                active === c ? "bg-ink text-paper" : "bg-sand text-ink hover:bg-brand-soft"
               }`}
             >
               {c || "All"}
             </button>
           ))}
-        </div>
+        </FadeContent>
       )}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {/* The first project runs across both columns and gets a wider crop. */}
+      <div className="grid gap-x-10 gap-y-20 md:grid-cols-2 md:[&>*:first-child]:col-span-2 md:[&>*:first-child_[data-card-media]]:aspect-[16/7]">
         {visible.map((i) => (
-          <div key={i.id}>{i.node}</div>
+          <FadeContent key={`${active}-${i.id}`} duration={0.7} threshold={0.1}>
+            {i.node}
+          </FadeContent>
         ))}
       </div>
     </>

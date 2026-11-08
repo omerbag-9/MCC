@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import "@fontsource-variable/inter";
+import "@fontsource-variable/hanken-grotesk";
 import "./globals.css";
 import { getSettings } from "@/lib/db/queries";
 import { getAppEnv, getSiteUrl } from "@/lib/env";
@@ -21,12 +21,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#14161a",
+  themeColor: "#0b1f3a",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Lets CSS hide content that will fade in, only when scripts actually run. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+      </head>
       <body className="min-h-dvh">{children}</body>
     </html>
   );

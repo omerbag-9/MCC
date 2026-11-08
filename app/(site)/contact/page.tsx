@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
-import { ClockIcon, MailIcon, PhoneIcon, PinIcon, WhatsAppIcon } from "@/components/site/icons";
+import Link from "next/link";
+import { ArrowRightIcon, PhoneIcon, WhatsAppIcon } from "@/components/site/icons";
 import { LeadForm } from "@/components/site/lead-form";
+import { Photo, photoPool } from "@/components/site/photo";
+import { ProjectCard } from "@/components/site/project-card";
+import { Reveal } from "@/components/site/reveal";
 import { WhatsAppLink } from "@/components/site/whatsapp";
-import { getPublishedServices, getSettings } from "@/lib/db/queries";
-import { getVar } from "@/lib/env";
+import { getFeaturedProjects, getPublishedServices, getSettings } from "@/lib/db/queries";
+import { getMediaBase, getVar } from "@/lib/env";
 import { whatsappLink } from "@/lib/whatsapp";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -26,87 +30,117 @@ function safeMapUrl(url: string) {
 }
 
 export default async function ContactPage() {
-  const [settings, services, turnstileSiteKey] = await Promise.all([
+  const [settings, services, featured, mediaBase, turnstileSiteKey] = await Promise.all([
     getSettings(),
     getPublishedServices(),
+    getFeaturedProjects(),
+    getMediaBase(),
     getVar("TURNSTILE_SITE_KEY"),
   ]);
   const wa = whatsappLink(settings.whatsappNumber, settings.whatsappMessage);
   const map = safeMapUrl(settings.mapEmbedUrl);
+  const photo = photoPool(...featured.map((p) => p.coverKey), settings.heroImageKey).next();
+  const recent = featured.slice(0, 3);
 
   const items = [
-    settings.phone && { icon: PhoneIcon, label: "Phone", value: settings.phone, href: `tel:${settings.phone.replace(/\s/g, "")}` },
-    settings.email && { icon: MailIcon, label: "Email", value: settings.email, href: `mailto:${settings.email}` },
-    settings.address && { icon: PinIcon, label: "Office", value: settings.address },
-    settings.workingHours && { icon: ClockIcon, label: "Working hours", value: settings.workingHours },
-  ].filter(Boolean) as { icon: typeof PhoneIcon; label: string; value: string; href?: string }[];
+    settings.phone && { label: "Phone", value: settings.phone, href: `tel:${settings.phone.replace(/\s/g, "")}` },
+    settings.email && { label: "Email", value: settings.email, href: `mailto:${settings.email}` },
+    settings.address && { label: "Office", value: settings.address },
+    settings.workingHours && { label: "Working hours", value: settings.workingHours },
+  ].filter(Boolean) as { label: string; value: string; href?: string }[];
 
   return (
     <>
-      <section className="bg-ink py-16 text-white sm:py-20">
-        <div className="container-x">
-          <p className="eyebrow text-brand">Contact</p>
-          <h1 className="mt-3 text-4xl font-extrabold tracking-tight sm:text-5xl">Let&apos;s build together</h1>
-          <p className="mt-4 max-w-2xl text-white/75">
-            Send us a few details about your project and we&apos;ll get back to you with a free quote.
-          </p>
-        </div>
-      </section>
-
-      <section className="py-14 sm:py-20">
-        <div className="container-x grid gap-10 lg:grid-cols-5">
-          <div className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-line sm:p-8 lg:col-span-3">
-            <h2 className="text-xl font-bold">Request a quote</h2>
-            <div className="mt-6">
+      <section className="grid lg:grid-cols-2">
+        {/* Form half */}
+        <div className="px-5 pt-14 pb-20 sm:px-8 lg:px-12 lg:pt-20 lg:pb-28">
+          <Reveal className="lg:max-w-xl">
+            <h1 className="text-display font-semibold">Request a quote</h1>
+            <p className="mt-5 text-lead">
+              Tell us about your project. We reply within one business day with next steps and a free estimate.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-2 lg:hidden">
+              {settings.phone && (
+                <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="btn-primary">
+                  <PhoneIcon width={18} height={18} /> Call us
+                </a>
+              )}
+              {wa && (
+                <WhatsAppLink href={wa} className="btn-whatsapp">
+                  <WhatsAppIcon width={18} height={18} /> WhatsApp
+                </WhatsAppLink>
+              )}
+            </div>
+            <div className="mt-12">
               <LeadForm pageSource="/contact" services={services.map((s) => s.title)} turnstileSiteKey={turnstileSiteKey} />
             </div>
-          </div>
-
-          <div className="space-y-6 lg:col-span-2">
-            {wa && (
-              <WhatsAppLink href={wa} className="flex items-center gap-4 rounded-lg bg-[#1fa855] p-6 text-white transition hover:bg-[#178a45]">
-                <WhatsAppIcon width={36} height={36} />
-                <span>
-                  <span className="block font-semibold">Chat on WhatsApp</span>
-                  <span className="text-sm text-white/85">The fastest way to reach us</span>
-                </span>
-              </WhatsAppLink>
-            )}
-            {items.length > 0 && (
-              <ul className="space-y-5 rounded-lg bg-white p-6 shadow-sm ring-1 ring-line">
-                {items.map(({ icon: Icon, label, value, href }) => (
-                  <li key={label} className="flex gap-4">
-                    <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-brand-soft text-brand-dark">
-                      <Icon width={20} height={20} />
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block text-xs font-medium tracking-wide text-muted uppercase">{label}</span>
-                      {href ? (
-                        <a href={href} className="font-medium break-words hover:underline">{value}</a>
-                      ) : (
-                        <span className="font-medium">{value}</span>
-                      )}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+          </Reveal>
         </div>
 
-        {map && (
-          <div className="container-x mt-10">
-            <iframe
-              src={map}
-              title={`${settings.companyName} location`}
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-              className="h-80 w-full rounded-lg border-0 sm:h-96"
-              allowFullScreen
-            />
+        {/* Photograph half, with the contact details set on it */}
+        <div className="relative min-h-[560px] bg-ink lg:min-h-0">
+          <div className="absolute inset-0">
+            <Photo mediaBase={mediaBase} src={photo} alt={`${settings.companyName} at work`} sizes="(min-width: 1024px) 50vw, 100vw" />
           </div>
-        )}
+          <Reveal className="absolute inset-x-5 bottom-5 bg-ink p-8 text-paper sm:inset-x-8 sm:bottom-8 lg:inset-x-auto lg:right-12 lg:bottom-12 lg:w-[380px]">
+            <h2 className="text-lead font-semibold">Contact details</h2>
+            {items.length > 0 && (
+              <dl className="mt-6 space-y-5">
+                {items.map(({ label, value, href }) => (
+                  <div key={label}>
+                    <dt className="text-small text-on-navy-muted">{label}</dt>
+                    <dd className="mt-0.5">
+                      {href ? (
+                        <a href={href} className="font-semibold break-words hover:underline">{value}</a>
+                      ) : (
+                        <span className="font-semibold">{value}</span>
+                      )}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            {wa && (
+              <WhatsAppLink href={wa} className="btn-whatsapp mt-8 w-full">
+                <WhatsAppIcon width={18} height={18} /> Chat on WhatsApp
+              </WhatsAppLink>
+            )}
+          </Reveal>
+        </div>
       </section>
+
+      {recent.length > 0 && (
+        <section className="section-y bg-sand">
+          <div className="container-x">
+            <Reveal className="mb-12 flex flex-wrap items-baseline gap-x-10 gap-y-4">
+              <h2 className="text-head font-semibold">Recent projects</h2>
+              <Link href="/projects" className="link-arrow">
+                All projects <ArrowRightIcon width={18} height={18} />
+              </Link>
+            </Reveal>
+            <div className="grid gap-x-8 gap-y-14 md:grid-cols-3">
+              {recent.map((p) => (
+                <Reveal key={p.id}>
+                  <ProjectCard project={p} mediaBase={mediaBase} />
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {map && (
+        <section aria-label="Map">
+          <iframe
+            src={map}
+            title={`${settings.companyName} location`}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="block h-[60svh] w-full border-0 grayscale"
+            allowFullScreen
+          />
+        </section>
+      )}
     </>
   );
 }

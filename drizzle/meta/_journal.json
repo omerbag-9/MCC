@@ -15,6 +15,13 @@
       "when": 1794174288502,
       "tag": "0001_opennext_revalidations",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794176143773,
+      "tag": "0002_service_images",
+      "breakpoints": true
     }
   ]
 }

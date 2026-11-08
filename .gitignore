@@ -34,3 +34,6 @@ venv/
 .dev.vars
 next-env.d.ts
 *.tsbuildinfo
+
+# taste-skill working files (screenshots)
+.taste-skill/inspect*/

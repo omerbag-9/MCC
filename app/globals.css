@@ -1,72 +1,163 @@
 @import "tailwindcss";
 
+/*
+ * Design tokens. Public site and admin share them.
+ * Ground: white. Ink and dark fields: navy. The one accent is the navy itself (buttons on white)
+ * and white (buttons on navy). Surfaces are separated by tone steps, never by lines or shadows.
+ */
 @theme {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --color-ink: #14161a;
-  --color-ink-soft: #2a2e35;
-  --color-muted: #5f6672;
-  --color-line: #e4e1da;
-  --color-paper: #faf8f4;
-  --color-sand: #f1ede4;
-  --color-brand: #e8890c;
-  --color-brand-dark: #b96a05;
-  --color-brand-soft: #fdf0dc;
+  /* Navy */
+  --color-ink: #0b1f3a;
+  --color-ink-soft: #24385a;
+  --color-navy-2: #132b4d; /* one tone step up from the navy field */
+  --color-muted: #52627b; /* secondary text on white (AA) */
+  --color-on-navy-muted: #b4c0d3; /* secondary text on navy (AA) */
+
+  /* White and its steps */
+  --color-paper: #ffffff;
+  --color-sand: #f1f4f8; /* surface: one tone step from white */
+  --color-line: #dce2ea; /* admin tables and form fields only */
+
+  /* Kept names so the admin follows the theme */
+  --color-brand: #0b1f3a;
+  --color-brand-dark: #06132a;
+  --color-brand-soft: #e6ecf4;
+
+  /* Five type steps (house rule: no more) */
+  --text-small: 0.875rem; /* 14px */
+  --text-body: 1.0625rem; /* 17px */
+  --text-lead: 1.25rem; /* 20px */
+  --text-head: clamp(1.75rem, 1.4rem + 1vw, 2.25rem); /* 28-36px */
+  --text-display: clamp(2rem, 1.4rem + 2.6vw, 3.5rem); /* 32-56px */
 }
 
 @layer base {
   html {
-    scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
   }
   body {
     @apply bg-paper text-ink antialiased;
+    font-size: var(--text-body);
+    line-height: 1.55;
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+    text-wrap: balance;
   }
   :focus-visible {
-    outline: 2px solid var(--color-brand);
-    outline-offset: 2px;
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: var(--color-ink);
+    color: var(--color-paper);
   }
   [id] {
     scroll-margin-top: 5rem;
   }
 }
 
+/* Page frame: one pair of margins everywhere. */
 @utility container-x {
-  @apply mx-auto w-full max-w-6xl px-4 sm:px-6 lg:px-8;
+  @apply mx-auto w-full max-w-[90rem] px-5 sm:px-8 lg:px-12;
 }
 
+/* Section rhythm: clearly larger than any gap inside a section. */
+@utility section-y {
+  @apply py-24 lg:py-36;
+}
+
+/* Buttons: square corners, flat fill. */
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-md px-5 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+  @apply inline-flex min-h-12 items-center justify-center gap-2 px-6 text-[15px] font-semibold transition-[background-color,color,transform] duration-200 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60;
 }
-
 @utility btn-primary {
-  @apply btn bg-brand text-white hover:bg-brand-dark;
+  @apply btn bg-ink text-paper hover:bg-ink-soft;
 }
-
+@utility btn-light {
+  @apply btn bg-paper text-ink hover:bg-sand;
+}
 @utility btn-dark {
-  @apply btn bg-ink text-white hover:bg-ink-soft;
+  @apply btn bg-ink text-paper hover:bg-ink-soft;
 }
-
 @utility btn-outline {
-  @apply btn border border-current hover:bg-white/10;
+  @apply btn bg-transparent text-current ring-1 ring-current ring-inset hover:bg-paper/10;
 }
-
 @utility btn-whatsapp {
-  @apply btn bg-[#1fa855] text-white hover:bg-[#178a45];
+  @apply btn bg-[#15753a] text-white hover:bg-[#106331];
 }
 
-@utility eyebrow {
-  @apply text-xs font-semibold tracking-[0.18em] text-brand-dark uppercase;
+/* Text link with a moving arrow. */
+@utility link-arrow {
+  @apply inline-flex items-center gap-2 font-semibold underline-offset-4 hover:underline;
 }
 
-@utility section-title {
-  @apply mt-3 text-3xl font-bold tracking-tight text-balance sm:text-4xl;
-}
-
+/* Admin form controls (form fields may carry lines). */
 @utility field {
-  @apply block w-full rounded-md border border-line bg-white px-3 py-2.5 text-sm text-ink placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/25 focus:outline-none;
+  @apply block w-full rounded-none border border-line bg-white px-3 py-2.5 text-[15px] text-ink placeholder:text-muted/70 focus:border-ink focus:ring-2 focus:ring-ink/15 focus:outline-none;
 }
-
 @utility label {
   @apply mb-1.5 block text-sm font-medium text-ink-soft;
+}
+
+/* Kept for the admin. Not used on the public site. */
+@utility eyebrow {
+  @apply text-sm font-semibold text-muted;
+}
+@utility section-title {
+  @apply mt-2 text-[length:var(--text-head)] font-semibold tracking-tight text-balance;
+}
+
+/*
+ * React Bits FadeContent: content is hidden only once JS is running (html.js, set in the root
+ * layout), and shown after 3s regardless, so a failed script never hides the page.
+ */
+.js .rb-fade {
+  visibility: hidden;
+  animation: rb-fade-failsafe 0s linear 3s forwards;
+}
+@keyframes rb-fade-failsafe {
+  to {
+    visibility: visible;
+  }
+}
+
+/* The one moving picture: a slow settle on the hero photograph. */
+@keyframes hero-settle {
+  from {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+.hero-photo {
+  animation: hero-settle 2.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Horizontal project strip */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .js .rb-fade {
+    visibility: visible;
+  }
 }

@@ -50,6 +50,8 @@ export const services = sqliteTable("services", {
   description: text("description").notNull().default(""),
   /** Key of an icon in components/site/icons.tsx */
   icon: text("icon").notNull().default("building"),
+  /** Photograph shown beside the service on the home page */
+  imageKey: text("image_key"),
   sortOrder: integer("sort_order").notNull().default(0),
   published: integer("published", { mode: "boolean" }).notNull().default(true),
   createdAt: createdAt(),

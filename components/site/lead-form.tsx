@@ -27,14 +27,14 @@ export function LeadForm({
 
   if (state.status === "success") {
     return (
-      <div className={`rounded-lg p-8 text-center ${dark ? "bg-white/10 text-white" : "bg-white text-ink shadow-sm"}`} role="status">
-        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-brand text-white">
+      <div className={`p-8 text-center ${dark ? "bg-navy-2 text-paper" : "bg-sand text-ink"}`} role="status">
+        <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-ink text-paper">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
             <path d="m5 12 5 5 9-10" />
           </svg>
         </div>
         <p className="mt-4 text-lg font-semibold">Thank you! We received your request.</p>
-        <p className={`mt-1 text-sm ${dark ? "text-white/70" : "text-muted"}`}>Our team will get back to you shortly.</p>
+        <p className={`mt-1 ${dark ? "text-on-navy-muted" : "text-muted"}`}>Our team will get back to you shortly.</p>
       </div>
     );
   }

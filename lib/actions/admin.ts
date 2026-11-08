@@ -297,6 +297,7 @@ const serviceSchema = z.object({
   title: str(120).min(1, "Title is required"),
   description: str(1000),
   icon: str(30),
+  imageKey: mediaKey,
   sortOrder: z.coerce.number().int().min(-10000).max(10000).catch(0),
   published: checkbox,
 });
@@ -306,8 +307,15 @@ export async function saveService(id: number | null, formData: FormData) {
   const parsed = serviceSchema.safeParse(form(formData));
   if (!parsed.success) fail("/admin/services", firstError(parsed.error));
   const db = await getDb();
-  if (id) await db.update(services).set({ ...parsed.data, updatedAt: new Date() }).where(eq(services.id, id));
-  else await db.insert(services).values(parsed.data);
+  if (id) {
+    const previous = await db.query.services.findFirst({ where: eq(services.id, id) });
+    await db.update(services).set({ ...parsed.data, updatedAt: new Date() }).where(eq(services.id, id));
+    if (previous?.imageKey && previous.imageKey !== parsed.data.imageKey) {
+      await deleteObjects([previous.imageKey, thumbOf(previous.imageKey)]);
+    }
+  } else {
+    await db.insert(services).values(parsed.data);
+  }
   revalidateSite();
   redirect("/admin/services?saved=1");
 }
@@ -315,7 +323,9 @@ export async function saveService(id: number | null, formData: FormData) {
 export async function deleteService(id: number) {
   await requireAdmin();
   const db = await getDb();
+  const previous = await db.query.services.findFirst({ where: eq(services.id, id) });
   await db.delete(services).where(eq(services.id, id));
+  await deleteObjects([previous?.imageKey, thumbOf(previous?.imageKey ?? null)]);
   revalidateSite();
   redirect("/admin/services?deleted=1");
 }

@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Gallery, type GalleryItem } from "@/components/site/gallery";
 import { ArrowRightIcon, WhatsAppIcon } from "@/components/site/icons";
-import { MediaImage } from "@/components/site/media-image";
+import { Photo } from "@/components/site/photo";
+import { Reveal } from "@/components/site/reveal";
 import { WhatsAppLink } from "@/components/site/whatsapp";
 import { getPublishedProjectBySlug, getSettings } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl } from "@/lib/env";
@@ -45,21 +46,23 @@ export default async function ProjectPage({ params }: Props) {
   ]);
   if (!project) notFound();
 
-  const gallery: GalleryItem[] = project.media.map((m) => ({
-    id: m.id,
-    type: m.type,
-    src: mediaUrl(m.key, mediaBase)!,
-    thumb: mediaUrl(m.thumbKey, mediaBase),
-    alt: m.alt || project.title,
-    width: m.width,
-    height: m.height,
-  }));
+  const gallery: GalleryItem[] = project.media
+    .filter((m) => m.key !== project.coverKey)
+    .map((m) => ({
+      id: m.id,
+      type: m.type,
+      src: mediaUrl(m.key, mediaBase)!,
+      thumb: mediaUrl(m.thumbKey, mediaBase),
+      alt: m.alt || project.title,
+      width: m.width,
+      height: m.height,
+    }));
 
   const wa = whatsappLink(settings.whatsappNumber, `Hi, I'm interested in a project like "${project.title}".`);
   const details = [
     ["Category", project.category],
     ["Location", project.location],
-    ["Year", project.year?.toString()],
+    ["Completed", project.year?.toString()],
     ["Area", project.areaM2 ? `${project.areaM2.toLocaleString("en-US")} m²` : ""],
     ["Client", project.client],
   ].filter(([, v]) => v) as [string, string][];
@@ -71,62 +74,52 @@ export default async function ProjectPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLdScript(projectJsonLd(project, siteUrl, cover && (cover.startsWith("http") ? cover : `${siteUrl}${cover}`)))}
       />
-      <section className="bg-ink pt-10 pb-14 text-white sm:pb-20">
+
+      <section className="pt-12 lg:pt-16">
         <div className="container-x">
-          <nav aria-label="Breadcrumb" className="text-sm text-white/60">
-            <Link href="/" className="hover:text-white">Home</Link> <span aria-hidden>/</span>{" "}
-            <Link href="/projects" className="hover:text-white">Projects</Link>
+          <nav aria-label="Breadcrumb" className="text-small text-muted">
+            <Link href="/projects" className="inline-flex items-center gap-1.5 hover:text-ink">
+              <ArrowRightIcon className="rotate-180" width={16} height={16} /> All projects
+            </Link>
           </nav>
-          <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-balance sm:text-5xl">{project.title}</h1>
-          {project.summary && <p className="mt-4 max-w-2xl text-lg text-white/75">{project.summary}</p>}
+          <Reveal className="mt-8 grid gap-6 lg:grid-cols-12 lg:items-end">
+            <h1 className="text-display font-semibold lg:col-span-7">{project.title}</h1>
+            {project.summary && <p className="text-lead text-muted lg:col-span-5">{project.summary}</p>}
+          </Reveal>
+        </div>
+        <div className="container-x mt-12">
+          <div className="aspect-[4/3] overflow-hidden bg-ink sm:aspect-[16/8]">
+            <Photo mediaBase={mediaBase} src={project.coverKey} alt={project.title} sizes="100vw" priority className="hero-photo" />
+          </div>
         </div>
       </section>
 
-      {project.coverKey && (
-        <div className="container-x -mt-8 sm:-mt-12">
-          <MediaImage
-            mediaBase={mediaBase}
-            src={project.coverKey}
-            thumb={project.coverKey.replace(/\.(\w+)$/, "-thumb.$1")}
-            alt={project.title}
-            sizes="(min-width: 1152px) 1152px, 100vw"
-            priority
-            className="aspect-[16/9] w-full rounded-lg object-cover shadow-xl"
-          />
-        </div>
-      )}
+      <section className="section-y">
+        <div className="container-x grid gap-14 lg:grid-cols-12">
+          <Reveal className="space-y-5 lg:col-span-7">
+            <h2 className="text-head font-semibold">About the project</h2>
+            {paragraphs(project.body).map((p, i) => (
+              <p key={i} className="max-w-[62ch]">{p}</p>
+            ))}
+            {!project.body && project.summary && <p className="max-w-[62ch]">{project.summary}</p>}
+          </Reveal>
 
-      <section className="py-14 sm:py-20">
-        <div className="container-x grid gap-12 lg:grid-cols-3">
-          <div className="space-y-10 lg:col-span-2">
-            {project.body && (
-              <div className="space-y-4 text-lg leading-relaxed text-ink-soft">
-                {paragraphs(project.body).map((p, i) => (
-                  <p key={i}>{p}</p>
-                ))}
-              </div>
-            )}
-            {gallery.length > 0 && <Gallery items={gallery} />}
-          </div>
-
-          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          <Reveal className="space-y-4 lg:col-span-4 lg:col-start-9">
             {details.length > 0 && (
-              <dl className="divide-y divide-line rounded-lg bg-white p-6 shadow-sm ring-1 ring-line">
+              <dl className="space-y-5 bg-sand p-8">
                 {details.map(([k, v]) => (
-                  <div key={k} className="flex justify-between gap-4 py-3 text-sm first:pt-0 last:pb-0">
-                    <dt className="text-muted">{k}</dt>
-                    <dd className="text-right font-medium">{v}</dd>
+                  <div key={k}>
+                    <dt className="text-small text-muted">{k}</dt>
+                    <dd className="font-semibold">{v}</dd>
                   </div>
                 ))}
               </dl>
             )}
-            <div className="rounded-lg bg-brand-soft p-6">
-              <p className="font-semibold">Planning a similar project?</p>
-              <p className="mt-1 text-sm text-ink-soft">Get a free, no-obligation quote from our team.</p>
-              <div className="mt-5 flex flex-col gap-2">
-                <Link href="/contact" className="btn-primary">
-                  Request a quote <ArrowRightIcon width={16} height={16} />
-                </Link>
+            <div className="bg-ink p-8 text-paper">
+              <p className="text-lead font-semibold">Planning something similar?</p>
+              <p className="mt-2 text-on-navy-muted">Tell us about it and get a free, no-obligation quote.</p>
+              <div className="mt-6 grid gap-2">
+                <Link href="/contact" className="btn-light">Request a quote</Link>
                 {wa && (
                   <WhatsAppLink href={wa} className="btn-whatsapp">
                     <WhatsAppIcon width={18} height={18} /> Ask on WhatsApp
@@ -134,9 +127,18 @@ export default async function ProjectPage({ params }: Props) {
                 )}
               </div>
             </div>
-          </aside>
+          </Reveal>
         </div>
       </section>
+
+      {gallery.length > 0 && (
+        <section className="pb-24 lg:pb-36">
+          <div className="container-x">
+            <h2 className="mb-10 text-head font-semibold">Photos and video</h2>
+            <Gallery items={gallery} />
+          </div>
+        </section>
+      )}
     </>
   );
 }
