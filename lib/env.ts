@@ -10,6 +10,7 @@ export async function getBindings(): Promise<CloudflareEnv> {
 }
 
 type StringVar =
+  | "APP_ENV"
   | "SITE_URL"
   | "MEDIA_URL"
   | "EMAIL_FROM"
@@ -51,4 +52,12 @@ export async function getSiteUrl(): Promise<string> {
 /** Public base URL of the media bucket ("" = serve through the /media route). */
 export async function getMediaBase(): Promise<string> {
   return getVar("MEDIA_URL");
+}
+
+export type AppEnv = "dev" | "staging" | "production";
+
+/** Which deployment this is (APP_ENV in wrangler.jsonc). Local development counts as "dev". */
+export async function getAppEnv(): Promise<AppEnv> {
+  const value = await getVar("APP_ENV");
+  return value === "production" || value === "staging" ? value : "dev";
 }

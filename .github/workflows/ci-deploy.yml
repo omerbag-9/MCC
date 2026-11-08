@@ -1,0 +1,67 @@
+name: CI & Deploy
+
+# Pull requests: lint + typecheck + build.
+# Pushes to dev / staging / production: the same checks, then migrate the D1 database and deploy
+# to the matching Cloudflare environment (see wrangler.jsonc).
+on:
+  pull_request:
+  push:
+    branches: [dev, staging, production]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npx opennextjs-cloudflare build
+
+  deploy:
+    needs: check
+    if: github.event_name != 'pull_request' && contains(fromJSON('["dev","staging","production"]'), github.ref_name)
+    runs-on: ubuntu-latest
+    # GitHub environment with the same name: holds its secrets and (optionally) required reviewers.
+    environment: ${{ github.ref_name }}
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+    steps:
+      - name: Check Cloudflare credentials
+        id: creds
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::warning::CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID are not set for the '${{ github.ref_name }}' environment. Skipping deploy (see README, 'Automatic deploys')."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.creds.outputs.ready == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.creds.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+        if: steps.creds.outputs.ready == 'true'
+      - name: Apply database migrations
+        if: steps.creds.outputs.ready == 'true'
+        run: npm run db:migrate:${{ github.ref_name }}
+      - name: Build and deploy
+        if: steps.creds.outputs.ready == 'true'
+        run: npm run deploy:${{ github.ref_name }}

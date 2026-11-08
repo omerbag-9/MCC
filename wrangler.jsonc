@@ -1,6 +1,20 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "mcc",
+  /*
+   * Three environments, each with its own Worker, D1 database and R2 buckets:
+   *
+   *   dev        (top level)        npm run deploy:dev         https://mcc-dev.<account>.workers.dev
+   *   staging    (env.staging)      npm run deploy:staging     https://staging.example.com
+   *   production (env.production)   npm run deploy:production  https://example.com
+   *
+   * Local development (`npm run dev` / `npm run preview`) uses the top-level bindings, simulated
+   * locally by Wrangler. Bindings, vars and routes are NOT inherited by environments, so each
+   * environment repeats them in full.
+   *
+   * Replace every 00000000-... database_id with the ids printed by `wrangler d1 create` (see README).
+   */
+
+  // ---------------------------------------------------------------- shared settings (inherited)
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
@@ -10,51 +24,100 @@
   },
   "observability": { "enabled": true },
 
-  // Uncomment once the domain's DNS is on Cloudflare.
-  // "routes": [
-  //   { "pattern": "example.com", "custom_domain": true },
-  //   { "pattern": "www.example.com", "custom_domain": true }
-  // ],
-
+  // ---------------------------------------------------------------- dev (default)
+  "name": "mcc-dev",
+  "workers_dev": true,
   "services": [
-    // Self-reference required by the OpenNext cache. Must match "name" above.
-    { "binding": "WORKER_SELF_REFERENCE", "service": "mcc" }
+    // Self-reference required by the OpenNext cache. Must match this environment's worker name.
+    { "binding": "WORKER_SELF_REFERENCE", "service": "mcc-dev" }
   ],
-
   "d1_databases": [
-    {
-      // App data: projects, services, leads, ...
-      "binding": "DB",
-      "database_name": "mcc-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
-      "migrations_dir": "drizzle"
-    },
-    {
-      // Same database, used by OpenNext to track page revalidations.
-      "binding": "NEXT_TAG_CACHE_D1",
-      "database_name": "mcc-db",
-      "database_id": "00000000-0000-0000-0000-000000000000"
-    }
+    // App data: projects, services, leads, ...
+    { "binding": "DB", "database_name": "mcc-db-dev", "database_id": "00000000-0000-0000-0000-000000000001", "migrations_dir": "drizzle" },
+    // Same database, used by OpenNext to track page revalidations.
+    { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc-db-dev", "database_id": "00000000-0000-0000-0000-000000000001" }
   ],
-
   "r2_buckets": [
-    // Uploaded images and videos (serve publicly via a custom domain, e.g. media.example.com)
-    { "binding": "MEDIA", "bucket_name": "mcc-media" },
+    // Uploaded images and videos
+    { "binding": "MEDIA", "bucket_name": "mcc-media-dev" },
     // OpenNext page cache
-    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "mcc-cache" }
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "mcc-cache-dev" }
   ],
-
-  // Non-secret configuration. Secrets go in `wrangler secret put` (prod) or .dev.vars (local).
+  // Non-secret configuration. Secrets: `wrangler secret put NAME [--env ...]` (remote) or .dev.vars (local).
   "vars": {
-    "SITE_URL": "https://example.com",
+    "APP_ENV": "dev",
+    "SITE_URL": "https://mcc-dev.example.workers.dev",
     "MEDIA_URL": "",
-    "EMAIL_FROM": "Website <noreply@example.com>",
-    "LEADS_NOTIFY_TO": "info@example.com",
+    "EMAIL_FROM": "Website (dev) <noreply@example.com>",
+    "LEADS_NOTIFY_TO": "dev-team@example.com",
     "CF_ACCESS_TEAM_DOMAIN": "",
     "CF_ACCESS_AUD": "",
     "R2_ACCOUNT_ID": "",
-    "R2_BUCKET_NAME": "mcc-media",
+    "R2_BUCKET_NAME": "mcc-media-dev",
     "TURNSTILE_SITE_KEY": "",
     "CF_ANALYTICS_TOKEN": ""
+  },
+
+  "env": {
+    // -------------------------------------------------------------- staging
+    "staging": {
+      "name": "mcc-staging",
+      "workers_dev": false,
+      "routes": [{ "pattern": "staging.example.com", "custom_domain": true }],
+      "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "mcc-staging" }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "mcc-db-staging", "database_id": "00000000-0000-0000-0000-000000000002", "migrations_dir": "drizzle" },
+        { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc-db-staging", "database_id": "00000000-0000-0000-0000-000000000002" }
+      ],
+      "r2_buckets": [
+        { "binding": "MEDIA", "bucket_name": "mcc-media-staging" },
+        { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "mcc-cache-staging" }
+      ],
+      "vars": {
+        "APP_ENV": "staging",
+        "SITE_URL": "https://staging.example.com",
+        "MEDIA_URL": "",
+        "EMAIL_FROM": "Website (staging) <noreply@example.com>",
+        "LEADS_NOTIFY_TO": "dev-team@example.com",
+        "CF_ACCESS_TEAM_DOMAIN": "",
+        "CF_ACCESS_AUD": "",
+        "R2_ACCOUNT_ID": "",
+        "R2_BUCKET_NAME": "mcc-media-staging",
+        "TURNSTILE_SITE_KEY": "",
+        "CF_ANALYTICS_TOKEN": ""
+      }
+    },
+
+    // -------------------------------------------------------------- production
+    "production": {
+      "name": "mcc",
+      "workers_dev": false,
+      "routes": [
+        { "pattern": "example.com", "custom_domain": true },
+        { "pattern": "www.example.com", "custom_domain": true }
+      ],
+      "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "mcc" }],
+      "d1_databases": [
+        { "binding": "DB", "database_name": "mcc-db", "database_id": "00000000-0000-0000-0000-000000000003", "migrations_dir": "drizzle" },
+        { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc-db", "database_id": "00000000-0000-0000-0000-000000000003" }
+      ],
+      "r2_buckets": [
+        { "binding": "MEDIA", "bucket_name": "mcc-media" },
+        { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "mcc-cache" }
+      ],
+      "vars": {
+        "APP_ENV": "production",
+        "SITE_URL": "https://example.com",
+        "MEDIA_URL": "",
+        "EMAIL_FROM": "Website <noreply@example.com>",
+        "LEADS_NOTIFY_TO": "info@example.com",
+        "CF_ACCESS_TEAM_DOMAIN": "",
+        "CF_ACCESS_AUD": "",
+        "R2_ACCOUNT_ID": "",
+        "R2_BUCKET_NAME": "mcc-media",
+        "TURNSTILE_SITE_KEY": "",
+        "CF_ANALYTICS_TOKEN": ""
+      }
+    }
   }
 }

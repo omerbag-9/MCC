@@ -10,12 +10,16 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy && node scripts/post-deploy.mjs",
+    "deploy:dev": "opennextjs-cloudflare build && opennextjs-cloudflare deploy && node scripts/post-deploy.mjs dev",
+    "deploy:staging": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env staging && node scripts/post-deploy.mjs staging",
+    "deploy:production": "opennextjs-cloudflare build && opennextjs-cloudflare deploy --env production && node scripts/post-deploy.mjs production",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "db:seed:local": "wrangler d1 execute DB --local --file=./scripts/seed.sql"
+    "db:seed:local": "wrangler d1 execute DB --local --file=./scripts/seed.sql",
+    "db:migrate:dev": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:staging": "wrangler d1 migrations apply DB --remote --env staging",
+    "db:migrate:production": "wrangler d1 migrations apply DB --remote --env production"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",

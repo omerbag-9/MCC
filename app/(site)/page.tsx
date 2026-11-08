@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, QuoteIcon, ServiceIcon, WhatsAppIcon } from "@/components/site/icons";
 import { LeadForm } from "@/components/site/lead-form";
@@ -16,6 +17,8 @@ import { paragraphs } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { jsonLdScript, organizationJsonLd } from "@/lib/seo";
 import { whatsappLink } from "@/lib/whatsapp";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default async function HomePage() {
   const [settings, services, featured, testimonials, clients, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([

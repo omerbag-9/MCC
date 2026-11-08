@@ -2,11 +2,11 @@ import type { Metadata, Viewport } from "next";
 import "@fontsource-variable/inter";
 import "./globals.css";
 import { getSettings } from "@/lib/db/queries";
-import { getSiteUrl } from "@/lib/env";
+import { getAppEnv, getSiteUrl } from "@/lib/env";
 import { siteDescription, siteTitle } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
-  const [settings, siteUrl] = await Promise.all([getSettings(), getSiteUrl()]);
+  const [settings, siteUrl, appEnv] = await Promise.all([getSettings(), getSiteUrl(), getAppEnv()]);
   const title = siteTitle(settings);
   return {
     metadataBase: new URL(siteUrl),
@@ -15,6 +15,8 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: { type: "website", siteName: settings.companyName, locale: "en_US" },
     twitter: { card: "summary_large_image" },
     icons: { icon: "/icon.svg" },
+    // Only production may be indexed; dev and staging are noindex.
+    ...(appEnv !== "production" && { robots: { index: false, follow: false } }),
   };
 }
 
