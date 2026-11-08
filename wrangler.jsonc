@@ -1,0 +1,58 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mcc",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true },
+
+  // Uncomment once the domain's DNS is on Cloudflare.
+  // "routes": [
+  //   { "pattern": "example.com", "custom_domain": true },
+  //   { "pattern": "www.example.com", "custom_domain": true }
+  // ],
+
+  "services": [
+    // Self-reference required by the OpenNext cache. Must match "name" above.
+    { "binding": "WORKER_SELF_REFERENCE", "service": "mcc" }
+  ],
+
+  "d1_databases": [
+    {
+      // App data: projects, services, leads, ...
+      "binding": "DB",
+      "database_name": "mcc-db",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "drizzle"
+    },
+    {
+      // Same database, used by OpenNext to track page revalidations.
+      "binding": "NEXT_TAG_CACHE_D1",
+      "database_name": "mcc-db",
+      "database_id": "00000000-0000-0000-0000-000000000000"
+    }
+  ],
+
+  "r2_buckets": [
+    // Uploaded images and videos (serve publicly via a custom domain, e.g. media.example.com)
+    { "binding": "MEDIA", "bucket_name": "mcc-media" },
+    // OpenNext page cache
+    { "binding": "NEXT_INC_CACHE_R2_BUCKET", "bucket_name": "mcc-cache" }
+  ],
+
+  // Non-secret configuration. Secrets go in `wrangler secret put` (prod) or .dev.vars (local).
+  "vars": {
+    "NEXT_PUBLIC_SITE_URL": "https://example.com",
+    "NEXT_PUBLIC_MEDIA_URL": "",
+    "EMAIL_FROM": "Website <noreply@example.com>",
+    "LEADS_NOTIFY_TO": "info@example.com",
+    "CF_ACCESS_TEAM_DOMAIN": "",
+    "CF_ACCESS_AUD": "",
+    "R2_ACCOUNT_ID": "",
+    "R2_BUCKET_NAME": "mcc-media"
+  }
+}

@@ -1,0 +1,16 @@
+# Copy to .dev.vars for local development (never commit .dev.vars).
+NEXTJS_ENV=development
+
+# Cloudflare Turnstile test keys (always pass). Replace with real keys in production.
+NEXT_PUBLIC_TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+
+# Resend (leave empty locally to just log emails to the console)
+RESEND_API_KEY=
+
+# Protects POST /api/revalidate (used after each deploy)
+REVALIDATE_SECRET=change-me
+
+# Optional: R2 S3 API credentials for direct browser uploads (needed for large videos in production)
+R2_ACCESS_KEY_ID=
+R2_SECRET_ACCESS_KEY=

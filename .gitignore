@@ -26,3 +26,11 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+
+# Next.js / Cloudflare
+.next/
+.open-next/
+.wrangler/
+.dev.vars
+next-env.d.ts
+*.tsbuildinfo
