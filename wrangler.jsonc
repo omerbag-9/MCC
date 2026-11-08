@@ -48,7 +48,7 @@
   // Non-secret configuration. Secrets: `wrangler secret put NAME [--env ...]` (remote) or .dev.vars (local).
   "vars": {
     "APP_ENV": "dev",
-    "SITE_URL": "https://mcc-dev.example.workers.dev",
+    "SITE_URL": "https://mcc-dev.omerbagprog.workers.dev",
     "MEDIA_URL": "",
     "EMAIL_FROM": "Website (dev) <noreply@example.com>",
     "LEADS_NOTIFY_TO": "dev-team@example.com",
