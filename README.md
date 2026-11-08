@@ -27,7 +27,7 @@ Marketing site and content admin for a construction company, built to run on Clo
 
 Public pages are pre-rendered and served from the R2 cache, so visits use almost no Worker CPU and stay within the free plan's 10 ms CPU limit. When an admin saves anything, the app calls `revalidatePath()`, and each page is re-rendered from D1 on its next visit.
 
-The build has no access to the production database, so pages built during `next build` hold placeholder content. Each `npm run deploy:<env>` therefore calls `POST /api/revalidate` right after deploying (`scripts/post-deploy.mjs`). You can also click **Refresh public site** on the admin dashboard.
+After a deploy the cache starts empty: `scripts/deploy.mjs` runs `wrangler deploy` directly and doesn't upload the build-time pages, which have no database access. So every page renders from D1 on its first visit and is cached from then on. To force every page to re-render, click **Refresh public site** on the admin dashboard.
 
 ## Local development
 
@@ -45,7 +45,6 @@ Local D1 and R2 are simulated by Wrangler inside `.wrangler/`. To test the produ
 
 ```bash
 npm run preview            # http://localhost:8787
-curl -X POST -H "x-revalidate-secret: change-me" http://localhost:8787/api/revalidate
 ```
 
 Other scripts: `npm run lint`, `npm run typecheck`, `npm run db:generate` (creates a new SQL migration in `drizzle/` after editing `lib/db/schema.ts`), `npm run cf-typegen` (regenerates binding types after editing `wrangler.jsonc`).
@@ -62,7 +61,7 @@ Each environment has its own data, so testing on dev or staging never touches th
 
 Dev uses a single R2 bucket for uploads and the page cache. If an environment has no R2 bucket bound at all, uploads are turned off there with a notice and the rest of the site still works. Dev also offers a password login for the admin until Cloudflare Access is set up (see below). Dev and staging send `noindex` and a `Disallow: /` robots.txt (driven by `APP_ENV`).
 
-**Workflow:** branch off `dev` → pull request into `dev` (deploys to dev) → pull request `dev` → `staging` (deploys to staging, where you check it) → pull request `staging` → `production` (deploys the live site). Every pull request runs lint, typecheck and a build. See `.github/workflows/ci-deploy.yml`.
+**Workflow:** branch off `dev` → merge into `dev` (deploys to dev) → merge `dev` into `staging` (deploys to staging, where you check it) → merge `staging` into `production` (deploys the live site). Deploys run from `.github/workflows/deploy.yml`, which calls `scripts/deploy.mjs`. For now it only deploys `dev`; see "Automatic deploys from GitHub" to turn on staging and production.
 
 Everything stays on the free tier. D1 allows 10 databases and R2's 10 GB is shared by all buckets, so keep dev and staging media small.
 
@@ -73,27 +72,24 @@ Dev deploys automatically from the `dev` branch to `https://mcc-dev.<your-subdom
 1. **Cloudflare account:** sign up (free) and open **Workers & Pages** once, which creates your `workers.dev` subdomain.
 2. **D1 database:** **Storage & Databases → D1 → Create** → `mcc_db`. Put its id in both D1 entries at the top level of `wrangler.jsonc`.
 3. **R2 bucket:** **R2 → Create bucket** → `mcc-bucket` (R2 asks for a payment card even on the free tier; nothing is charged within the free limits).
-4. **API token:** **My Profile → API Tokens → Create Token** → template **Edit Cloudflare Workers**, then add **Account → D1 → Edit**. Also copy the **Account ID** shown on the Workers & Pages overview.
+4. **API token:** **My Profile → API Tokens → Create Token** → template **Edit Cloudflare Workers**, then add **Account → D1 → Edit** and **Account → Workers R2 Storage → Edit**. Also copy the **Account ID** shown on the Workers & Pages overview.
 5. **GitHub:** **Settings → Environments → New environment** → `dev`, and add these secrets:
 
    | Secret | Value |
    |---|---|
    | `CLOUDFLARE_API_TOKEN` | the token from step 4 |
    | `CLOUDFLARE_ACCOUNT_ID` | the account id from step 4 |
-   | `REVALIDATE_SECRET` | any long random string |
    | `ADMIN_PASSWORD` | the dev admin password, at least 8 characters |
    | `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY` | optional, when you have them |
    | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | optional: direct browser uploads for videos over 25 MB (see "Media uploads") |
 
-6. **Push to `dev`.** The workflow creates the tables, loads the demo content (only while the database is empty), deploys, copies the secrets to the Worker and refreshes the pages. The address appears in the run summary.
+6. **Push to `dev`** (or Actions → Deploy → Run workflow). The workflow creates the tables, loads the demo content (only while the database is empty), deploys, and copies the secrets to the Worker. The dev address is printed at the end of the deploy log.
 
 Open `/admin` on the dev address and sign in with `ADMIN_PASSWORD`. The password login exists **only on dev** and only while Cloudflare Access isn't configured there; staging and production always require Access.
 
-Until ids and secrets are filled in, the workflow skips the deploy with a warning instead of failing.
-
 ## First deployment (staging / production)
 
-These need the company Cloudflare account (the domain's DNS lives there). The dashboard steps can be done in the browser; commands run from the project folder after `npx wrangler login`. Pass `--env staging` or `--env production` to wrangler.
+These need the company Cloudflare account (the domain's DNS lives there). The dashboard steps can be done in the browser; commands run from the project folder after `npx wrangler login`. Pass `--env staging` or `--env production` to wrangler commands.
 
 ### 1. Move the domain's DNS to Cloudflare
 
@@ -144,19 +140,15 @@ npx wrangler secret put RESEND_API_KEY --env staging
 
 `EMAIL_FROM` must use the verified domain, e.g. `Website <noreply@example.com>`. To receive mail at `info@example.com` for free, use **Cloudflare Email Routing** (domain → Email → Email Routing) to forward it to an existing inbox.
 
-### 7. Revalidation secret
-
-Use a different long random string per environment, stored as the GitHub environment secret `REVALIDATE_SECRET` (copied to the Worker on deploy).
-
-### 8. Deploy
+### 7. Deploy
 
 ```bash
-REVALIDATE_SECRET_STAGING=<same secret> npm run deploy:staging
+npm run deploy:staging
 ```
 
-Use `npm run deploy:dev` or `npm run deploy:production` for the others. The site URL is read from `wrangler.jsonc`. If the secret isn't set in your shell, the deploy still succeeds. Afterwards, open the admin and click **Refresh public site**.
+(or `npm run deploy:production`). This runs `scripts/deploy.mjs`: it applies migrations, builds, deploys, and copies any secrets set as environment variables (`TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, …) to the Worker.
 
-### 9. Protect the admin with Cloudflare Access
+### 8. Protect the admin with Cloudflare Access
 
 1. Dashboard → **Zero Trust** (pick a team name and the Free plan).
 2. **Access → Applications → Add an application → Self-hosted**, one application per environment.
@@ -171,22 +163,16 @@ The app verifies the Access token on every admin page, server action and API cal
 
 To keep the **whole** staging site private (not just `/admin`), make the staging Access application cover `staging.example.com` itself.
 
-### 10. Automatic deploys from GitHub
+### 9. Automatic deploys from GitHub
 
-Pushing to `dev`, `staging` or `production` runs `.github/workflows/ci-deploy.yml`, which applies database migrations, deploys to the matching environment, copies the GitHub environment secrets to the Worker (`scripts/sync-secrets.mjs`) and refreshes the pages.
+`.github/workflows/deploy.yml` installs dependencies and runs `node scripts/deploy.mjs <branch>`. It currently deploys on pushes to `dev` only. To turn on staging and production:
 
-1. Cloudflare → **My Profile → API Tokens → Create Token** → template **Edit Cloudflare Workers**, then add the permission **Account → D1 → Edit**. Copy the token and your **Account ID** (shown on the Workers overview page).
-2. GitHub → repository **Settings → Environments** → create `dev`, `staging` and `production`. In each, add these secrets:
-   - `CLOUDFLARE_API_TOKEN`
-   - `CLOUDFLARE_ACCOUNT_ID`
-   - `REVALIDATE_SECRET`
-   - optional: `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`
-3. Optional: in the `production` environment, add **Required reviewers** so live deploys need approval.
-4. Optional: **Settings → Branches → Add rule** for `staging` and `production` with **Require a pull request before merging**.
+1. Cloudflare (company account) → **My Profile → API Tokens → Create Token** → template **Edit Cloudflare Workers**, then add **Account → D1 → Edit** and **Account → Workers R2 Storage → Edit**. Copy the token and the **Account ID**.
+2. GitHub → **Settings → Environments** → create `staging` and `production`. In each, add the secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, plus optional `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY`, `R2_ACCESS_KEY_ID` and `R2_SECRET_ACCESS_KEY`.
+3. In `.github/workflows/deploy.yml`, change `branches: [dev]` to `branches: [dev, staging, production]`.
+4. Optional: add **Required reviewers** to the `production` environment so live deploys need approval.
 
-Until the secrets exist and the ids in `wrangler.jsonc` are real, the workflow still runs checks and skips the deploy with a warning.
-
-### 11. Analytics and Search Console (optional, production)
+### 10. Analytics and Search Console (optional, production)
 
 - Dashboard → **Web Analytics** → add the site → put the token in `CF_ANALYTICS_TOKEN`. Alternatively, enable automatic setup, which injects the script without the token.
 - Add the domain to Google Search Console and submit `https://example.com/sitemap.xml`.
@@ -239,6 +225,6 @@ lib/
   uploads.ts           R2 keys + presigned URLs
   client/upload.ts     browser-side resize + upload
 drizzle/               SQL migrations (applied with wrangler)
-scripts/               seed data, deploy helpers (config check, secret sync, demo seed, cache refresh)
-.github/workflows/     CI checks + per-branch deploys
+scripts/               deploy.mjs (deploy one environment), seed.sql (demo content)
+.github/workflows/     deploy.yml (push to dev → deploy)
 ```

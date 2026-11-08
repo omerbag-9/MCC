@@ -16,9 +16,9 @@ import {
 /*
  * Read queries for the public site.
  *
- * During `next build` there is no production database, so these return empty data and the
- * pre-rendered pages are placeholders. After every deploy, `npm run deploy` calls
- * POST /api/revalidate, which makes the first real visit re-render each page from D1.
+ * During `next build` there is no production database, so these return empty data. Those
+ * build-time pages are never uploaded to the cache (scripts/deploy.mjs runs `wrangler deploy`
+ * directly), so after each deploy every page renders from D1 on its first visit.
  */
 
 export const DEFAULT_SETTINGS: Settings = {
