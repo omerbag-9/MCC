@@ -54,25 +54,25 @@ Other scripts: `npm run lint`, `npm run typecheck`, `npm run db:generate` (creat
 
 | Branch | Cloudflare environment | Worker | Database / buckets | URL | Indexed by Google |
 |---|---|---|---|---|---|
-| `dev` (default) | top level of `wrangler.jsonc` | `mcc-dev` | `mcc-db-dev` + KV page cache (no R2) | `https://mcc-dev.<account>.workers.dev` | no |
+| `dev` (default) | top level of `wrangler.jsonc` | `mcc-dev` | `mcc_db`, `mcc-bucket` (media + page cache) | `https://mcc-dev.<account>.workers.dev` | no |
 | `staging` | `env.staging` | `mcc-staging` | `mcc-db-staging`, `mcc-media-staging`, `mcc-cache-staging` | `https://staging.example.com` | no |
 | `production` | `env.production` | `mcc` | `mcc-db`, `mcc-media`, `mcc-cache` | `https://example.com` | yes |
 
 Each environment has its own data, so testing on dev or staging never touches the live site.
 
-**Dev runs without R2**, so it can live on any free Cloudflare account without a payment card (R2 asks for one even on the free tier). Its page cache is in Workers KV (`open-next.config.dev.ts`), and photo/video uploads are turned off. Everything else works. Dev also offers a password login for the admin until Cloudflare Access is set up (see below). Dev and staging send `noindex` and a `Disallow: /` robots.txt (driven by `APP_ENV`).
+Dev uses a single R2 bucket for uploads and the page cache. If an environment has no R2 bucket bound at all, uploads are turned off there with a notice and the rest of the site still works. Dev also offers a password login for the admin until Cloudflare Access is set up (see below). Dev and staging send `noindex` and a `Disallow: /` robots.txt (driven by `APP_ENV`).
 
 **Workflow:** branch off `dev` → pull request into `dev` (deploys to dev) → pull request `dev` → `staging` (deploys to staging, where you check it) → pull request `staging` → `production` (deploys the live site). Every pull request runs lint, typecheck and a build. See `.github/workflows/ci-deploy.yml`.
 
 Everything stays on the free tier. D1 allows 10 databases and R2's 10 GB is shared by all buckets, so keep dev and staging media small.
 
-## Setting up the dev environment (browser only, no card)
+## Setting up the dev environment (browser only)
 
 Dev deploys automatically from the `dev` branch to `https://mcc-dev.<your-subdomain>.workers.dev`. You can use any Cloudflare account, including a personal one, and move to the company account later by swapping the ids and secrets below.
 
 1. **Cloudflare account:** sign up (free) and open **Workers & Pages** once, which creates your `workers.dev` subdomain.
-2. **D1 database:** **Storage & Databases → D1 → Create** → `mcc-db-dev`. Put its id in both D1 entries at the top level of `wrangler.jsonc`.
-3. **KV namespace (page cache):** **Storage & Databases → KV → Create** → `mcc-cache-dev`. Put its id in `kv_namespaces` at the top level of `wrangler.jsonc`.
+2. **D1 database:** **Storage & Databases → D1 → Create** → `mcc_db`. Put its id in both D1 entries at the top level of `wrangler.jsonc`.
+3. **R2 bucket:** **R2 → Create bucket** → `mcc-bucket` (R2 asks for a payment card even on the free tier; nothing is charged within the free limits).
 4. **API token:** **My Profile → API Tokens → Create Token** → template **Edit Cloudflare Workers**, then add **Account → D1 → Edit**. Also copy the **Account ID** shown on the Workers & Pages overview.
 5. **GitHub:** **Settings → Environments → New environment** → `dev`, and add these secrets:
 
@@ -83,6 +83,7 @@ Dev deploys automatically from the `dev` branch to `https://mcc-dev.<your-subdom
    | `REVALIDATE_SECRET` | any long random string |
    | `ADMIN_PASSWORD` | the dev admin password, at least 8 characters |
    | `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY` | optional, when you have them |
+   | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | optional: direct browser uploads for videos over 25 MB (see "Media uploads") |
 
 6. **Push to `dev`.** The workflow creates the tables, loads the demo content (only while the database is empty), deploys, copies the secrets to the Worker and refreshes the pages. The address appears in the run summary.
 

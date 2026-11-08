@@ -81,13 +81,7 @@ jobs:
 
       - name: Build
         if: steps.creds.outputs.ready == 'true'
-        # Dev has no R2, so it builds with the KV page-cache config.
-        run: |
-          if [ "$TARGET" = "dev" ]; then
-            npx opennextjs-cloudflare build --openNextConfigPath open-next.config.dev.ts
-          else
-            npx opennextjs-cloudflare build
-          fi
+        run: npx opennextjs-cloudflare build
 
       - name: Deploy
         id: deploy
