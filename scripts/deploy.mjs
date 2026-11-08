@@ -15,7 +15,8 @@ import { join } from "node:path";
 const ENVIRONMENTS = ["dev", "staging", "production"];
 const env = process.argv[2];
 if (!ENVIRONMENTS.includes(env)) fail(`Usage: node scripts/deploy.mjs <${ENVIRONMENTS.join("|")}>`);
-const envFlag = env === "dev" ? [] : ["--env", env];
+// Dev is the top level of wrangler.jsonc; `--env ""` targets it explicitly (avoids a wrangler warning).
+const envFlag = ["--env", env === "dev" ? "" : env];
 
 // Secrets copied to the Worker when set (GitHub environment secrets in CI).
 const SECRET_NAMES = ["TURNSTILE_SECRET_KEY", "RESEND_API_KEY", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "ADMIN_PASSWORD"];
