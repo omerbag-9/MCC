@@ -47,3 +47,8 @@ export async function getVar(name: StringVar): Promise<string> {
 export async function getSiteUrl(): Promise<string> {
   return ((await getVar("SITE_URL")) || "http://localhost:3000").replace(/\/+$/, "");
 }
+
+/** Public base URL of the media bucket ("" = serve through the /media route). */
+export async function getMediaBase(): Promise<string> {
+  return getVar("MEDIA_URL");
+}

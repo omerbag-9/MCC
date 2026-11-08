@@ -46,13 +46,15 @@
 
   // Non-secret configuration. Secrets go in `wrangler secret put` (prod) or .dev.vars (local).
   "vars": {
-    "NEXT_PUBLIC_SITE_URL": "https://example.com",
-    "NEXT_PUBLIC_MEDIA_URL": "",
+    "SITE_URL": "https://example.com",
+    "MEDIA_URL": "",
     "EMAIL_FROM": "Website <noreply@example.com>",
     "LEADS_NOTIFY_TO": "info@example.com",
     "CF_ACCESS_TEAM_DOMAIN": "",
     "CF_ACCESS_AUD": "",
     "R2_ACCOUNT_ID": "",
-    "R2_BUCKET_NAME": "mcc-media"
+    "R2_BUCKET_NAME": "mcc-media",
+    "TURNSTILE_SITE_KEY": "",
+    "CF_ANALYTICS_TOKEN": ""
   }
 }
