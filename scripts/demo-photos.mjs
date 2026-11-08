@@ -2,8 +2,9 @@
 //
 //   node scripts/demo-photos.mjs dev [--local]
 //
-// Runs from scripts/deploy.mjs on dev only, and only while the demo is fresh (no hero image and
-// no project cover yet), so it never replaces photos uploaded in the admin.
+// Runs from scripts/deploy.mjs on dev only and only fills empty slots, so it never replaces photos
+// uploaded in the admin: the hero and service photos while the demo is fresh (no hero yet), and
+// the seeded demo projects (scripts/seed.sql slugs) while they have fewer than three photos.
 //
 // Source: the Openverse API (openverse.org), limited to CC0 and public-domain photographs, which
 // are free for commercial use without attribution. Each photo's title, creator, licence and source
@@ -26,24 +27,28 @@ const target = local ? "--local" : "--remote";
 
 // What each slot shows. Projects are matched by the demo slugs in scripts/seed.sql; anything else
 // falls back to a general query.
-const HERO_QUERY = "construction site crane";
+// Each slot tries its queries in order until one returns a usable photograph.
+const HERO_QUERY = ["construction site crane", "construction site"];
 const PROJECT_QUERIES = {
-  "palm-hills-villa": "modern villa exterior",
-  "nile-business-tower": "office building construction",
-  "delta-logistics-hub": "warehouse steel structure",
-  "zamalek-apartment-renovation": "apartment interior renovation",
+  "palm-hills-villa": ["modern villa exterior", "modern house", "villa"],
+  "nile-business-tower": ["office building construction", "office building"],
+  "delta-logistics-hub": ["warehouse steel structure", "warehouse", "industrial building", "factory"],
+  "zamalek-apartment-renovation": ["apartment interior renovation", "interior renovation", "apartment interior"],
 };
 const SERVICE_QUERIES = [
-  [/resident/i, "house construction"],
-  [/commercial/i, "commercial building construction"],
-  [/industrial|warehouse/i, "steel frame construction"],
-  [/renovat|fit-out|interior/i, "interior renovation"],
-  [/design|engineer/i, "architect blueprint"],
-  [/manage/i, "construction workers"],
+  [/resident/i, ["house construction"]],
+  [/commercial/i, ["commercial building construction"]],
+  [/industrial|warehouse/i, ["steel frame construction"]],
+  [/renovat|fit-out|interior/i, ["interior renovation"]],
+  [/design|engineer/i, ["architect blueprint", "architect"]],
+  [/manage/i, ["construction workers"]],
 ];
-const GALLERY_PER_PROJECT = 2;
+const FALLBACK = ["building construction", "construction"];
+const PHOTOS_PER_PROJECT = 3; // cover + gallery
 
 const used = new Set();
+/** Titles of photos already on the site (stored as alt text), so a later run doesn't add them twice. */
+const usedTitles = new Set();
 const credits = [];
 
 function wrangler(args, { capture = false } = {}) {
@@ -63,23 +68,44 @@ function query(sql) {
 
 const sqlString = (s) => `'${String(s).replace(/'/g, "''")}'`;
 
+const searches = new Map();
 async function search(q, { landscape = true } = {}) {
+  const cacheKey = `${q}|${landscape}`;
+  if (!searches.has(cacheKey)) searches.set(cacheKey, searchOnce(q, landscape));
+  return (await searches.get(cacheKey)).filter((r) => !used.has(r.id) && !usedTitles.has(r.title ?? ""));
+}
+async function searchOnce(q, landscape) {
   const url = new URL(API);
   url.searchParams.set("q", q);
   url.searchParams.set("license", "cc0,pdm");
   url.searchParams.set("category", "photograph");
-  url.searchParams.set("size", "large");
   if (landscape) url.searchParams.set("aspect_ratio", "wide");
   url.searchParams.set("page_size", "20");
   const res = await fetch(url, { headers: { "User-Agent": "mcc-demo-photos/1.0" } });
   if (!res.ok) throw new Error(`Openverse ${res.status} for "${q}"`);
   const data = await res.json();
-  return (data.results ?? []).filter((r) => r.url && !used.has(r.id) && (r.width ?? 0) >= 1200);
+  return (data.results ?? []).filter((r) => r.url && (r.width ?? 0) >= 1200);
+}
+
+/** First photo from the queries in order (wide crops first, then any shape), stored in R2. */
+async function fetchPhoto(queries, folder, { landscape = true } = {}) {
+  const list = [...queries, ...FALLBACK];
+  const attempts = landscape ? [true, false] : [false];
+  for (const wide of attempts) {
+    for (const q of list) {
+      const photo = await fetchFrom(q, folder, wide).catch((error) => {
+        console.warn(`  search "${q}" failed: ${error.message}`);
+        return null;
+      });
+      if (photo) return photo;
+    }
+  }
+  return null;
 }
 
 /** Downloads the next unused result for a query, stores a 1920px and 640px WebP in R2, returns keys. */
-async function fetchPhoto(q, folder, opts) {
-  for (const r of await search(q, opts)) {
+async function fetchFrom(q, folder, landscape) {
+  for (const r of await search(q, { landscape })) {
     try {
       const res = await fetch(r.url, { headers: { "User-Agent": "mcc-demo-photos/1.0" } });
       if (!res.ok) continue;
@@ -111,45 +137,51 @@ async function fetchPhoto(q, folder, opts) {
 
 async function main() {
   const [settings] = query("SELECT hero_image_key FROM settings WHERE id = 1");
-  const projects = query("SELECT id, slug, cover_key FROM projects ORDER BY sort_order, id");
+  const projects = query(
+    "SELECT p.id, p.slug, p.cover_key, (SELECT COUNT(*) FROM project_media m WHERE m.project_id = p.id) AS media FROM projects p ORDER BY p.sort_order, p.id",
+  );
   const services = query("SELECT id, title, image_key FROM services ORDER BY sort_order, id");
-
-  if (!settings || settings.hero_image_key || projects.some((p) => p.cover_key)) {
-    console.log("Photos already present; demo photos skipped.");
-    return;
-  }
+  if (!settings) return;
+  for (const row of query("SELECT DISTINCT alt FROM project_media WHERE alt != ''")) usedTitles.add(row.alt);
 
   const sql = [];
+  const fresh = !settings.hero_image_key;
 
-  console.log(`Hero: "${HERO_QUERY}"`);
-  const hero = await fetchPhoto(HERO_QUERY, "site");
-  if (hero) sql.push(`UPDATE settings SET hero_image_key = ${sqlString(hero.key)} WHERE id = 1;`);
+  if (fresh) {
+    console.log(`Hero: ${HERO_QUERY.join(" / ")}`);
+    const hero = await fetchPhoto(HERO_QUERY, "site");
+    if (hero) sql.push(`UPDATE settings SET hero_image_key = ${sqlString(hero.key)} WHERE id = 1;`);
+  }
 
-  for (const p of projects) {
-    const q = PROJECT_QUERIES[p.slug] ?? "building construction";
-    console.log(`Project ${p.slug}: "${q}"`);
-    const cover = await fetchPhoto(q, "projects");
-    if (!cover) continue;
-    sql.push(`UPDATE projects SET cover_key = ${sqlString(cover.key)} WHERE id = ${p.id};`);
-    const media = [cover];
-    for (let i = 0; i < GALLERY_PER_PROJECT; i++) {
-      const extra = await fetchPhoto(q, "projects");
-      if (extra) media.push(extra);
-    }
-    media.forEach((m, i) =>
+  // Only the seeded demo projects, and only up to three photos each.
+  for (const p of projects.filter((p) => PROJECT_QUERIES[p.slug] && p.media < PHOTOS_PER_PROJECT)) {
+    const queries = PROJECT_QUERIES[p.slug];
+    console.log(`Project ${p.slug}: ${queries.join(" / ")}`);
+    let order = p.media;
+    for (let i = p.media; i < PHOTOS_PER_PROJECT; i++) {
+      const photo = await fetchPhoto(queries, "projects");
+      if (!photo) break;
+      order += 1;
       sql.push(
-        `INSERT INTO project_media (project_id, type, key, thumb_key, width, height, alt, sort_order) VALUES (${p.id}, 'image', ${sqlString(m.key)}, ${sqlString(m.thumbKey)}, ${m.width}, ${m.height}, ${sqlString(m.alt.slice(0, 300))}, ${i + 1});`,
-      ),
-    );
+        `INSERT INTO project_media (project_id, type, key, thumb_key, width, height, alt, sort_order) VALUES (${p.id}, 'image', ${sqlString(photo.key)}, ${sqlString(photo.thumbKey)}, ${photo.width}, ${photo.height}, ${sqlString(photo.alt.slice(0, 300))}, ${order});`,
+      );
+      if (!p.cover_key && i === p.media) sql.push(`UPDATE projects SET cover_key = ${sqlString(photo.key)} WHERE id = ${p.id} AND cover_key IS NULL;`);
+    }
   }
 
-  for (const s of services.filter((s) => !s.image_key)) {
-    const q = SERVICE_QUERIES.find(([re]) => re.test(s.title))?.[1] ?? "construction";
-    console.log(`Service ${s.title}: "${q}"`);
-    const photo = await fetchPhoto(q, "site", { landscape: false });
-    if (photo) sql.push(`UPDATE services SET image_key = ${sqlString(photo.key)} WHERE id = ${s.id};`);
+  if (fresh) {
+    for (const s of services.filter((s) => !s.image_key)) {
+      const queries = SERVICE_QUERIES.find(([re]) => re.test(s.title))?.[1] ?? [];
+      console.log(`Service ${s.title}: ${queries.join(" / ") || "construction"}`);
+      const photo = await fetchPhoto(queries, "site", { landscape: false });
+      if (photo) sql.push(`UPDATE services SET image_key = ${sqlString(photo.key)} WHERE id = ${s.id};`);
+    }
   }
 
+  if (sql.length === 0) {
+    console.log("No empty demo picture slots; nothing to do.");
+    return;
+  }
   if (sql.length > 0) {
     const dir = mkdtempSync(join(tmpdir(), "mcc-sql-"));
     try {

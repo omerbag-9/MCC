@@ -85,7 +85,7 @@ Dev deploys automatically from the `dev` branch to `https://mcc-dev.<your-subdom
 
 6. **Push to `dev`** (or Actions → Deploy → Run workflow). The workflow creates the tables, loads the demo content (only while the database is empty), deploys, and copies the secrets to the Worker. The dev address is printed at the end of the deploy log.
 
-**Demo photos:** while the dev demo has no photos at all (no hero image, no project cover), each deploy fills the empty picture slots with free construction photographs: CC0 / public domain only, found through the Openverse API by `scripts/demo-photos.mjs`. The deploy log and the GitHub job summary list every photo with its creator, licence and source page. Once any photo is uploaded, the step does nothing. Replace them with the company's own photos in the admin.
+**Demo photos:** each dev deploy fills empty demo picture slots (the hero and service photos while there's no hero yet; the seeded demo projects up to three photos each) with free construction photographs: CC0 / public domain only, found through the Openverse API by `scripts/demo-photos.mjs`. The deploy log and the GitHub job summary list every photo with its creator, licence and source page. It never replaces a photo that is already there. Replace them with the company's own photos in the admin.
 
 Open `/admin` on the dev address and sign in with `ADMIN_PASSWORD`. The password login exists **only on dev** and only while Cloudflare Access isn't configured there; staging and production always require Access.
 
