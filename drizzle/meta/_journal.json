@@ -43,6 +43,13 @@
       "when": 1794253371768,
       "tag": "0005_settings_strengths",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1794254826591,
+      "tag": "0006_company_name",
+      "breakpoints": true
     }
   ]
 }
