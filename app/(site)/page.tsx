@@ -3,7 +3,7 @@ import Link from "next/link";
 import SplitText from "@/components/reactbits/SplitText";
 import { ClientsLoop } from "@/components/site/clients-loop";
 import { HeroVideo } from "@/components/site/hero-video";
-import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, WhatsAppIcon } from "@/components/site/icons";
+import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, StrengthIcon, WhatsAppIcon } from "@/components/site/icons";
 import { LeadForm } from "@/components/site/lead-form";
 import { ProjectFacts } from "@/components/site/project-facts";
 import { formatArea } from "@/components/site/project-card";
@@ -16,7 +16,6 @@ import {
   getClients,
   getFeaturedProjects,
   getPublishedServices,
-  getRecentProjectPhotos,
   getSettings,
 } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl, getVar } from "@/lib/env";
@@ -30,12 +29,11 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 const thumbOf = (key: string | null) => (key ? key.replace(/\.(\w+)$/, "-thumb.$1") : null);
 
 export default async function HomePage() {
-  const [settings, services, featured, clients, photos, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
+  const [settings, services, featured, clients, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
     getSettings(),
     getPublishedServices(),
     getFeaturedProjects(),
     getClients(),
-    getRecentProjectPhotos(6),
     getMediaBase(),
     getSiteUrl(),
     getVar("TURNSTILE_SITE_KEY"),
@@ -53,7 +51,6 @@ export default async function HomePage() {
   const showcase = featured.slice(0, 3);
   const strengths = lines(settings.strengths);
   const whyPhoto = pool.next() ?? aboutPhoto;
-  const latest = featured[0];
   const facts = featured.slice(0, 4).map((p) => ({
     id: p.id,
     title: p.title,
@@ -86,7 +83,7 @@ export default async function HomePage() {
           )}
         </div>
         <div className="absolute inset-0 -z-10 bg-ink/60" />
-        <div className="container-x flex flex-1 flex-col justify-center gap-10 py-8 sm:py-14 lg:flex-row lg:items-end lg:justify-between lg:py-16">
+        <div className="container-x flex flex-1 flex-col justify-center py-8 sm:py-14 lg:py-16">
           <div className="max-w-5xl">
             <SplitText
               tag="h1"
@@ -114,24 +111,6 @@ export default async function HomePage() {
               </Link>
             </Reveal>
           </div>
-          {latest && (
-            <Reveal delay={0.7} className="hidden shrink-0 lg:block">
-              <Link href={`/projects/${latest.slug}`} className="group flex w-80 items-stretch bg-paper text-ink">
-                <span className="relative w-28 shrink-0 overflow-hidden bg-ink">
-                  <span className="absolute inset-0">
-                    <Photo mediaBase={mediaBase} src={latest.coverKey} alt="" sizes="112px" className="transition-transform duration-500 group-hover:scale-110" />
-                  </span>
-                </span>
-                <span className="flex flex-1 flex-col justify-center px-5 py-4">
-                  <span className="text-small text-muted">Latest project</span>
-                  <span className="mt-1 font-semibold">{latest.title}</span>
-                  <span className="mt-2 inline-flex items-center gap-1.5 text-small font-semibold">
-                    View <ArrowRightIcon width={15} height={15} className="transition-transform group-hover:translate-x-1" />
-                  </span>
-                </span>
-              </Link>
-            </Reveal>
-          )}
         </div>
 
         {stats.length > 0 && (
@@ -197,11 +176,9 @@ export default async function HomePage() {
             </Reveal>
             <Reveal className="grid gap-1 sm:grid-cols-2 lg:col-span-7" stagger={0.06}>
               {strengths.map((t) => (
-                <p key={t} className="flex min-h-28 items-center gap-4 bg-paper px-6 py-6 text-lead font-semibold">
-                  <span className="flex size-9 shrink-0 items-center justify-center bg-ink text-paper" aria-hidden>
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="m5 12 5 5 9-10" />
-                    </svg>
+                <p key={t} className="group flex min-h-28 items-center gap-5 bg-paper px-6 py-6 text-lead font-semibold">
+                  <span className="flex size-14 shrink-0 items-center justify-center bg-brand-soft text-ink transition-colors duration-300 group-hover:bg-ink group-hover:text-paper" aria-hidden>
+                    <StrengthIcon text={t} width={30} height={30} />
                   </span>
                   {t}
                 </p>
@@ -285,20 +262,6 @@ export default async function HomePage() {
               <ProjectFacts items={facts} />
             </Reveal>
           </div>
-        </section>
-      )}
-
-      {/* A strip of photographs from the sites, edge to edge */}
-      {photos.length >= 4 && (
-        <section aria-labelledby="strip-title">
-          <h2 id="strip-title" className="sr-only">From our sites</h2>
-          <Reveal className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6" stagger={0.05}>
-            {photos.map((ph) => (
-              <Link key={ph.key} href={`/projects/${ph.slug}`} className="group relative block aspect-square overflow-hidden bg-ink" title={ph.title}>
-                <Photo mediaBase={mediaBase} src={ph.key} alt={ph.alt || ph.title} sizes="(min-width: 1024px) 17vw, 50vw" className="transition-transform duration-700 group-hover:scale-110" />
-              </Link>
-            ))}
-          </Reveal>
         </section>
       )}
 
