@@ -13,11 +13,15 @@
 // The hero video comes from Wikimedia Commons (free licences: CC0, public domain, CC BY, CC BY-SA);
 // its credit is printed the same way. Only filled while the hero has no video.
 //
+// The seeded demo clients get the demo logos in scripts/demo-logos/ (drawn for the demo, not real
+// companies' marks) while they have no logo.
+//
 // Never fails the deploy: on any network or API problem it warns and leaves the slots empty.
 import { spawnSync } from "node:child_process";
-import { appendFileSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import sharp from "sharp";
 
@@ -218,6 +222,17 @@ async function main() {
       return null;
     });
     if (video) sql.push(`UPDATE settings SET hero_video_key = ${sqlString(video)} WHERE id = 1;`);
+  }
+
+  // Demo client logos: scripts/demo-logos/<name as a slug>.png, for clients that have none.
+  const logoDir = join(dirname(fileURLToPath(import.meta.url)), "demo-logos");
+  for (const c of query("SELECT id, name FROM clients WHERE logo_key IS NULL OR logo_key = ''")) {
+    const file = join(logoDir, `${c.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.png`);
+    if (!existsSync(file)) continue;
+    const key = `clients/${new Date().getUTCFullYear()}/${randomUUID()}.png`;
+    wrangler(["r2", "object", "put", `${BUCKET}/${key}`, "--file", file, "--content-type", "image/png", target, ...envFlag]);
+    console.log(`Client logo: ${c.name}`);
+    sql.push(`UPDATE clients SET logo_key = ${sqlString(key)} WHERE id = ${c.id};`);
   }
 
   // Only the seeded demo projects, and only up to three photos each.

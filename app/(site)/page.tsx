@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import SplitText from "@/components/reactbits/SplitText";
-import { ClientLogo } from "@/components/site/client-logo";
+import { ClientsLoop } from "@/components/site/clients-loop";
 import { HeroVideo } from "@/components/site/hero-video";
 import { ArrowRightIcon, PhoneIcon, WhatsAppIcon } from "@/components/site/icons";
 import { Photo, photoPool } from "@/components/site/photo";
@@ -176,12 +176,12 @@ export default async function HomePage() {
                 All projects <ArrowRightIcon width={18} height={18} />
               </Link>
             </Reveal>
-            <Reveal className="grid gap-4 lg:h-[640px] lg:grid-cols-12 lg:grid-rows-2" stagger={0.1}>
+            <Reveal className="grid gap-4 lg:h-[clamp(360px,calc(100svh-260px),520px)] lg:grid-cols-12 lg:grid-rows-2" stagger={0.1}>
               {showcase.map((p, i) => (
                 <Link
                   key={p.id}
                   href={`/projects/${p.slug}`}
-                  className={`group relative block overflow-hidden bg-ink ${i === 0 ? "aspect-[4/3] lg:col-span-7 lg:row-span-2 lg:aspect-auto" : "aspect-[4/3] lg:col-span-5 lg:aspect-auto"}`}
+                  className={`group relative block overflow-hidden bg-ink ${i === 0 ? "aspect-[16/10] lg:col-span-7 lg:row-span-2 lg:aspect-auto" : "aspect-[16/10] lg:col-span-5 lg:aspect-auto"}`}
                 >
                   <div className="absolute inset-0">
                     <Photo
@@ -203,35 +203,13 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Clients: a wall of logos on a tone step, the heading beside it */}
+      {/* Clients: their logos moving slowly across the page, nothing else */}
       {clients.length > 0 && (
-        <section className="section-y bg-sand" aria-labelledby="clients-title">
-          <div className="container-x grid gap-10 lg:grid-cols-12 lg:gap-16">
-            <Reveal className="lg:col-span-4">
-              <h2 id="clients-title" className="text-head font-semibold">Trusted by</h2>
-              <p className="mt-4 max-w-sm text-lead">
-                Developers, operators and owners who have trusted us with their buildings.
-              </p>
-            </Reveal>
-            <Reveal className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:col-span-8 lg:grid-cols-4" stagger={0.06}>
-              {clients.map((c) => {
-                const tile = (
-                  <span className="flex h-28 items-center justify-center bg-paper px-5 text-ink-soft opacity-85 grayscale transition-[opacity,filter,color] duration-300 group-hover:text-ink group-hover:opacity-100 group-hover:grayscale-0 lg:h-36">
-                    <ClientLogo client={c} mediaBase={mediaBase} />
-                  </span>
-                );
-                return c.url ? (
-                  <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer" className="group block" title={c.name}>
-                    {tile}
-                  </a>
-                ) : (
-                  <div key={c.id} className="group" title={c.name}>
-                    {tile}
-                  </div>
-                );
-              })}
-            </Reveal>
-          </div>
+        <section className="py-14 lg:py-20" aria-labelledby="clients-title">
+          <h2 id="clients-title" className="sr-only">Trusted by</h2>
+          <ClientsLoop
+            clients={clients.map((c) => ({ id: c.id, name: c.name, url: c.url, logo: mediaUrl(c.logoKey, mediaBase) }))}
+          />
         </section>
       )}
 

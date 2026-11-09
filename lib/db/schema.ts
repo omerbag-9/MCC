@@ -74,6 +74,10 @@ export const projects = sqliteTable(
     year: integer("year"),
     areaM2: integer("area_m2"),
     client: text("client").notNull().default(""),
+    /** Overview table rows, one per line as "Label: value". */
+    specs: text("specs").notNull().default(""),
+    /** Features or amenities delivered, one per line. */
+    highlights: text("highlights").notNull().default(""),
     coverKey: text("cover_key"),
     featured: integer("featured", { mode: "boolean" }).notNull().default(false),
     published: integer("published", { mode: "boolean" }).notNull().default(false),

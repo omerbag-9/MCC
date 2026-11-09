@@ -43,6 +43,48 @@ The villa features double-height living spaces, a basement entertainment area an
   ('delta-logistics-hub', 'Delta Logistics Hub', 'Steel-frame distribution centre with 40 loading docks.', 'Design and construction of a 24,000 m² warehouse with a high-bay racking area, offices and truck yard.', 'Industrial', '10th of Ramadan', 2024, 24000, 'Delta Logistics', 1, 1, 3),
   ('zamalek-apartment-renovation', 'Zamalek Apartment Renovation', 'Complete renovation of a 1930s apartment, preserving its original details.', 'Structural repairs, new MEP, custom joinery and restoration of the original parquet floors and mouldings.', 'Renovation', 'Zamalek, Cairo', 2023, 280, 'Private client', 0, 1, 4);
 
+-- Specifications and highlights for the demo projects
+UPDATE projects SET specs = 'Type: Private villa
+Floors: Basement + 2
+Bedrooms: 6
+Pool: Infinity pool, 18 m
+Scope: Design-build, turnkey
+Status: Completed', highlights = 'Double-height living spaces
+Basement entertainment level
+Infinity pool and landscaped garden
+Smart-home lighting and security
+Full MEP and finishing' WHERE slug = 'palm-hills-villa' AND specs = '' AND highlights = '';
+UPDATE projects SET specs = 'Type: Grade-A offices
+Floors: G + 12
+Basements: 2 parking levels
+Building height: 52 m
+Delivery: 22 months
+Status: Completed', highlights = 'Glass curtain-wall facade
+Two basement parking levels
+Raised floors and open office plates
+Four high-speed passenger lifts
+Central chilled-water plant' WHERE slug = 'nile-business-tower' AND specs = '' AND highlights = '';
+UPDATE projects SET specs = 'Type: Distribution centre
+Structure: Steel portal frame
+Clear height: 12 m
+Loading docks: 40
+Offices: 1,200 m²
+Status: Completed', highlights = 'High-bay racking area
+Forty dock levellers with shelters
+Truck yard and staff parking
+Sprinkler and fire-alarm systems
+Roof ready for solar panels' WHERE slug = 'delta-logistics-hub' AND specs = '' AND highlights = '';
+UPDATE projects SET specs = 'Type: Apartment renovation
+Built: 1930s
+Rooms: 5 + 2 bathrooms
+Duration: 7 months
+Scope: Structure, MEP, finishing
+Status: Completed', highlights = 'Restored original parquet floors
+Rebuilt plaster mouldings
+Custom oak joinery
+New electrical and plumbing
+Structural repairs to the slab' WHERE slug = 'zamalek-apartment-renovation' AND specs = '' AND highlights = '';
+
 INSERT INTO clients (name, url, sort_order) VALUES
   ('Nile Developments', '', 1),
   ('Delta Logistics', '', 2),

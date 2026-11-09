@@ -151,6 +151,8 @@ const projectSchema = z.object({
   client: str(120),
   year: optionalInt,
   areaM2: optionalInt,
+  specs: str(4000),
+  highlights: str(4000),
   featured: checkbox,
   published: checkbox,
   seoTitle: str(120),

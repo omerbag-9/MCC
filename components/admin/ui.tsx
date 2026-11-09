@@ -78,6 +78,7 @@ export function TextArea({
   rows = 4,
   hint,
   required,
+  placeholder,
 }: {
   name: string;
   label: string;
@@ -85,11 +86,12 @@ export function TextArea({
   rows?: number;
   hint?: string;
   required?: boolean;
+  placeholder?: string;
 }) {
   return (
     <div>
       <label htmlFor={name} className="label">{label}{required && " *"}</label>
-      <textarea id={name} name={name} rows={rows} defaultValue={defaultValue ?? ""} required={required} className="field" />
+      <textarea id={name} name={name} rows={rows} defaultValue={defaultValue ?? ""} required={required} placeholder={placeholder} className="field" />
       {hint && <p className="mt-1.5 text-xs text-muted">{hint}</p>}
     </div>
   );
