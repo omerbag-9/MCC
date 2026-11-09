@@ -15,6 +15,7 @@ import {
   settings,
 } from "@/lib/db/schema";
 import { getMediaBucket } from "@/lib/env";
+import { CONTENT_FIELDS } from "@/lib/content";
 import { slugify } from "@/lib/format";
 import { MEDIA_KEY_PATTERN } from "@/lib/media";
 import { revalidateSite } from "@/lib/revalidate";
@@ -136,6 +137,35 @@ export async function saveSettings(formData: FormData): Promise<ActionResult> {
   if (previous?.heroVideoKey && previous.heroVideoKey !== data.heroVideoKey) {
     await deleteObjects([previous.heroVideoKey]);
   }
+  revalidateSite();
+  return { ok: true };
+}
+
+/** Saves Admin → Website content: every field of lib/content.ts, as one JSON object. */
+export async function saveContent(formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const content: Record<string, string> = {};
+  for (const f of CONTENT_FIELDS) {
+    const raw = String(formData.get(`c_${f.key}`) ?? "").trim();
+    if (f.kind === "toggle") content[f.key] = formData.get(`c_${f.key}`) === "on" ? "1" : "0";
+    else if (f.kind === "image") {
+      if (raw && !MEDIA_KEY_PATTERN.test(raw)) return { ok: false, error: `${f.label}: invalid image` };
+      content[f.key] = raw;
+    } else content[f.key] = raw.slice(0, f.kind === "textarea" ? 600 : 160);
+  }
+
+  const db = await getDb();
+  const previous = await db.query.settings.findFirst({ where: eq(settings.id, 1) });
+  await db
+    .insert(settings)
+    .values({ id: 1, content })
+    .onConflictDoUpdate({ target: settings.id, set: { content, updatedAt: new Date() } });
+
+  // Photos that were replaced or removed go to the bucket's trash.
+  const replaced = CONTENT_FIELDS.filter((f) => f.kind === "image")
+    .map((f) => previous?.content?.[f.key])
+    .filter((k): k is string => !!k && !Object.values(content).includes(k));
+  if (replaced.length) await deleteObjects(replaced.flatMap((k) => [k, thumbOf(k)]));
   revalidateSite();
   return { ok: true };
 }

@@ -6,7 +6,7 @@ import { Photo, photoPool } from "@/components/site/photo";
 import { ProjectCard } from "@/components/site/project-card";
 import { Reveal } from "@/components/site/reveal";
 import { WhatsAppLink } from "@/components/site/whatsapp";
-import { getFeaturedProjects, getPublishedServices, getSettings } from "@/lib/db/queries";
+import { getContent, getFeaturedProjects, getPublishedServices, getSettings } from "@/lib/db/queries";
 import { getMediaBase, getVar } from "@/lib/env";
 import { whatsappLink } from "@/lib/whatsapp";
 
@@ -30,8 +30,9 @@ function safeMapUrl(url: string) {
 }
 
 export default async function ContactPage() {
-  const [settings, services, featured, mediaBase, turnstileSiteKey] = await Promise.all([
+  const [settings, c, services, featured, mediaBase, turnstileSiteKey] = await Promise.all([
     getSettings(),
+    getContent(),
     getPublishedServices(),
     getFeaturedProjects(),
     getMediaBase(),
@@ -39,7 +40,7 @@ export default async function ContactPage() {
   ]);
   const wa = whatsappLink(settings.whatsappNumber, settings.whatsappMessage);
   const map = safeMapUrl(settings.mapEmbedUrl);
-  const photo = photoPool(...featured.map((p) => p.coverKey), settings.heroImageKey).next();
+  const photo = c.contactPageImage || photoPool(...featured.map((p) => p.coverKey), settings.heroImageKey).next();
   const recent = featured.slice(0, 3);
 
   const items = [
@@ -55,9 +56,9 @@ export default async function ContactPage() {
         {/* Form half */}
         <div className="px-5 pt-14 pb-20 sm:px-8 lg:px-12 lg:pt-20 lg:pb-28">
           <Reveal className="lg:max-w-xl">
-            <h1 className="text-display font-semibold">Request a quote</h1>
+            <h1 className="text-display font-semibold">{c.contactPageTitle}</h1>
             <p className="mt-5 text-lead">
-              Tell us about your project. We reply within one business day with next steps and a free estimate.
+              {c.contactPageIntro}
             </p>
             <div className="mt-8 flex flex-wrap gap-2 lg:hidden">
               {settings.phone && (
@@ -72,7 +73,7 @@ export default async function ContactPage() {
               )}
             </div>
             <div className="mt-12">
-              <LeadForm pageSource="/contact" services={services.map((s) => s.title)} turnstileSiteKey={turnstileSiteKey} />
+              <LeadForm pageSource="/contact" services={services.map((s) => s.title)} turnstileSiteKey={turnstileSiteKey} labels={{ button: c.formButton, successTitle: c.formSuccessTitle, successText: c.formSuccessText }} />
             </div>
           </Reveal>
         </div>
@@ -83,7 +84,7 @@ export default async function ContactPage() {
             <Photo mediaBase={mediaBase} src={photo} alt={`${settings.companyName} at work`} sizes="(min-width: 1024px) 50vw, 100vw" />
           </div>
           <Reveal className="absolute inset-x-5 bottom-5 bg-ink p-8 text-paper sm:inset-x-8 sm:bottom-8 lg:inset-x-auto lg:right-12 lg:bottom-12 lg:w-[380px]">
-            <h2 className="text-lead font-semibold">Contact details</h2>
+            <h2 className="text-lead font-semibold">{c.contactDetailsTitle}</h2>
             {items.length > 0 && (
               <dl className="mt-6 space-y-5">
                 {items.map(({ label, value, href }) => (
@@ -109,11 +110,11 @@ export default async function ContactPage() {
         </div>
       </section>
 
-      {recent.length > 0 && (
+      {c.on("showContactRecent") && recent.length > 0 && (
         <section className="section-y bg-sand">
           <div className="container-x">
             <Reveal className="mb-12 flex flex-wrap items-baseline gap-x-10 gap-y-4">
-              <h2 className="text-head font-semibold">Recent projects</h2>
+              <h2 className="text-head font-semibold">{c.contactRecentTitle}</h2>
               <Link href="/projects" className="link-arrow">
                 All projects <ArrowRightIcon width={18} height={18} />
               </Link>

@@ -4,7 +4,7 @@ import { Photo, photoPool } from "@/components/site/photo";
 import { formatArea, ProjectTile } from "@/components/site/project-card";
 import { ProjectsBrowser } from "@/components/site/projects-browser";
 import { Reveal } from "@/components/site/reveal";
-import { getPublishedProjects, getSettings } from "@/lib/db/queries";
+import { getContent, getPublishedProjects, getSettings } from "@/lib/db/queries";
 import { getMediaBase } from "@/lib/env";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProjectsPage() {
-  const [projects, settings, mediaBase] = await Promise.all([getPublishedProjects(), getSettings(), getMediaBase()]);
+  const [projects, settings, c, mediaBase] = await Promise.all([getPublishedProjects(), getSettings(), getContent(), getMediaBase()]);
 
   // The record, computed from the published projects themselves.
   const area = projects.reduce((sum, p) => sum + (p.areaM2 ?? 0), 0);
@@ -29,7 +29,7 @@ export default async function ProjectsPage() {
     sectors > 1 && { value: String(sectors), label: "Sectors" },
     years.length > 1 && Math.min(...years) !== Math.max(...years) && { value: `${Math.min(...years)}–${Math.max(...years)}`, label: "Delivered" },
   ].filter((r): r is { value: string; label: string } => !!r);
-  const heroPhoto = photoPool(...projects.map((p) => p.coverKey), settings.heroImageKey).next();
+  const heroPhoto = c.projectsImage || photoPool(...projects.map((p) => p.coverKey), settings.heroImageKey).next();
 
   return (
     <>
@@ -49,9 +49,9 @@ export default async function ProjectsPage() {
               <li aria-current="page" className="text-paper">Projects</li>
             </ol>
           </nav>
-          <h1 className="mt-5 text-display font-semibold">Our projects</h1>
+          <h1 className="mt-5 text-display font-semibold">{c.projectsTitle}</h1>
           <p className="mt-5 max-w-xl text-lead text-paper/90">
-            Homes, offices, warehouses and renovations we have designed and built.
+            {c.projectsIntro}
           </p>
         </Reveal>
         {record.length > 0 && projects.length > 0 && (
@@ -72,7 +72,7 @@ export default async function ProjectsPage() {
       <section className="pt-6 pb-16 lg:pb-24">
         <div className="container-x">
           {projects.length === 0 ? (
-            <p className="py-16 text-muted">Projects will be published here soon.</p>
+            <p className="py-16 text-muted">{c.projectsEmpty}</p>
           ) : (
             <ProjectsBrowser
               items={projects.map((p, order) => ({
@@ -92,11 +92,11 @@ export default async function ProjectsPage() {
       <section className="bg-sand">
         <Reveal className="container-x grid gap-8 py-14 lg:grid-cols-12 lg:items-center lg:py-16">
           <div className="lg:col-span-8">
-            <h2 className="text-head font-semibold">Have a project in mind?</h2>
-            <p className="mt-3 max-w-xl">Tell us what you&apos;re building. We reply within one business day with next steps and a free estimate.</p>
+            <h2 className="text-head font-semibold">{c.projectsCtaTitle}</h2>
+            <p className="mt-3 max-w-xl">{c.projectsCtaText}</p>
           </div>
           <div className="lg:col-span-4 lg:justify-self-end">
-            <Link href="/contact" className="btn-primary">Request a quote</Link>
+            <Link href="/contact" className="btn-primary">{c.quoteButton}</Link>
           </div>
         </Reveal>
       </section>

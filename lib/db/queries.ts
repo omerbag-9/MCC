@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { isBuildPhase } from "@/lib/env";
+import { resolveContent } from "@/lib/content";
 import { getDb } from "./client";
 import {
   clients,
@@ -31,6 +32,7 @@ export const DEFAULT_SETTINGS: Settings = {
   aboutTitle: "About us",
   aboutBody: "",
   strengths: "",
+  content: {},
   stats: [],
   phone: "",
   email: "",
@@ -66,6 +68,12 @@ export const getSettings = cache(() =>
     return row ?? DEFAULT_SETTINGS;
   }),
 );
+
+/** Website text, images and section switches, with defaults for anything not edited yet. */
+export const getContent = cache(async () => {
+  const settings = await getSettings();
+  return resolveContent(settings.content, settings.companyName);
+});
 
 export const getPublishedServices = cache(() =>
   safe([], async () => {

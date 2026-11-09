@@ -1,0 +1,1 @@
+ALTER TABLE `settings` ADD `content` text DEFAULT '{}' NOT NULL;
