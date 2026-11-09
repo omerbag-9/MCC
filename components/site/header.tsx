@@ -6,10 +6,12 @@ import { MobileMenu } from "./mobile-menu";
 
 // Services and About live on the home page: those links scroll smoothly to their sections
 // (html has scroll-behavior: smooth). Projects and Contact have their own pages.
+// In the order a visitor meets them on the home page: who we are, what we do, what we've built,
+// how to reach us. The footer's Company list follows the same order.
 const NAV = [
+  { href: "/#about", label: "About" },
   { href: "/#services", label: "Services" },
   { href: "/projects", label: "Projects" },
-  { href: "/#about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
 
