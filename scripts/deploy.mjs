@@ -2,12 +2,16 @@
 //
 //   node scripts/deploy.mjs dev|staging|production      (npm run deploy:dev, ...)
 //
-// Steps: check wrangler.jsonc ids -> apply D1 migrations -> (dev) load demo content if the
-// database is empty -> build -> wrangler deploy -> copy secrets from environment variables.
+// Steps: check wrangler.jsonc ids -> build -> smoke-test the build locally (nothing remote is
+// touched if it fails) -> apply D1 migrations -> (dev) demo content and photos -> wrangler deploy
+// -> copy secrets -> smoke-test the live site -> on failure, roll back to the previous version.
+//
+// Note: a rollback restores the code, not the database. Migrations are additive (new tables and
+// columns), so the previous version keeps working with them.
 //
 // Locally, run `npx wrangler login` first. In CI, CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID
 // come from the GitHub environment secrets.
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -29,6 +33,12 @@ if (placeholders.length > 0) {
   fail(`[${env}] wrangler.jsonc still has a placeholder database_id for "${placeholders[0].database_name}". See README.`);
 }
 
+step("Build");
+run("npx", ["opennextjs-cloudflare", "build"]);
+
+step("Check the build locally (fresh local database with demo content)");
+await checkBuildLocally();
+
 step("Apply database migrations");
 run("npx", ["wrangler", "d1", "migrations", "apply", "DB", "--remote", ...envFlag]);
 
@@ -43,11 +53,10 @@ if (env === "dev") {
   run("node", ["scripts/demo-photos.mjs", "dev"]);
 }
 
-step("Build");
-run("npx", ["opennextjs-cloudflare", "build"]);
-
 // `wrangler deploy` directly (not `opennextjs-cloudflare deploy`): we skip uploading the build-time
 // pages into the cache, so every page renders from D1 on its first visit after a deploy.
+const previousVersion = currentVersionId();
+
 step("Deploy");
 run("npx", ["wrangler", "deploy", ...envFlag], { env: { OPEN_NEXT_DEPLOY: "true" } });
 
@@ -60,6 +69,23 @@ if (Object.keys(secrets).length > 0) {
     run("npx", ["wrangler", "secret", "bulk", join(dir, "secrets.json"), ...envFlag]);
   } finally {
     rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+const siteUrl = section.vars?.SITE_URL ?? "";
+if (!siteUrl || siteUrl.includes("example.")) {
+  console.warn(`\n⚠️  SITE_URL for ${env} is a placeholder; skipped the live check.`);
+} else {
+  step(`Check the live site: ${siteUrl}`);
+  await new Promise((r) => setTimeout(r, 5000)); // let the new version reach every location
+  const live = spawnSync("node", ["scripts/smoke.mjs", siteUrl], { stdio: "inherit" });
+  if (live.status !== 0) {
+    if (previousVersion) {
+      step(`Live check failed: rolling back to the previous version ${previousVersion}`);
+      run("npx", ["wrangler", "rollback", previousVersion, "--message", "Automatic rollback: live smoke test failed", "--yes", ...envFlag]);
+      fail("Deploy rolled back because the live site failed its checks. See the log above.");
+    }
+    fail("The live site failed its checks and there is no previous version to roll back to.");
   }
 }
 
@@ -76,6 +102,63 @@ function run(cmd, args, { capture = false, env: extraEnv = {} } = {}) {
   });
   if (res.status !== 0) fail(`Command failed: ${cmd} ${args.join(" ")}`);
   return res.stdout ?? "";
+}
+
+/** Starts the built Worker locally with a throwaway database and runs the smoke test against it. */
+async function checkBuildLocally() {
+  const dir = mkdtempSync(join(tmpdir(), "mcc-check-"));
+  const port = 8790 + Math.floor(Math.random() * 100);
+  const local = ["--local", "--persist-to", dir, ...envFlag];
+  run("npx", ["wrangler", "d1", "migrations", "apply", "DB", ...local]);
+  run("npx", ["wrangler", "d1", "execute", "DB", ...local, "--yes", "--file", "scripts/seed.sql"]);
+
+  const server = spawn("npx", ["wrangler", "dev", "--port", String(port), "--persist-to", dir, ...envFlag], {
+    stdio: ["ignore", "ignore", "inherit"],
+    shell: process.platform === "win32",
+    detached: process.platform !== "win32",
+  });
+  const stop = () => {
+    try {
+      if (process.platform === "win32") server.kill();
+      else process.kill(-server.pid, "SIGTERM");
+    } catch {
+      // already stopped
+    }
+  };
+  try {
+    const url = `http://localhost:${port}`;
+    let up = false;
+    for (let i = 0; i < 90 && !up; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      up = await fetch(url).then(() => true, () => false);
+    }
+    if (!up) fail("The built site did not start locally.");
+    const result = spawnSync("node", ["scripts/smoke.mjs", url], { stdio: "inherit" });
+    if (result.status !== 0) fail("The build failed its local checks; nothing was deployed.");
+  } finally {
+    stop();
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** The Worker version currently serving this environment (null on the first deploy). */
+function currentVersionId() {
+  const res = spawnSync("npx", ["wrangler", "deployments", "list", "--json", ...envFlag], {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"],
+    shell: process.platform === "win32",
+  });
+  if (res.status !== 0) return null;
+  try {
+    const out = res.stdout;
+    const list = JSON.parse(out.slice(out.search(/^[[{]/m)));
+    const deployments = (Array.isArray(list) ? list : []).filter((d) => d?.versions?.length);
+    deployments.sort((a, b) => String(b.created_on).localeCompare(String(a.created_on)));
+    const top = deployments[0]?.versions?.slice().sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0))[0];
+    return top?.version_id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 function step(title) {

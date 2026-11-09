@@ -1,0 +1,28 @@
+name: Backup
+
+# Daily database backup into the environment's private R2 bucket (see scripts/backup.mjs).
+# When staging and production exist, add them to the matrix.
+on:
+  schedule:
+    - cron: "17 2 * * *" # 02:17 UTC every day
+  workflow_dispatch:
+
+jobs:
+  backup:
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [dev]
+    runs-on: ubuntu-latest
+    environment: ${{ matrix.environment }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/backup.mjs ${{ matrix.environment }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

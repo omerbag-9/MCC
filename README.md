@@ -179,6 +179,39 @@ To keep the **whole** staging site private (not just `/admin`), make the staging
 - Dashboard → **Web Analytics** → add the site → put the token in `CF_ANALYTICS_TOKEN`. Alternatively, enable automatic setup, which injects the script without the token.
 - Add the domain to Google Search Console and submit `https://example.com/sitemap.xml`.
 
+## Deploy checks
+
+Every deploy (`scripts/deploy.mjs`, run by `.github/workflows/deploy.yml`) goes through these gates, in order. If any fails, the deploy stops.
+
+1. **Lint and typecheck** (in CI, before the script runs).
+2. **Build**, then **run the built site locally** on a fresh database with the demo content, and run `scripts/smoke.mjs` against it. Nothing remote has been touched yet, so a failure here changes nothing.
+3. Apply database migrations, then deploy.
+4. **Check the live site** with the same smoke test. If it fails, the deploy **rolls back automatically** to the version that was live before (`wrangler rollback`) and the run is marked failed.
+
+The smoke test checks that the home, projects, project, contact, sitemap and robots pages respond correctly, that an unknown page returns 404, and that the security headers are present. Run it yourself with `node scripts/smoke.mjs <url>`.
+
+A rollback restores the code, not the database. Migrations only add tables and columns, so the previous version keeps working with them.
+
+## Security headers
+
+Set for every page in `next.config.ts`: a Content Security Policy that allows only the third parties the site uses (Turnstile, Cloudflare Web Analytics, Google Maps, direct R2 uploads), `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and `Cross-Origin-Opener-Policy`. If you add a new third-party script, embed or API, add its host to the policy there.
+
+## Backups and restore
+
+**Database.** `.github/workflows/backup.yml` runs every day at 02:17 UTC (or on demand from the Actions tab) and stores a full export of the D1 database (schema first, then data) as `backups/d1/<env>/<date-time>.sql.gz` in that environment's media bucket. The bucket is private and the site never serves `backups/`. Backups are kept 90 days (an R2 lifecycle rule the backup script creates). They are deliberately **not** stored as GitHub artifacts: the repository is public and leads contain personal data. On top of this, D1 keeps its own point-in-time history (Time Travel: 7 days on the free plan, 30 on Workers Paid).
+
+To restore, download a backup from the bucket (Cloudflare dashboard → R2 → bucket → `backups/d1/...`), unzip it, then load it into an **empty** database. Never load it over existing data:
+
+```bash
+gunzip 2026-11-09-02-17.sql.gz
+npx wrangler d1 create mcc-db-restore
+npx wrangler d1 execute mcc-db-restore --remote --file 2026-11-09-02-17.sql
+```
+
+Check the restored data, then point the environment's two D1 entries in `wrangler.jsonc` at the new database id and deploy. To recover a recent mistake instead, D1 Time Travel can restore the existing database to a point in time: `npx wrangler d1 time-travel restore <database> --timestamp <ISO time>`.
+
+**Photos and videos.** Deleting a photo or video in the admin moves the file to `trash/<date>/<original path>` in the same bucket instead of destroying it, and the database record is removed. Trash is kept 30 days, then removed automatically, and is never served by the site. To recover a file, copy it back to its original path (R2 dashboard, or `wrangler r2 object get` then `put`) and upload it again in the admin, or ask a developer to restore the record.
+
 ## Media uploads
 
 The admin's browser resizes photos before uploading them: a 1920 px WebP plus a 640 px WebP thumbnail. This keeps storage small and avoids paid image resizing.
@@ -227,6 +260,7 @@ lib/
   uploads.ts           R2 keys + presigned URLs
   client/upload.ts     browser-side resize + upload
 drizzle/               SQL migrations (applied with wrangler)
-scripts/               deploy.mjs (deploy one environment), seed.sql (demo content), demo-photos.mjs (free demo photos on dev)
-.github/workflows/     deploy.yml (push to dev → deploy)
+scripts/               deploy.mjs (deploy one environment), smoke.mjs (deploy checks), backup.mjs (daily backups),
+                       seed.sql (demo content), demo-photos.mjs (free demo photos on dev)
+.github/workflows/     deploy.yml (push to dev → checks → deploy), backup.yml (daily backup)
 ```

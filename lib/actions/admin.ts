@@ -51,14 +51,30 @@ function firstError(error: z.ZodError) {
   return issue ? `${issue.path.join(".") || "form"}: ${issue.message}` : "Invalid input";
 }
 
+/**
+ * "Deletes" media by moving it to trash/<date>/<key> in the same bucket; a lifecycle rule
+ * (scripts/backup.mjs) removes trash after 30 days, so an accidental delete can be undone by
+ * copying the file back. trash/ is never served: the /media route only serves projects/, site/
+ * and clients/ keys. The original is removed only once its copy is safe.
+ */
 async function deleteObjects(keys: (string | null | undefined)[]) {
   const valid = keys.filter((k): k is string => !!k && MEDIA_KEY_PATTERN.test(k));
   if (valid.length === 0) return;
   try {
     const bucket = await getMediaBucket();
-    if (bucket) await bucket.delete(valid);
+    if (!bucket) return;
+    const day = new Date().toISOString().slice(0, 10);
+    for (const key of valid) {
+      const object = await bucket.get(key);
+      if (!object) continue;
+      // Stream the copy (videos can be 100 MB): R2 needs a known length, hence FixedLengthStream.
+      await bucket.put(`trash/${day}/${key}`, object.body.pipeThrough(new FixedLengthStream(object.size)), {
+        httpMetadata: object.httpMetadata,
+      });
+      await bucket.delete(key);
+    }
   } catch (error) {
-    console.error("Failed to delete media", error);
+    console.error("Failed to move media to trash", error);
   }
 }
 
