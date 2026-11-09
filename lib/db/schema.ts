@@ -20,6 +20,8 @@ export const settings = sqliteTable("settings", {
   heroTitle: text("hero_title").notNull().default(""),
   heroSubtitle: text("hero_subtitle").notNull().default(""),
   heroImageKey: text("hero_image_key"),
+  /** Muted looping video behind the hero (mp4/webm); the hero image is its poster. */
+  heroVideoKey: text("hero_video_key"),
   aboutTitle: text("about_title").notNull().default(""),
   aboutBody: text("about_body").notNull().default(""),
   /** JSON array of { value: string, label: string } */
@@ -105,16 +107,6 @@ export const projectMedia = sqliteTable(
   (t) => [index("project_media_project_idx").on(t.projectId, t.sortOrder)],
 );
 
-export const testimonials = sqliteTable("testimonials", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull(),
-  role: text("role").notNull().default(""),
-  quote: text("quote").notNull(),
-  sortOrder: integer("sort_order").notNull().default(0),
-  published: integer("published", { mode: "boolean" }).notNull().default(true),
-  createdAt: createdAt(),
-});
-
 export const clients = sqliteTable("clients", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
@@ -160,6 +152,5 @@ export type Settings = typeof settings.$inferSelect;
 export type Service = typeof services.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type ProjectMedia = typeof projectMedia.$inferSelect;
-export type Testimonial = typeof testimonials.$inferSelect;
 export type Client = typeof clients.$inferSelect;
 export type Lead = typeof leads.$inferSelect;

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "./logo";
 import type { Service, Settings } from "@/lib/db/schema";
 import { ClockIcon, MailIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
 
@@ -25,11 +26,7 @@ export function Footer({ settings, services }: { settings: Settings; services: S
       <div className="container-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-12 lg:py-20">
         <div className="lg:col-span-4">
           <Link href="/" className="flex items-center gap-3 text-[17px] font-semibold">
-            <span className="flex size-9 items-center justify-center bg-paper text-ink">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M2 22V9l10-6 10 6v13h-7v-7H9v7z" />
-              </svg>
-            </span>
+            <LogoMark size={34} className="shrink-0" />
             {settings.companyName}
           </Link>
           {settings.tagline && <p className="mt-5 max-w-xs text-on-navy-muted">{settings.tagline}</p>}

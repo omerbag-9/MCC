@@ -9,7 +9,6 @@ import {
   projects,
   services,
   settings,
-  testimonials,
   type Settings,
 } from "./schema";
 
@@ -23,11 +22,12 @@ import {
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 1,
-  companyName: "Your Construction Co.",
+  companyName: "MCC Construction",
   tagline: "Building with integrity",
   heroTitle: "We build what lasts",
   heroSubtitle: "Residential, commercial and industrial construction delivered on time and on budget.",
   heroImageKey: null,
+  heroVideoKey: null,
   aboutTitle: "About us",
   aboutBody: "",
   stats: [],
@@ -109,16 +109,6 @@ export const getPublishedProjectBySlug = cache((slug: string) =>
       orderBy: [asc(projectMedia.sortOrder), asc(projectMedia.id)],
     });
     return { ...project, media };
-  }),
-);
-
-export const getPublishedTestimonials = cache(() =>
-  safe([], async () => {
-    const db = await getDb();
-    return db.query.testimonials.findMany({
-      where: eq(testimonials.published, true),
-      orderBy: [asc(testimonials.sortOrder), asc(testimonials.id)],
-    });
   }),
 );
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogoMark } from "./logo";
 import { CloseIcon, MenuIcon, PhoneIcon } from "./icons";
 import { MobileMenu } from "./mobile-menu";
 
@@ -17,11 +18,7 @@ export function Header({ companyName, phone }: { companyName: string; phone: str
     <header className="sticky top-0 z-40 bg-ink text-paper">
       <div className="container-x flex h-[72px] items-center justify-between gap-6">
         <Link href="/" className="flex items-center gap-3 text-[17px] font-semibold tracking-tight">
-          <span className="flex size-9 items-center justify-center bg-paper text-ink">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-              <path d="M2 22V9l10-6 10 6v13h-7v-7H9v7z" />
-            </svg>
-          </span>
+          <LogoMark size={34} className="shrink-0" />
           <span className="truncate">{companyName}</span>
         </Link>
 

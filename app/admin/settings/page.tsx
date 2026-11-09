@@ -9,12 +9,18 @@ import { getMediaBase, getMediaBucket } from "@/lib/env";
 
 export const metadata = { title: "Settings" };
 
+const STAT_HINTS = [
+  ["EGP 4.2B", "Total revenue"],
+  ["350+", "Projects completed"],
+  ["25+", "Years of experience"],
+];
+
 export default async function SettingsAdmin({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   await ensureAdmin();
   const db = await getDb();
   const [row, mediaBase, bucket] = await Promise.all([db.query.settings.findFirst(), getMediaBase(), getMediaBucket()]);
   const s = row ?? DEFAULT_SETTINGS;
-  const stats = [...s.stats, ...Array(4).fill({ value: "", label: "" })].slice(0, 4) as { value: string; label: string }[];
+  const stats = [...s.stats, ...Array(3).fill({ value: "", label: "" })].slice(0, 3) as { value: string; label: string }[];
 
   return (
     <>
@@ -35,14 +41,15 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
           <Card className="space-y-5">
             <TextField name="heroTitle" label="Hero title" defaultValue={s.heroTitle} hint="Keep it short, about 35 characters, so it fits on two lines on phones." />
             <TextArea name="heroSubtitle" label="Hero subtitle" defaultValue={s.heroSubtitle} rows={2} />
-            <ImageField name="heroImageKey" label="Hero background image" folder="site" defaultKey={s.heroImageKey} mediaBase={mediaBase} enabled={!!bucket} hint="Wide photo, at least 1920px. If empty, the first featured project's cover is used." />
+            <ImageField name="heroImageKey" label="Hero background image" folder="site" defaultKey={s.heroImageKey} mediaBase={mediaBase} enabled={!!bucket} hint="Wide photo, at least 1920px. Shown while the video loads, and instead of it when there is none. If empty, the first featured project's cover is used." />
+            <ImageField kind="video" name="heroVideoKey" label="Hero background video" folder="site" defaultKey={s.heroVideoKey} mediaBase={mediaBase} enabled={!!bucket} hint="MP4 or WebM, 10–30 seconds, 1080p or 720p, ideally under 15 MB. Plays muted on a loop; sound is removed by the browser." />
             <div>
-              <span className="label">Stats strip (up to 4)</span>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <span className="label">Figures under the hero (3)</span>
+              <div className="grid gap-3">
                 {stats.map((st, i) => (
                   <div key={i} className="flex gap-2">
-                    <input name={`stat_value_${i}`} defaultValue={st.value} placeholder="25+" aria-label={`Stat ${i + 1} value`} className="field w-24" />
-                    <input name={`stat_label_${i}`} defaultValue={st.label} placeholder="Years of experience" aria-label={`Stat ${i + 1} label`} className="field" />
+                    <input name={`stat_value_${i}`} defaultValue={st.value} placeholder={STAT_HINTS[i][0]} aria-label={`Figure ${i + 1} value`} className="field w-36" />
+                    <input name={`stat_label_${i}`} defaultValue={st.label} placeholder={STAT_HINTS[i][1]} aria-label={`Figure ${i + 1} label`} className="field" />
                   </div>
                 ))}
               </div>

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { uploadMedia, type UploadFolder } from "@/lib/client/upload";
 
-/** Single image picker that uploads to R2 and stores the object key in a hidden input. */
+/** Single image (or video) picker that uploads to R2 and stores the object key in a hidden input. */
 export function ImageField({
   name,
   label,
@@ -13,6 +13,7 @@ export function ImageField({
   mediaBase,
   hint,
   enabled = true,
+  kind = "image",
 }: {
   name: string;
   label: string;
@@ -21,6 +22,7 @@ export function ImageField({
   mediaBase: string;
   hint?: string;
   enabled?: boolean;
+  kind?: "image" | "video";
 }) {
   const [key, setKey] = useState(defaultKey ?? "");
   const [busy, setBusy] = useState(false);
@@ -62,11 +64,13 @@ export function ImageField({
       <input ref={hidden} type="hidden" name={name} value={key} />
       <div className="flex items-center gap-4">
         <div className="flex h-20 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md bg-sand ring-1 ring-line">
-          {preview ? (
+          {preview && kind === "video" ? (
+            <video src={preview} muted loop autoPlay playsInline className="size-full object-cover" />
+          ) : preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="" className="size-full object-cover" />
           ) : (
-            <span className="text-xs text-muted">No image</span>
+            <span className="text-xs text-muted">{kind === "video" ? "No video" : "No image"}</span>
           )}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -74,7 +78,7 @@ export function ImageField({
           {enabled && <label htmlFor={id} className={`btn border border-line bg-white py-2 text-ink hover:bg-sand ${busy ? "pointer-events-none opacity-60" : "cursor-pointer"}`}>
             {busy ? "Uploading…" : key ? "Replace" : "Upload"}
           </label>}
-          {enabled && <input id={id} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />}
+          {enabled && <input id={id} type="file" accept={kind === "video" ? "video/mp4,video/webm" : "image/jpeg,image/png,image/webp,image/avif"} className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />}
           {key && (
             <button type="button" className="btn py-2 text-red-700 hover:bg-red-50" onClick={() => change("")}>
               Remove

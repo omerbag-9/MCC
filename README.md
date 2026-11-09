@@ -2,8 +2,8 @@
 
 Marketing site and content admin for a construction company, built to run on Cloudflare's free tier.
 
-- **Public site:** home page with services, featured projects, about, testimonials, client logos and a quote form; `/projects` with a category filter; one page per project with gallery and video; `/contact` with a quote form, map and WhatsApp.
-- **Admin (`/admin`):** edit projects (photo/video upload, ordering, cover), services, testimonials, client logos and site settings; manage leads (status, notes, CSV export); dashboard with lead and WhatsApp-click counts.
+- **Public site:** home page with services, featured projects, about, client logos and a quote form; `/projects` with a category filter; one page per project with gallery and video; `/contact` with a quote form, map and WhatsApp.
+- **Admin (`/admin`):** edit projects (photo/video upload, ordering, cover), services, client logos and site settings; manage leads (status, notes, CSV export); dashboard with lead and WhatsApp-click counts.
 - **Leads:** saved in the database and emailed to the company. Turnstile blocks spam.
 - **WhatsApp:** click-to-chat buttons with a pre-filled message per page, and click tracking per page.
 - **SEO:** pre-rendered pages, per-page titles and descriptions, canonical URLs, Open Graph, `sitemap.xml`, `robots.txt`, schema.org `GeneralContractor` data.
@@ -246,7 +246,7 @@ Keep videos short and compressed (H.264 MP4, 720p/1080p). For long walkthroughs,
 ```
 app/
   (site)/              public pages: home, projects, projects/[slug], contact
-  admin/               admin pages (dashboard, leads, projects, services, testimonials, clients, settings)
+  admin/               admin pages (dashboard, leads, projects, services, clients, settings)
   api/                 wa-click tracking, revalidate, admin uploads
   media/[...key]/      serves R2 files when MEDIA_URL isn't set
   sitemap.ts robots.ts
