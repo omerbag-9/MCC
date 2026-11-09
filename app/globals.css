@@ -8,23 +8,23 @@
 @theme {
   --font-sans: "Hanken Grotesk Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  /* Navy */
-  --color-ink: #0b1f3a;
-  --color-ink-soft: #24385a;
-  --color-navy-2: #132b4d; /* one tone step up from the navy field */
-  --color-muted: #52627b; /* secondary text on white (AA) */
-  --color-on-navy-muted: #b4c0d3; /* secondary text on navy (AA) */
-  --color-steel: #7fa3d1; /* small marks on navy only: rules under labels, step numbers */
+  /* Brand: the deep teal-navy of the MCC logo (#042630) */
+  --color-ink: #042630;
+  --color-ink-soft: #0d3a47;
+  --color-navy-2: #0b3440; /* one tone step up from the navy field */
+  --color-muted: #4a6470; /* secondary text on white (AA) */
+  --color-on-navy-muted: #a7bfc6; /* secondary text on navy (AA) */
+  --color-steel: #6fa9b8; /* small marks on navy only: rules under labels, step numbers */
 
   /* White and its steps */
   --color-paper: #ffffff;
-  --color-sand: #f1f4f8; /* surface: one tone step from white */
-  --color-line: #dce2ea; /* admin tables and form fields only */
+  --color-sand: #f1f5f6; /* surface: one tone step from white */
+  --color-line: #d7e1e4; /* admin tables and form fields only */
 
   /* Kept names so the admin follows the theme */
-  --color-brand: #0b1f3a;
-  --color-brand-dark: #06132a;
-  --color-brand-soft: #e6ecf4;
+  --color-brand: #042630;
+  --color-brand-dark: #021a21;
+  --color-brand-soft: #e2ecef;
 
   /* Five type steps (house rule: no more) */
   --text-small: 0.875rem; /* 14px */

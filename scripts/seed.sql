@@ -9,7 +9,7 @@ DELETE FROM settings;
 
 INSERT INTO settings (id, company_name, tagline, hero_title, hero_subtitle, about_title, about_body, stats, phone, email, whatsapp_number, whatsapp_message, address, working_hours, seo_title, seo_description)
 VALUES (1,
-  'Atlas Build Co.',
+  'MCC Construction',
   'Building with integrity since 1998',
   'Building what lasts since 1998',
   'Design-build, general contracting and renovation, delivered on time, on budget and to the highest safety standards.',

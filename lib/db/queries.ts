@@ -23,7 +23,7 @@ import {
 
 export const DEFAULT_SETTINGS: Settings = {
   id: 1,
-  companyName: "Your Construction Co.",
+  companyName: "MCC Construction",
   tagline: "Building with integrity",
   heroTitle: "We build what lasts",
   heroSubtitle: "Residential, commercial and industrial construction delivered on time and on budget.",
