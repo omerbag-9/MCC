@@ -56,6 +56,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
             </div>
             <TextField name="aboutTitle" label="About section title" defaultValue={s.aboutTitle} />
             <TextArea name="aboutBody" label="About section text" defaultValue={s.aboutBody} rows={6} hint="Separate paragraphs with an empty line." />
+            <TextArea name="strengths" label="Why choose us" defaultValue={s.strengths} rows={6} hint="One point per line, about 3–6 words each. Shown with checkmarks on the home page; six works best." />
           </Card>
         </section>
 

@@ -6,7 +6,7 @@ DELETE FROM services;
 DELETE FROM clients;
 DELETE FROM settings;
 
-INSERT INTO settings (id, company_name, tagline, hero_title, hero_subtitle, about_title, about_body, stats, phone, email, whatsapp_number, whatsapp_message, address, working_hours, seo_title, seo_description)
+INSERT INTO settings (id, company_name, tagline, hero_title, hero_subtitle, about_title, about_body, strengths, stats, phone, email, whatsapp_number, whatsapp_message, address, working_hours, seo_title, seo_description)
 VALUES (1,
   'MCC Construction',
   'Building with integrity since 1998',
@@ -16,6 +16,12 @@ VALUES (1,
   'We are a full-service construction company delivering residential, commercial and industrial projects from first sketch to final handover.
 
 Our in-house engineers, project managers and site crews work as one team, so you get a single point of contact, transparent pricing and a schedule we stick to.',
+  'Design and build under one contract
+In-house engineers and site crews
+Fixed, transparent pricing
+Schedules we keep
+Safety-first sites
+Support after handover',
   '[{"value":"EGP 4.2B","label":"Total revenue"},{"value":"350+","label":"Projects completed"},{"value":"25+","label":"Years of experience"}]',
   '+20 100 123 4567',
   'info@example.com',

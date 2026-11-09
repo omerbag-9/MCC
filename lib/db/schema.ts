@@ -24,6 +24,8 @@ export const settings = sqliteTable("settings", {
   heroVideoKey: text("hero_video_key"),
   aboutTitle: text("about_title").notNull().default(""),
   aboutBody: text("about_body").notNull().default(""),
+  /** "Why choose us" points on the home page, one per line. */
+  strengths: text("strengths").notNull().default(""),
   /** JSON array of { value: string, label: string } */
   stats: text("stats", { mode: "json" }).$type<Stat[]>().notNull().default(sql`'[]'`),
   phone: text("phone").notNull().default(""),

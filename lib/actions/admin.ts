@@ -92,6 +92,7 @@ const settingsSchema = z.object({
   heroVideoKey: mediaKey,
   aboutTitle: str(200),
   aboutBody: str(5000),
+  strengths: str(2000),
   phone: str(40),
   email: z.union([z.literal(""), z.string().trim().email().max(200)]),
   whatsappNumber: str(20).regex(/^[\d+\s-]*$/, "digits only"),

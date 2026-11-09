@@ -3,7 +3,10 @@ import Link from "next/link";
 import SplitText from "@/components/reactbits/SplitText";
 import { ClientsLoop } from "@/components/site/clients-loop";
 import { HeroVideo } from "@/components/site/hero-video";
-import { ArrowRightIcon, PhoneIcon, WhatsAppIcon } from "@/components/site/icons";
+import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, WhatsAppIcon } from "@/components/site/icons";
+import { LeadForm } from "@/components/site/lead-form";
+import { ProjectFacts } from "@/components/site/project-facts";
+import { formatArea } from "@/components/site/project-card";
 import { Photo, photoPool } from "@/components/site/photo";
 import { Reveal } from "@/components/site/reveal";
 import { ServicesExplorer } from "@/components/site/services-explorer";
@@ -13,10 +16,11 @@ import {
   getClients,
   getFeaturedProjects,
   getPublishedServices,
+  getRecentProjectPhotos,
   getSettings,
 } from "@/lib/db/queries";
-import { getMediaBase, getSiteUrl } from "@/lib/env";
-import { paragraphs } from "@/lib/format";
+import { getMediaBase, getSiteUrl, getVar } from "@/lib/env";
+import { lines, paragraphs, specRows } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { jsonLdScript, organizationJsonLd } from "@/lib/seo";
 import { whatsappLink } from "@/lib/whatsapp";
@@ -26,13 +30,15 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 const thumbOf = (key: string | null) => (key ? key.replace(/\.(\w+)$/, "-thumb.$1") : null);
 
 export default async function HomePage() {
-  const [settings, services, featured, clients, mediaBase, siteUrl] = await Promise.all([
+  const [settings, services, featured, clients, photos, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
     getSettings(),
     getPublishedServices(),
     getFeaturedProjects(),
     getClients(),
+    getRecentProjectPhotos(6),
     getMediaBase(),
     getSiteUrl(),
+    getVar("TURNSTILE_SITE_KEY"),
   ]);
 
   const wa = whatsappLink(settings.whatsappNumber, settings.whatsappMessage);
@@ -45,6 +51,25 @@ export default async function HomePage() {
   const [firstStat] = stats;
   const heroVideo = mediaUrl(settings.heroVideoKey, mediaBase);
   const showcase = featured.slice(0, 3);
+  const strengths = lines(settings.strengths);
+  const whyPhoto = pool.next() ?? aboutPhoto;
+  const latest = featured[0];
+  const facts = featured.slice(0, 4).map((p) => ({
+    id: p.id,
+    title: p.title,
+    slug: p.slug,
+    rows: [
+      ...([
+        ["Category", p.category],
+        ["Location", p.location],
+        ["Completed", p.year?.toString() ?? ""],
+        ["Area", formatArea(p.areaM2) ?? ""],
+        ["Client", p.client],
+      ].filter(([, v]) => v) as [string, string][]),
+      ...specRows(p.specs),
+    ].slice(0, 9),
+    photo: <Photo mediaBase={mediaBase} src={p.coverKey} alt={p.title} sizes="(min-width: 1024px) 50vw, 100vw" />,
+  }));
 
   return (
     <>
@@ -52,7 +77,7 @@ export default async function HomePage() {
 
       {/* Hero: video (or the photograph) under a veil, the claim, two actions; the figures close the
           first screen, so hero and figures together fill exactly one screen. */}
-      <section className="relative isolate flex min-h-[calc(100svh-72px)] flex-col overflow-hidden bg-ink text-paper">
+      <section className="relative isolate flex min-h-[calc(100svh-72px)] flex-col overflow-hidden bg-ink text-paper lg:min-h-[calc(100svh-112px)]">
         <div className="absolute inset-0 -z-20">
           {heroVideo ? (
             <HeroVideo src={heroVideo} poster={mediaUrl(heroPhoto, mediaBase)} />
@@ -61,12 +86,12 @@ export default async function HomePage() {
           )}
         </div>
         <div className="absolute inset-0 -z-10 bg-ink/60" />
-        <div className="container-x flex flex-1 flex-col justify-center py-8 sm:py-14 lg:py-20">
-          <div className="max-w-3xl">
+        <div className="container-x flex flex-1 flex-col justify-center gap-10 py-8 sm:py-14 lg:flex-row lg:items-end lg:justify-between lg:py-16">
+          <div className="max-w-5xl">
             <SplitText
               tag="h1"
               text={settings.heroTitle || settings.companyName}
-              className="text-display font-semibold"
+              className="text-[clamp(2.25rem,1rem+4.6vw,5.25rem)] leading-[1.02] font-semibold tracking-[-0.03em]"
               splitType="words"
               delay={60}
               duration={0.9}
@@ -89,6 +114,24 @@ export default async function HomePage() {
               </Link>
             </Reveal>
           </div>
+          {latest && (
+            <Reveal delay={0.7} className="hidden shrink-0 lg:block">
+              <Link href={`/projects/${latest.slug}`} className="group flex w-80 items-stretch bg-paper text-ink">
+                <span className="relative w-28 shrink-0 overflow-hidden bg-ink">
+                  <span className="absolute inset-0">
+                    <Photo mediaBase={mediaBase} src={latest.coverKey} alt="" sizes="112px" className="transition-transform duration-500 group-hover:scale-110" />
+                  </span>
+                </span>
+                <span className="flex flex-1 flex-col justify-center px-5 py-4">
+                  <span className="text-small text-muted">Latest project</span>
+                  <span className="mt-1 font-semibold">{latest.title}</span>
+                  <span className="mt-2 inline-flex items-center gap-1.5 text-small font-semibold">
+                    View <ArrowRightIcon width={15} height={15} className="transition-transform group-hover:translate-x-1" />
+                  </span>
+                </span>
+              </Link>
+            </Reveal>
+          )}
         </div>
 
         {stats.length > 0 && (
@@ -140,6 +183,33 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
+
+      {/* Why choose us: the points beside a photograph, on a tone step */}
+      {strengths.length > 0 && (
+        <section className="section-y bg-sand" aria-labelledby="why-title">
+          <div className="container-x grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
+            <Reveal className="lg:col-span-5">
+              <h2 id="why-title" className="text-head font-semibold">Why clients choose {settings.companyName}</h2>
+              <p className="mt-5 max-w-md text-lead">One accountable team from the first drawing to the keys, and a site you would be proud to visit.</p>
+              <div className="mt-8 aspect-[16/10] overflow-hidden bg-ink">
+                <Photo mediaBase={mediaBase} src={whyPhoto} alt={`${settings.companyName} on site`} sizes="(min-width: 1024px) 40vw, 100vw" />
+              </div>
+            </Reveal>
+            <Reveal className="grid gap-1 sm:grid-cols-2 lg:col-span-7" stagger={0.06}>
+              {strengths.map((t) => (
+                <p key={t} className="flex min-h-28 items-center gap-4 bg-paper px-6 py-6 text-lead font-semibold">
+                  <span className="flex size-9 shrink-0 items-center justify-center bg-ink text-paper" aria-hidden>
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m5 12 5 5 9-10" />
+                    </svg>
+                  </span>
+                  {t}
+                </p>
+              ))}
+            </Reveal>
+          </div>
+        </section>
+      )}
 
       {/* Services: the list and the selected service's photograph, on navy */}
       {services.length > 0 && (
@@ -203,6 +273,35 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Project facts: one tab per featured project, its facts beside its photograph */}
+      {facts.length > 0 && (
+        <section className="section-y bg-ink text-paper" aria-labelledby="facts-title">
+          <div className="container-x">
+            <Reveal className="mb-10 grid gap-6 lg:grid-cols-12 lg:items-end">
+              <h2 id="facts-title" className="text-head font-semibold lg:col-span-5">Project facts</h2>
+              <p className="max-w-xl text-on-navy-muted lg:col-span-7">The numbers behind our recent work: size, scope and what was delivered.</p>
+            </Reveal>
+            <Reveal>
+              <ProjectFacts items={facts} />
+            </Reveal>
+          </div>
+        </section>
+      )}
+
+      {/* A strip of photographs from the sites, edge to edge */}
+      {photos.length >= 4 && (
+        <section aria-labelledby="strip-title">
+          <h2 id="strip-title" className="sr-only">From our sites</h2>
+          <Reveal className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:grid-cols-6" stagger={0.05}>
+            {photos.map((ph) => (
+              <Link key={ph.key} href={`/projects/${ph.slug}`} className="group relative block aspect-square overflow-hidden bg-ink" title={ph.title}>
+                <Photo mediaBase={mediaBase} src={ph.key} alt={ph.alt || ph.title} sizes="(min-width: 1024px) 17vw, 50vw" className="transition-transform duration-700 group-hover:scale-110" />
+              </Link>
+            ))}
+          </Reveal>
+        </section>
+      )}
+
       {/* Clients: their logos moving slowly across the page, nothing else */}
       {clients.length > 0 && (
         <section className="py-14 lg:py-20" aria-labelledby="clients-title">
@@ -213,33 +312,72 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Call to action on navy over a photograph */}
-      <section id="contact" className="relative isolate overflow-hidden bg-ink text-paper">
+      {/* Contact: how to reach us beside the quote form, on ink over a photograph */}
+      <section id="contact" className="relative isolate overflow-hidden bg-ink text-paper" aria-labelledby="contact-title">
         <div className="absolute inset-0 -z-20">
           <Photo mediaBase={mediaBase} src={ctaPhoto} alt="" sizes="100vw" />
         </div>
-        <div className="absolute inset-0 -z-10 bg-ink/85" />
-        <Reveal className="container-x grid gap-10 py-16 lg:grid-cols-12 lg:items-center lg:py-20">
-          <div className="lg:col-span-7">
-            <h2 className="text-head font-semibold">Planning a project?</h2>
-            <p className="mt-4 max-w-xl text-on-navy-muted">
+        <div className="absolute inset-0 -z-10 bg-ink/90" />
+        <div className="container-x section-y grid gap-12 lg:grid-cols-12 lg:gap-16">
+          <Reveal className="lg:col-span-5">
+            <h2 id="contact-title" className="text-head font-semibold">Have a project in mind?</h2>
+            <p className="mt-5 max-w-md text-lead text-paper/90">
               Tell us what you&apos;re building. We reply within one business day with next steps and a free estimate.
             </p>
-          </div>
-          <div className="flex flex-wrap gap-3 lg:col-span-5 lg:justify-end">
-            <Link href="/contact" className="btn-light">Request a free quote</Link>
-            {wa && (
-              <WhatsAppLink href={wa} className="btn-whatsapp">
-                <WhatsAppIcon width={18} height={18} /> WhatsApp
-              </WhatsAppLink>
-            )}
-            {settings.phone && (
-              <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="btn-outline">
-                <PhoneIcon width={18} height={18} /> {settings.phone}
-              </a>
-            )}
-          </div>
-        </Reveal>
+            <ul className="mt-10 grid gap-1">
+              {settings.phone && (
+                <li>
+                  <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="flex items-center gap-4 bg-navy-2 px-5 py-4 transition-colors hover:bg-ink-soft">
+                    <PhoneIcon width={20} height={20} />
+                    <span>
+                      <span className="block text-small text-on-navy-muted">Call us</span>
+                      <span className="font-semibold">{settings.phone}</span>
+                    </span>
+                  </a>
+                </li>
+              )}
+              {wa && (
+                <li>
+                  <WhatsAppLink href={wa} className="flex items-center gap-4 bg-navy-2 px-5 py-4 transition-colors hover:bg-ink-soft">
+                    <WhatsAppIcon width={20} height={20} />
+                    <span>
+                      <span className="block text-small text-on-navy-muted">WhatsApp</span>
+                      <span className="font-semibold">Message us</span>
+                    </span>
+                  </WhatsAppLink>
+                </li>
+              )}
+              {settings.email && (
+                <li>
+                  <a href={`mailto:${settings.email}`} className="flex items-center gap-4 bg-navy-2 px-5 py-4 transition-colors hover:bg-ink-soft">
+                    <MailIcon width={20} height={20} />
+                    <span>
+                      <span className="block text-small text-on-navy-muted">Email</span>
+                      <span className="font-semibold break-all">{settings.email}</span>
+                    </span>
+                  </a>
+                </li>
+              )}
+              {settings.address && (
+                <li className="flex items-center gap-4 bg-navy-2 px-5 py-4">
+                  <PinIcon width={20} height={20} />
+                  <span>
+                    <span className="block text-small text-on-navy-muted">Office</span>
+                    <span className="font-semibold">{settings.address}</span>
+                  </span>
+                </li>
+              )}
+            </ul>
+          </Reveal>
+          <Reveal className="lg:col-span-7">
+            <div className="bg-paper p-6 text-ink sm:p-10">
+              <h3 className="text-lead font-semibold">Request a free quote</h3>
+              <div className="mt-6">
+                <LeadForm pageSource="/" services={services.map((s) => s.title)} turnstileSiteKey={turnstileSiteKey} />
+              </div>
+            </div>
+          </Reveal>
+        </div>
       </section>
     </>
   );
