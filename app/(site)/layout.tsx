@@ -2,13 +2,14 @@ import Script from "next/script";
 import { Footer } from "@/components/site/footer";
 import { Header, TopBar } from "@/components/site/header";
 import { WhatsAppFloat } from "@/components/site/whatsapp";
-import { getFeaturedProjects, getPublishedServices, getSettings } from "@/lib/db/queries";
+import { getContent, getFeaturedProjects, getPublishedServices, getSettings } from "@/lib/db/queries";
 import { getVar } from "@/lib/env";
 import { whatsappLink } from "@/lib/whatsapp";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const [settings, services, projects, analyticsToken] = await Promise.all([
+  const [settings, content, services, projects, analyticsToken] = await Promise.all([
     getSettings(),
+    getContent(),
     getPublishedServices(),
     getFeaturedProjects(),
     getVar("CF_ANALYTICS_TOKEN"),
@@ -21,9 +22,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         Skip to content
       </a>
       <TopBar settings={settings} />
-      <Header companyName={settings.companyName} phone={settings.phone} />
+      <Header companyName={settings.companyName} phone={settings.phone} quoteLabel={content.quoteButton} />
       <main id="main">{children}</main>
-      <Footer settings={settings} services={services} projects={projects} />
+      <Footer settings={settings} services={services} projects={projects} quoteLabel={content.quoteButton} />
       {wa && <WhatsAppFloat href={wa} />}
       {analyticsToken && (
         <Script

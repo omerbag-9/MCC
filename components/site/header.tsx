@@ -58,7 +58,7 @@ export function TopBar({ settings }: { settings: Settings }) {
 }
 
 /** Sticky dark navy bar on every page. */
-export function Header({ companyName, phone }: { companyName: string; phone: string }) {
+export function Header({ companyName, phone, quoteLabel = "Request a quote" }: { companyName: string; phone: string; quoteLabel?: string }) {
   return (
     <header className="sticky top-0 z-40 bg-ink text-paper">
       <div className="container-x flex h-[72px] items-center justify-between gap-6">
@@ -87,7 +87,7 @@ export function Header({ companyName, phone }: { companyName: string; phone: str
             </a>
           )}
           <Link href="/contact" className="btn-light min-h-11 px-5">
-            Request a quote
+            {quoteLabel}
           </Link>
         </div>
 
@@ -107,7 +107,7 @@ export function Header({ companyName, phone }: { companyName: string; phone: str
               </Link>
             ))}
             <Link href="/contact" className="btn-light mt-5 w-full">
-              Request a quote
+              {quoteLabel}
             </Link>
           </nav>
         </MobileMenu>

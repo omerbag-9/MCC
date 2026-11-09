@@ -10,7 +10,17 @@ const PAGES = [
   { href: "/contact", label: "Request a quote" },
 ];
 
-export function Footer({ settings, services, projects }: { settings: Settings; services: Service[]; projects: Project[] }) {
+export function Footer({
+  settings,
+  services,
+  projects,
+  quoteLabel = "Request a quote",
+}: {
+  settings: Settings;
+  services: Service[];
+  projects: Project[];
+  quoteLabel?: string;
+}) {
   const socials = (
     [
       ["facebook", settings.facebookUrl],
@@ -53,7 +63,7 @@ export function Footer({ settings, services, projects }: { settings: Settings; s
           <ul className="mt-5 space-y-3 text-on-navy-muted">
             {PAGES.map((p) => (
               <li key={p.href}>
-                <Link href={p.href} className="transition-colors hover:text-paper">{p.label}</Link>
+                <Link href={p.href} className="transition-colors hover:text-paper">{p.href === "/contact" ? quoteLabel : p.label}</Link>
               </li>
             ))}
           </ul>
@@ -118,7 +128,7 @@ export function Footer({ settings, services, projects }: { settings: Settings; s
       <div className="bg-brand-dark">
         <div className="container-x flex flex-wrap items-center justify-between gap-3 py-5 text-small text-on-navy-muted">
           <p>© {new Date().getFullYear()} {settings.companyName}. All rights reserved.</p>
-          <Link href="/contact" className="hover:text-paper">Request a free quote</Link>
+          <Link href="/contact" className="hover:text-paper">{quoteLabel}</Link>
         </div>
       </div>
     </footer>

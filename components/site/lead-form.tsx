@@ -11,11 +11,14 @@ export function LeadForm({
   services,
   turnstileSiteKey,
   dark = false,
+  labels,
 }: {
   pageSource: string;
   services: string[];
   turnstileSiteKey: string;
   dark?: boolean;
+  /** Texts from Admin → Website content. */
+  labels?: { button: string; successTitle: string; successText: string };
 }) {
   const [state, action, pending] = useActionState(submitLead, initialState);
   const turnstile = useRef<TurnstileHandle>(null);
@@ -33,8 +36,8 @@ export function LeadForm({
             <path d="m5 12 5 5 9-10" />
           </svg>
         </div>
-        <p className="mt-4 text-lg font-semibold">Thank you! We received your request.</p>
-        <p className={`mt-1 ${dark ? "text-on-navy-muted" : "text-muted"}`}>Our team will get back to you shortly.</p>
+        <p className="mt-4 text-lg font-semibold">{labels?.successTitle ?? "Thank you! We received your request."}</p>
+        <p className={`mt-1 ${dark ? "text-on-navy-muted" : "text-muted"}`}>{labels?.successText ?? "Our team will get back to you shortly."}</p>
       </div>
     );
   }
@@ -102,7 +105,7 @@ export function LeadForm({
 
       <div className="sm:col-span-2">
         <button type="submit" className="btn-primary w-full sm:w-auto" disabled={pending}>
-          {pending ? "Sending…" : "Request a free quote"}
+          {pending ? "Sending…" : (labels?.button ?? "Request a free quote")}
         </button>
       </div>
     </form>

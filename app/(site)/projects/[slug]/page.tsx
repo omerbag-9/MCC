@@ -7,7 +7,7 @@ import { Photo, photoPool } from "@/components/site/photo";
 import { formatArea } from "@/components/site/project-card";
 import { Reveal } from "@/components/site/reveal";
 import { WhatsAppLink } from "@/components/site/whatsapp";
-import { getPublishedProjectBySlug, getPublishedProjects, getSettings } from "@/lib/db/queries";
+import { getContent, getPublishedProjectBySlug, getPublishedProjects, getSettings } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl } from "@/lib/env";
 import { lines, paragraphs, specRows } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
@@ -39,9 +39,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
-  const [project, settings, mediaBase, siteUrl, allProjects] = await Promise.all([
+  const [project, settings, c, mediaBase, siteUrl, allProjects] = await Promise.all([
     getPublishedProjectBySlug(slug),
     getSettings(),
+    getContent(),
     getMediaBase(),
     getSiteUrl(),
     getPublishedProjects(),
@@ -138,14 +139,14 @@ export default async function ProjectPage({ params }: Props) {
       <section className="section-y">
         <div className="container-x grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-6">
-            <h2 className="text-head font-semibold">About the project</h2>
+            <h2 className="text-head font-semibold">{c.projectAboutTitle}</h2>
             {(body.length > 0 ? body : [project.summary].filter(Boolean)).map((p, i) => (
               <p key={i} className={i === 0 ? "mt-6 text-lead" : "mt-4"}>
                 {p}
               </p>
             ))}
             <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/contact" className="btn-primary">Request a quote</Link>
+              <Link href="/contact" className="btn-primary">{c.quoteButton}</Link>
               {wa && (
                 <WhatsAppLink href={wa} className="btn-whatsapp">
                   <WhatsAppIcon width={18} height={18} /> Ask on WhatsApp
@@ -167,7 +168,7 @@ export default async function ProjectPage({ params }: Props) {
         <section className="section-y bg-ink text-paper" aria-labelledby="overview-title">
           <div className="container-x grid gap-12 lg:grid-cols-12 lg:items-start lg:gap-16">
             <Reveal className="lg:col-span-6">
-              <h2 id="overview-title" className="text-head font-semibold">Project overview</h2>
+              <h2 id="overview-title" className="text-head font-semibold">{c.projectOverviewTitle}</h2>
               <table className="mt-8 w-full text-left">
                 <caption className="sr-only">Facts about {project.title}</caption>
                 <tbody>
@@ -194,8 +195,8 @@ export default async function ProjectPage({ params }: Props) {
         <section className="section-y bg-sand" aria-labelledby="highlights-title">
           <div className="container-x grid gap-10 lg:grid-cols-12 lg:gap-16">
             <Reveal className="lg:col-span-4">
-              <h2 id="highlights-title" className="text-head font-semibold">What we delivered</h2>
-              <p className="mt-4 max-w-sm text-muted">The features, systems and finishes handed over on this project.</p>
+              <h2 id="highlights-title" className="text-head font-semibold">{c.projectHighlightsTitle}</h2>
+              <p className="mt-4 max-w-sm text-muted">{c.projectHighlightsIntro}</p>
             </Reveal>
             <Reveal className="grid gap-1 sm:grid-cols-2 lg:col-span-8" stagger={0.05}>
               {highlights.map((h) => (
@@ -214,7 +215,7 @@ export default async function ProjectPage({ params }: Props) {
         <section className="section-y" aria-labelledby="video-title">
           <div className="container-x">
             <Reveal>
-              <h2 id="video-title" className="mb-8 text-head font-semibold">Video tour</h2>
+              <h2 id="video-title" className="mb-8 text-head font-semibold">{c.projectVideoTitle}</h2>
               <div className="space-y-6">
                 {videos.map((v) => (
                   <video
@@ -237,7 +238,7 @@ export default async function ProjectPage({ params }: Props) {
       {gallery.length > 0 && (
         <section className={videos.length > 0 ? "pb-16 lg:pb-24" : "section-y"} aria-labelledby="gallery-title">
           <div className="container-x">
-            <h2 id="gallery-title" className="mb-8 text-head font-semibold">Gallery</h2>
+            <h2 id="gallery-title" className="mb-8 text-head font-semibold">{c.projectGalleryTitle}</h2>
             <Gallery items={gallery} />
           </div>
         </section>
@@ -274,11 +275,11 @@ export default async function ProjectPage({ params }: Props) {
       <section className="bg-sand">
         <Reveal className="container-x grid gap-8 py-14 lg:grid-cols-12 lg:items-center lg:py-16">
           <div className="lg:col-span-8">
-            <h2 className="text-head font-semibold">Planning something similar?</h2>
-            <p className="mt-3 max-w-xl">Tell us about it and get a free, no-obligation quote within one business day.</p>
+            <h2 className="text-head font-semibold">{c.projectCtaTitle}</h2>
+            <p className="mt-3 max-w-xl">{c.projectCtaText}</p>
           </div>
           <div className="flex flex-wrap gap-3 lg:col-span-4 lg:justify-end">
-            <Link href="/contact" className="btn-primary">Request a quote</Link>
+            <Link href="/contact" className="btn-primary">{c.quoteButton}</Link>
             <Link href="/projects" className="btn bg-paper text-ink hover:bg-brand-soft">All projects</Link>
           </div>
         </Reveal>

@@ -14,6 +14,7 @@ import { Stat } from "@/components/site/stat";
 import { WhatsAppLink } from "@/components/site/whatsapp";
 import {
   getClients,
+  getContent,
   getFeaturedProjects,
   getPublishedServices,
   getSettings,
@@ -29,8 +30,9 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 const thumbOf = (key: string | null) => (key ? key.replace(/\.(\w+)$/, "-thumb.$1") : null);
 
 export default async function HomePage() {
-  const [settings, services, featured, clients, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
+  const [settings, c, services, featured, clients, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
     getSettings(),
+    getContent(),
     getPublishedServices(),
     getFeaturedProjects(),
     getClients(),
@@ -42,15 +44,15 @@ export default async function HomePage() {
   const wa = whatsappLink(settings.whatsappNumber, settings.whatsappMessage);
   const pool = photoPool(settings.heroImageKey, ...featured.map((p) => p.coverKey));
   const heroPhoto = pool.next();
-  const aboutPhoto = pool.next() ?? heroPhoto;
-  const ctaPhoto = pool.any(3);
+  const aboutPhoto = c.aboutImage || (pool.next() ?? heroPhoto);
+  const ctaPhoto = c.contactImage || pool.any(3);
   const about = paragraphs(settings.aboutBody);
   const stats = settings.stats.slice(0, 3);
   const [firstStat] = stats;
   const heroVideo = mediaUrl(settings.heroVideoKey, mediaBase);
   const showcase = featured.slice(0, 3);
   const strengths = lines(settings.strengths);
-  const whyPhoto = pool.next() ?? aboutPhoto;
+  const whyPhoto = c.whyImage || (pool.next() ?? aboutPhoto);
   const facts = featured.slice(0, 4).map((p) => ({
     id: p.id,
     title: p.title,
@@ -104,10 +106,10 @@ export default async function HomePage() {
             )}
             <Reveal delay={0.5} className="mt-9 flex flex-wrap items-center gap-3">
               <Link href="/contact" className="btn-light">
-                Request a quote
+                {c.quoteButton}
               </Link>
               <Link href="/projects" className="btn-outline">
-                View our projects <ArrowRightIcon width={18} height={18} />
+                {c.projectsButton} <ArrowRightIcon width={18} height={18} />
               </Link>
             </Reveal>
           </div>
@@ -153,7 +155,7 @@ export default async function HomePage() {
             ))}
             <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
               <Link href="/contact" className="btn-primary">
-                Talk to our team
+                {c.aboutButton}
               </Link>
               <Link href="/#services" className="link-arrow">
                 Our services <ArrowRightIcon width={18} height={18} />
@@ -164,12 +166,12 @@ export default async function HomePage() {
       </section>
 
       {/* Why choose us: the points beside a photograph, on a tone step */}
-      {strengths.length > 0 && (
+      {c.on("showWhy") && strengths.length > 0 && (
         <section className="section-y bg-sand" aria-labelledby="why-title">
           <div className="container-x grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
             <Reveal className="lg:col-span-5">
-              <h2 id="why-title" className="text-head font-semibold">Why clients choose {settings.companyName}</h2>
-              <p className="mt-5 max-w-md text-lead">One accountable team from the first drawing to the keys, and a site you would be proud to visit.</p>
+              <h2 id="why-title" className="text-head font-semibold">{c.whyTitle}</h2>
+              <p className="mt-5 max-w-md text-lead">{c.whyIntro}</p>
               <div className="mt-8 aspect-[16/10] overflow-hidden bg-ink">
                 <Photo mediaBase={mediaBase} src={whyPhoto} alt={`${settings.companyName} on site`} sizes="(min-width: 1024px) 40vw, 100vw" />
               </div>
@@ -189,13 +191,13 @@ export default async function HomePage() {
       )}
 
       {/* Services: the list and the selected service's photograph, on navy */}
-      {services.length > 0 && (
+      {c.on("showServices") && services.length > 0 && (
         <section id="services" className="section-y bg-ink text-paper">
           <div className="container-x">
             <Reveal className="mb-12 grid gap-6 lg:grid-cols-12 lg:items-end">
-              <h2 className="text-head font-semibold lg:col-span-5">What we build</h2>
+              <h2 className="text-head font-semibold lg:col-span-5">{c.servicesTitle}</h2>
               <p className="max-w-xl text-on-navy-muted lg:col-span-7">
-                One team runs design, permits and construction, from the first drawing to the handover.
+                {c.servicesIntro}
               </p>
             </Reveal>
             <Reveal>
@@ -214,11 +216,11 @@ export default async function HomePage() {
       )}
 
       {/* Projects: one large and two smaller, each captioned on a navy panel */}
-      {showcase.length > 0 && (
+      {c.on("showFeatured") && showcase.length > 0 && (
         <section id="projects" className="section-y">
           <div className="container-x">
             <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-6">
-              <h2 className="text-head font-semibold">Featured projects</h2>
+              <h2 className="text-head font-semibold">{c.featuredTitle}</h2>
               <Link href="/projects" className="link-arrow">
                 All projects <ArrowRightIcon width={18} height={18} />
               </Link>
@@ -251,12 +253,12 @@ export default async function HomePage() {
       )}
 
       {/* Project facts: one tab per featured project, its facts beside its photograph */}
-      {facts.length > 0 && (
+      {c.on("showFacts") && facts.length > 0 && (
         <section className="section-y bg-ink text-paper" aria-labelledby="facts-title">
           <div className="container-x">
             <Reveal className="mb-10 grid gap-6 lg:grid-cols-12 lg:items-end">
-              <h2 id="facts-title" className="text-head font-semibold lg:col-span-5">Project facts</h2>
-              <p className="max-w-xl text-on-navy-muted lg:col-span-7">The numbers behind our recent work: size, scope and what was delivered.</p>
+              <h2 id="facts-title" className="text-head font-semibold lg:col-span-5">{c.factsTitle}</h2>
+              <p className="max-w-xl text-on-navy-muted lg:col-span-7">{c.factsIntro}</p>
             </Reveal>
             <Reveal>
               <ProjectFacts items={facts} />
@@ -266,7 +268,7 @@ export default async function HomePage() {
       )}
 
       {/* Clients: their logos moving slowly across the page, nothing else */}
-      {clients.length > 0 && (
+      {c.on("showClients") && clients.length > 0 && (
         <section className="py-14 lg:py-20" aria-labelledby="clients-title">
           <h2 id="clients-title" className="sr-only">Trusted by</h2>
           <ClientsLoop
@@ -283,9 +285,9 @@ export default async function HomePage() {
         <div className="absolute inset-0 -z-10 bg-ink/90" />
         <div className="container-x section-y grid gap-12 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-5">
-            <h2 id="contact-title" className="text-head font-semibold">Have a project in mind?</h2>
+            <h2 id="contact-title" className="text-head font-semibold">{c.contactTitle}</h2>
             <p className="mt-5 max-w-md text-lead text-paper/90">
-              Tell us what you&apos;re building. We reply within one business day with next steps and a free estimate.
+              {c.contactIntro}
             </p>
             <ul className="mt-10 grid gap-1">
               {settings.phone && (
@@ -334,9 +336,9 @@ export default async function HomePage() {
           </Reveal>
           <Reveal className="lg:col-span-7">
             <div className="bg-paper p-6 text-ink sm:p-10">
-              <h3 className="text-lead font-semibold">Request a free quote</h3>
+              <h3 className="text-lead font-semibold">{c.formTitle}</h3>
               <div className="mt-6">
-                <LeadForm pageSource="/" services={services.map((s) => s.title)} turnstileSiteKey={turnstileSiteKey} />
+                <LeadForm pageSource="/" services={services.map((s) => s.title)} turnstileSiteKey={turnstileSiteKey} labels={{ button: c.formButton, successTitle: c.formSuccessTitle, successText: c.formSuccessText }} />
               </div>
             </div>
           </Reveal>

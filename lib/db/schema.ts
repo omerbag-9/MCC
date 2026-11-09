@@ -26,6 +26,8 @@ export const settings = sqliteTable("settings", {
   aboutBody: text("about_body").notNull().default(""),
   /** "Why choose us" points on the home page, one per line. */
   strengths: text("strengths").notNull().default(""),
+  /** Editable page text, images and section switches (lib/content.ts), as { key: value }. */
+  content: text("content", { mode: "json" }).$type<Record<string, string>>().notNull().default(sql`'{}'`),
   /** JSON array of { value: string, label: string } */
   stats: text("stats", { mode: "json" }).$type<Stat[]>().notNull().default(sql`'[]'`),
   phone: text("phone").notNull().default(""),
