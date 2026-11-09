@@ -3,7 +3,6 @@
 DELETE FROM project_media;
 DELETE FROM projects;
 DELETE FROM services;
-DELETE FROM testimonials;
 DELETE FROM clients;
 DELETE FROM settings;
 
@@ -17,7 +16,7 @@ VALUES (1,
   'We are a full-service construction company delivering residential, commercial and industrial projects from first sketch to final handover.
 
 Our in-house engineers, project managers and site crews work as one team, so you get a single point of contact, transparent pricing and a schedule we stick to.',
-  '[{"value":"25+","label":"Years of experience"},{"value":"350+","label":"Projects completed"},{"value":"120","label":"Skilled staff"},{"value":"0","label":"Lost-time incidents in 2025"}]',
+  '[{"value":"EGP 4.2B","label":"Total revenue"},{"value":"350+","label":"Projects completed"},{"value":"25+","label":"Years of experience"}]',
   '+20 100 123 4567',
   'info@example.com',
   '201001234567',
@@ -43,11 +42,6 @@ The villa features double-height living spaces, a basement entertainment area an
   ('nile-business-tower', 'Nile Business Tower', 'Twelve-storey Grade-A office building delivered in 22 months.', 'Full general contracting for a 12-storey office tower with two basement parking levels and a glass curtain-wall facade.', 'Commercial', 'New Capital', 2024, 18500, 'Nile Developments', 1, 1, 2),
   ('delta-logistics-hub', 'Delta Logistics Hub', 'Steel-frame distribution centre with 40 loading docks.', 'Design and construction of a 24,000 m² warehouse with a high-bay racking area, offices and truck yard.', 'Industrial', '10th of Ramadan', 2024, 24000, 'Delta Logistics', 1, 1, 3),
   ('zamalek-apartment-renovation', 'Zamalek Apartment Renovation', 'Complete renovation of a 1930s apartment, preserving its original details.', 'Structural repairs, new MEP, custom joinery and restoration of the original parquet floors and mouldings.', 'Renovation', 'Zamalek, Cairo', 2023, 280, 'Private client', 0, 1, 4);
-
-INSERT INTO testimonials (name, role, quote, sort_order) VALUES
-  ('Ahmed Hassan', 'Homeowner, Sheikh Zayed', 'They delivered our villa two weeks early and the finishing quality is outstanding. Communication was clear from day one.', 1),
-  ('Sara Mahmoud', 'Operations Director, Delta Logistics', 'A professional team that understood our operational needs. The warehouse was handed over on budget.', 2),
-  ('Omar Farouk', 'CEO, Nile Developments', 'Our third project together. Reliable, safety-focused and transparent on costs.', 3);
 
 INSERT INTO clients (name, url, sort_order) VALUES
   ('Nile Developments', '', 1),

@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LogoMark } from "@/components/site/logo";
 import { count, eq } from "drizzle-orm";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Toaster } from "@/components/admin/toast";
 import { adminLogout } from "@/lib/actions/login";
 import { ensureAdmin, isPasswordLoginEnabled } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { clients, leads, projects, services, testimonials } from "@/lib/db/schema";
+import { clients, leads, projects, services } from "@/lib/db/schema";
 
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s | Admin" },
@@ -16,12 +17,11 @@ export const metadata: Metadata = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await ensureAdmin();
   const db = await getDb();
-  const [passwordLogin, [newLeads], [projectCount], [serviceCount], [testimonialCount], [clientCount]] = await Promise.all([
+  const [passwordLogin, [newLeads], [projectCount], [serviceCount], [clientCount]] = await Promise.all([
     isPasswordLoginEnabled(),
     db.select({ n: count() }).from(leads).where(eq(leads.status, "new")),
     db.select({ n: count() }).from(projects),
     db.select({ n: count() }).from(services),
-    db.select({ n: count() }).from(testimonials),
     db.select({ n: count() }).from(clients),
   ]);
 
@@ -30,11 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <aside className="bg-ink text-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-64 lg:shrink-0 lg:flex-col">
         <div className="flex items-center justify-between px-4 py-4 lg:px-5 lg:py-6">
           <Link href="/admin" className="flex items-center gap-3 font-semibold">
-            <span className="flex size-8 items-center justify-center bg-paper text-ink">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                <path d="M2 22V9l10-6 10 6v13h-7v-7H9v7z" />
-              </svg>
-            </span>
+            <LogoMark size={30} />
             Website admin
           </Link>
           <Link href="/" target="_blank" className="text-xs text-white/60 hover:text-white lg:hidden">View site ↗</Link>
@@ -45,7 +41,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             { href: "/admin/leads", label: "Leads", count: newLeads.n, alert: true },
             { href: "/admin/projects", label: "Projects", count: projectCount.n },
             { href: "/admin/services", label: "Services", count: serviceCount.n },
-            { href: "/admin/testimonials", label: "Testimonials", count: testimonialCount.n },
             { href: "/admin/clients", label: "Clients", count: clientCount.n },
             { href: "/admin/settings", label: "Site settings" },
           ]}

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import LogoLoop from "@/components/reactbits/LogoLoop";
 import SplitText from "@/components/reactbits/SplitText";
+import { ClientLogo } from "@/components/site/client-logo";
+import { HeroVideo } from "@/components/site/hero-video";
 import { ArrowRightIcon, PhoneIcon, WhatsAppIcon } from "@/components/site/icons";
 import { Photo, photoPool } from "@/components/site/photo";
 import { Reveal } from "@/components/site/reveal";
@@ -12,7 +13,6 @@ import {
   getClients,
   getFeaturedProjects,
   getPublishedServices,
-  getPublishedTestimonials,
   getSettings,
 } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl } from "@/lib/env";
@@ -26,11 +26,10 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 const thumbOf = (key: string | null) => (key ? key.replace(/\.(\w+)$/, "-thumb.$1") : null);
 
 export default async function HomePage() {
-  const [settings, services, featured, testimonials, clients, mediaBase, siteUrl] = await Promise.all([
+  const [settings, services, featured, clients, mediaBase, siteUrl] = await Promise.all([
     getSettings(),
     getPublishedServices(),
     getFeaturedProjects(),
-    getPublishedTestimonials(),
     getClients(),
     getMediaBase(),
     getSiteUrl(),
@@ -42,21 +41,27 @@ export default async function HomePage() {
   const aboutPhoto = pool.next() ?? heroPhoto;
   const ctaPhoto = pool.any(3);
   const about = paragraphs(settings.aboutBody);
-  const [quote, ...moreQuotes] = testimonials;
-  const [firstStat] = settings.stats;
+  const stats = settings.stats.slice(0, 3);
+  const [firstStat] = stats;
+  const heroVideo = mediaUrl(settings.heroVideoKey, mediaBase);
   const showcase = featured.slice(0, 3);
 
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(organizationJsonLd(settings, siteUrl, mediaBase))} />
 
-      {/* Hero: photograph under a navy veil, the claim, two actions; the record sits on its lower edge */}
-      <section className="relative isolate overflow-hidden bg-ink text-paper">
+      {/* Hero: video (or the photograph) under a veil, the claim, two actions; the figures close the
+          first screen, so hero and figures together fill exactly one screen. */}
+      <section className="relative isolate flex min-h-[calc(100svh-72px)] flex-col overflow-hidden bg-ink text-paper">
         <div className="absolute inset-0 -z-20">
-          <Photo mediaBase={mediaBase} src={heroPhoto} alt={settings.companyName} sizes="100vw" priority className="hero-photo" />
+          {heroVideo ? (
+            <HeroVideo src={heroVideo} poster={mediaUrl(heroPhoto, mediaBase)} />
+          ) : (
+            <Photo mediaBase={mediaBase} src={heroPhoto} alt={settings.companyName} sizes="100vw" priority className="hero-photo" />
+          )}
         </div>
-        <div className="absolute inset-0 -z-10 bg-ink/65" />
-        <div className="container-x flex min-h-[560px] flex-col justify-center py-20 lg:min-h-[calc(86svh-72px)] lg:py-28">
+        <div className="absolute inset-0 -z-10 bg-ink/60" />
+        <div className="container-x flex flex-1 flex-col justify-center py-8 sm:py-14 lg:py-20">
           <div className="max-w-3xl">
             <SplitText
               tag="h1"
@@ -86,16 +91,16 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {settings.stats.length > 0 && (
+        {stats.length > 0 && (
           <div className="bg-ink">
-            <Reveal className="container-x grid grid-cols-2 gap-y-8 py-9 lg:grid-cols-4 lg:py-11" stagger={0.06} onLoad delay={0.6}>
-              {settings.stats.map((s) => (
-                <dl key={s.label}>
+            <Reveal className="container-x grid grid-cols-3 gap-4 py-6 sm:py-8 lg:py-10" stagger={0.08} onLoad delay={0.6}>
+              {stats.map((s) => (
+                <dl key={s.label} className="min-w-0">
                   <dt className="sr-only">{s.label}</dt>
-                  <dd className="text-head font-semibold tabular-nums">
+                  <dd className="text-[clamp(1.375rem,0.9rem+2.4vw,3.25rem)] leading-none font-semibold tracking-tight tabular-nums">
                     <Stat value={s.value} />
                   </dd>
-                  <dd className="mt-1 text-small text-on-navy-muted">{s.label}</dd>
+                  <dd className="mt-2 text-small text-on-navy-muted sm:text-body">{s.label}</dd>
                 </dl>
               ))}
             </Reveal>
@@ -198,71 +203,34 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Testimonials */}
-      {quote && (
-        <section className="section-y bg-sand">
-          <div className="container-x grid gap-12 lg:grid-cols-12">
-            <Reveal className="lg:col-span-6">
-              <h2 className="text-head font-semibold">What our clients say</h2>
-              <figure className="mt-8">
-                <blockquote className="text-lead leading-relaxed font-medium">“{quote.quote}”</blockquote>
-                <figcaption className="mt-6">
-                  <span className="font-semibold">{quote.name}</span>
-                  {quote.role && <span className="text-muted">, {quote.role}</span>}
-                </figcaption>
-              </figure>
-            </Reveal>
-            {moreQuotes.length > 0 && (
-              <Reveal className="grid gap-4 lg:col-span-6" stagger={0.1}>
-                {moreQuotes.slice(0, 2).map((t) => (
-                  <figure key={t.id} className="bg-paper p-8">
-                    <blockquote>“{t.quote}”</blockquote>
-                    <figcaption className="mt-5 text-small">
-                      <span className="font-semibold">{t.name}</span>
-                      {t.role && <span className="text-muted">, {t.role}</span>}
-                    </figcaption>
-                  </figure>
-                ))}
-              </Reveal>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* Clients: a slow loop of names or logos (React Bits LogoLoop) */}
+      {/* Clients: a wall of logos on a tone step, the heading beside it */}
       {clients.length > 0 && (
-        <section className="py-14 lg:py-16" aria-labelledby="clients-title">
-          <div className="container-x grid items-center gap-8 lg:grid-cols-12">
-            <h2 id="clients-title" className="text-lead font-semibold lg:col-span-3">
-              Trusted by
-            </h2>
-            {/* min-w-0: a grid cell otherwise grows to the loop's content and the loop never settles */}
-            {/* Phones and tablets: a plain wrapped list. Desktop: the moving loop. */}
-            <p className="text-lead leading-[1.9] font-semibold text-ink-soft lg:hidden">
-              {clients.map((c, i) => (
-                <span key={c.id}>
-                  <span className="whitespace-nowrap">{c.name}</span>
-                  {i < clients.length - 1 && <span className="text-muted">{"\u00a0· "}</span>}
-                </span>
-              ))}
-            </p>
-            <div className="hidden min-w-0 overflow-hidden lg:col-span-9 lg:block">
-              <LogoLoop
-                logos={clients.map((c) => {
-                  const logo = mediaUrl(c.logoKey, mediaBase);
-                  return logo
-                    ? { src: logo, alt: c.name, href: c.url || undefined, title: c.name }
-                    : { node: <span className="text-lead font-semibold whitespace-nowrap text-ink-soft">{c.name}</span>, href: c.url || undefined, title: c.name };
-                })}
-                speed={40}
-                logoHeight={40}
-                gap={64}
-                pauseOnHover
-                fadeOut
-                fadeOutColor="#ffffff"
-                ariaLabel="Our clients"
-              />
-            </div>
+        <section className="section-y bg-sand" aria-labelledby="clients-title">
+          <div className="container-x grid gap-10 lg:grid-cols-12 lg:gap-16">
+            <Reveal className="lg:col-span-4">
+              <h2 id="clients-title" className="text-head font-semibold">Trusted by</h2>
+              <p className="mt-4 max-w-sm text-lead">
+                Developers, operators and owners who have trusted us with their buildings.
+              </p>
+            </Reveal>
+            <Reveal className="grid grid-cols-2 gap-1 sm:grid-cols-3 lg:col-span-8 lg:grid-cols-4" stagger={0.06}>
+              {clients.map((c) => {
+                const tile = (
+                  <span className="flex h-28 items-center justify-center bg-paper px-5 text-ink-soft opacity-85 grayscale transition-[opacity,filter,color] duration-300 group-hover:text-ink group-hover:opacity-100 group-hover:grayscale-0 lg:h-36">
+                    <ClientLogo client={c} mediaBase={mediaBase} />
+                  </span>
+                );
+                return c.url ? (
+                  <a key={c.id} href={c.url} target="_blank" rel="noopener noreferrer" className="group block" title={c.name}>
+                    {tile}
+                  </a>
+                ) : (
+                  <div key={c.id} className="group" title={c.name}>
+                    {tile}
+                  </div>
+                );
+              })}
+            </Reveal>
           </div>
         </section>
       )}

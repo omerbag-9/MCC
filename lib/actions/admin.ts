@@ -13,7 +13,6 @@ import {
   projects,
   services,
   settings,
-  testimonials,
 } from "@/lib/db/schema";
 import { getMediaBucket } from "@/lib/env";
 import { slugify } from "@/lib/format";
@@ -90,6 +89,7 @@ const settingsSchema = z.object({
   heroTitle: str(200),
   heroSubtitle: str(500),
   heroImageKey: mediaKey,
+  heroVideoKey: mediaKey,
   aboutTitle: str(200),
   aboutBody: str(5000),
   phone: str(40),
@@ -115,7 +115,7 @@ export async function saveSettings(formData: FormData): Promise<ActionResult> {
   if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
 
   const stats: { value: string; label: string }[] = [];
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 3; i++) {
     const value = String(raw[`stat_value_${i}`] ?? "").trim().slice(0, 20);
     const label = String(raw[`stat_label_${i}`] ?? "").trim().slice(0, 60);
     if (value && label) stats.push({ value, label });
@@ -131,6 +131,9 @@ export async function saveSettings(formData: FormData): Promise<ActionResult> {
 
   if (previous?.heroImageKey && previous.heroImageKey !== data.heroImageKey) {
     await deleteObjects([previous.heroImageKey, thumbOf(previous.heroImageKey)]);
+  }
+  if (previous?.heroVideoKey && previous.heroVideoKey !== data.heroVideoKey) {
+    await deleteObjects([previous.heroVideoKey]);
   }
   revalidateSite();
   return { ok: true };
@@ -290,7 +293,7 @@ export async function deleteMedia(mediaId: number, projectId: number): Promise<A
 
 /* ----------------------------------------------------------------------------- Ordering */
 
-const REORDERABLE = { projects, services, testimonials, clients } as const;
+const REORDERABLE = { projects, services, clients } as const;
 export type Reorderable = keyof typeof REORDERABLE;
 
 /** Saves a drag-and-drop order: each id gets its position as sort order. */
@@ -356,34 +359,6 @@ export async function deleteService(id: number) {
   await deleteObjects([previous?.imageKey, thumbOf(previous?.imageKey ?? null)]);
   revalidateSite();
   redirect("/admin/services?deleted=1");
-}
-
-/* ----------------------------------------------------------------------------- Testimonials */
-
-const testimonialSchema = z.object({
-  name: str(120).min(1, "Name is required"),
-  role: str(120),
-  quote: str(2000).min(1, "Quote is required"),
-  published: checkbox,
-});
-
-export async function saveTestimonial(id: number | null, formData: FormData) {
-  await requireAdmin();
-  const parsed = testimonialSchema.safeParse(form(formData));
-  if (!parsed.success) fail("/admin/testimonials", firstError(parsed.error));
-  const db = await getDb();
-  if (id) await db.update(testimonials).set(parsed.data).where(eq(testimonials.id, id));
-  else await db.insert(testimonials).values(parsed.data);
-  revalidateSite();
-  redirect("/admin/testimonials?saved=1");
-}
-
-export async function deleteTestimonial(id: number) {
-  await requireAdmin();
-  const db = await getDb();
-  await db.delete(testimonials).where(eq(testimonials.id, id));
-  revalidateSite();
-  redirect("/admin/testimonials?deleted=1");
 }
 
 /* ----------------------------------------------------------------------------- Clients */
