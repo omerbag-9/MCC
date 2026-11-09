@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogoMark } from "./logo";
-import { CloseIcon, MenuIcon, PhoneIcon } from "./icons";
+import type { Settings } from "@/lib/db/schema";
+import { ClockIcon, CloseIcon, MailIcon, MenuIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
 import { MobileMenu } from "./mobile-menu";
 
 // Services and About live on the home page: those links scroll smoothly to their sections
@@ -11,6 +12,50 @@ const NAV = [
   { href: "/#about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
+
+/** Desktop only: hours, address and email, and the social links, above the menu. Scrolls away. */
+export function TopBar({ settings }: { settings: Settings }) {
+  const socials = (
+    [
+      ["facebook", settings.facebookUrl],
+      ["instagram", settings.instagramUrl],
+      ["linkedin", settings.linkedinUrl],
+      ["youtube", settings.youtubeUrl],
+      ["tiktok", settings.tiktokUrl],
+    ] as const
+  ).filter(([, url]) => url);
+  const items = [
+    settings.workingHours && { icon: ClockIcon, text: settings.workingHours },
+    settings.address && { icon: PinIcon, text: settings.address },
+    settings.email && { icon: MailIcon, text: settings.email, href: `mailto:${settings.email}` },
+  ].filter(Boolean) as { icon: typeof ClockIcon; text: string; href?: string }[];
+  if (items.length === 0 && socials.length === 0) return null;
+  return (
+    <div className="hidden h-10 bg-brand-dark text-small text-on-navy-muted lg:block">
+      <div className="container-x flex h-full items-center justify-between gap-8">
+        <ul className="flex items-center gap-8">
+          {items.map(({ icon: Icon, text, href }) => (
+            <li key={text} className="flex items-center gap-2">
+              <Icon width={15} height={15} className="text-paper" />
+              {href ? <a href={href} className="hover:text-paper">{text}</a> : text}
+            </li>
+          ))}
+        </ul>
+        {socials.length > 0 && (
+          <ul className="flex items-center gap-1">
+            {socials.map(([network, url]) => (
+              <li key={network}>
+                <a href={url} target="_blank" rel="noopener noreferrer" aria-label={network} className="flex size-8 items-center justify-center hover:text-paper">
+                  <SocialIcon network={network} width={15} height={15} />
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+  );
+}
 
 /** Sticky dark navy bar on every page. */
 export function Header({ companyName, phone }: { companyName: string; phone: string }) {

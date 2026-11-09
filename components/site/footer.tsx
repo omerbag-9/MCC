@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { LogoMark } from "./logo";
-import type { Service, Settings } from "@/lib/db/schema";
+import type { Project, Service, Settings } from "@/lib/db/schema";
 import { ClockIcon, MailIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
 
 const PAGES = [
@@ -10,7 +10,7 @@ const PAGES = [
   { href: "/contact", label: "Request a quote" },
 ];
 
-export function Footer({ settings, services }: { settings: Settings; services: Service[] }) {
+export function Footer({ settings, services, projects }: { settings: Settings; services: Service[]; projects: Project[] }) {
   const socials = (
     [
       ["facebook", settings.facebookUrl],
@@ -24,7 +24,7 @@ export function Footer({ settings, services }: { settings: Settings; services: S
   return (
     <footer className="bg-ink text-paper">
       <div className="container-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-12 lg:py-20">
-        <div className="lg:col-span-4">
+        <div className="sm:col-span-2 lg:col-span-3">
           <Link href="/" className="flex items-center gap-3 text-[17px] font-semibold">
             <LogoMark size={34} className="shrink-0" />
             {settings.companyName}
@@ -59,8 +59,21 @@ export function Footer({ settings, services }: { settings: Settings; services: S
           </ul>
         </nav>
 
+        {projects.length > 0 && (
+          <nav aria-label="Projects" className="lg:col-span-2">
+            <p className="font-semibold">Projects</p>
+            <ul className="mt-5 space-y-3 text-on-navy-muted">
+              {projects.slice(0, 5).map((p) => (
+                <li key={p.id}>
+                  <Link href={`/projects/${p.slug}`} className="transition-colors hover:text-paper">{p.title}</Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
+
         {services.length > 0 && (
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-2">
             <p className="font-semibold">Services</p>
             <ul className="mt-5 space-y-3 text-on-navy-muted">
               {services.slice(0, 6).map((s) => (

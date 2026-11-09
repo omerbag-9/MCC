@@ -36,3 +36,46 @@ export function ProjectCard({ project, mediaBase, tall = false }: { project: Pro
     </Link>
   );
 }
+
+/**
+ * A large picture card for the projects page: the photograph fills it, the category sits in the
+ * top corner, and the title with its facts sits on an ink panel along the bottom edge.
+ */
+export function ProjectTile({ project, mediaBase, priority }: { project: Project; mediaBase: string; priority?: boolean }) {
+  const facts = [project.location, project.year, formatArea(project.areaM2)].filter(Boolean);
+  return (
+    <Link href={`/projects/${project.slug}`} className="group relative block overflow-hidden bg-ink text-paper">
+      <div data-card-media className="aspect-[4/3]">
+        <Photo
+          mediaBase={mediaBase}
+          src={project.coverKey}
+          alt={project.title}
+          priority={priority}
+          sizes="(min-width: 768px) 50vw, 100vw"
+          className="transition-transform duration-[900ms] ease-out group-hover:scale-105"
+        />
+      </div>
+      {project.category && (
+        <span className="absolute top-0 left-0 bg-paper px-4 py-2 text-small font-semibold text-ink">{project.category}</span>
+      )}
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 sm:right-auto sm:max-w-[88%]">
+        <div className="min-w-0 bg-ink px-5 py-4 sm:px-7 sm:py-5">
+          <h3 className="text-lead font-semibold">{project.title}</h3>
+          {facts.length > 0 && (
+            <p className="mt-1 flex flex-wrap gap-x-4 text-small text-on-navy-muted">
+              {facts.map((f) => (
+                <span key={String(f)}>{f}</span>
+              ))}
+            </p>
+          )}
+        </div>
+      </div>
+      <span
+        aria-hidden
+        className="absolute right-0 bottom-0 hidden size-14 items-center justify-center bg-paper text-ink transition-transform duration-300 group-hover:translate-x-0 sm:flex sm:translate-x-full"
+      >
+        <ArrowRightIcon width={22} height={22} />
+      </span>
+    </Link>
+  );
+}

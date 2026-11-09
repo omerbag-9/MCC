@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { formatArea, ProjectCard } from "@/components/site/project-card";
+import Link from "next/link";
+import { Photo, photoPool } from "@/components/site/photo";
+import { formatArea, ProjectTile } from "@/components/site/project-card";
 import { ProjectsBrowser } from "@/components/site/projects-browser";
 import { Reveal } from "@/components/site/reveal";
 import { getPublishedProjects, getSettings } from "@/lib/db/queries";
@@ -15,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ProjectsPage() {
-  const [projects, mediaBase] = await Promise.all([getPublishedProjects(), getMediaBase()]);
+  const [projects, settings, mediaBase] = await Promise.all([getPublishedProjects(), getSettings(), getMediaBase()]);
 
   // The record, computed from the published projects themselves.
   const area = projects.reduce((sum, p) => sum + (p.areaM2 ?? 0), 0);
@@ -27,30 +29,46 @@ export default async function ProjectsPage() {
     sectors > 1 && { value: String(sectors), label: "Sectors" },
     years.length > 1 && Math.min(...years) !== Math.max(...years) && { value: `${Math.min(...years)}–${Math.max(...years)}`, label: "Delivered" },
   ].filter((r): r is { value: string; label: string } => !!r);
+  const heroPhoto = photoPool(...projects.map((p) => p.coverKey), settings.heroImageKey).next();
 
   return (
     <>
-      <section className="bg-ink text-paper">
-        <div className="container-x grid gap-10 py-14 lg:grid-cols-12 lg:items-end lg:py-20">
-          <Reveal className="lg:col-span-6">
-            <h1 className="text-display font-semibold">Our projects</h1>
-            <p className="mt-5 max-w-xl text-lead text-on-navy-muted">
-              Homes, offices, warehouses and renovations we have designed and built.
-            </p>
-          </Reveal>
-          {projects.length > 0 && (
-            <Reveal className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:col-span-6" stagger={0.06}>
+      {/* Header: a photograph of the work under a veil, the title, and the record along its foot */}
+      <section className="relative isolate flex min-h-[420px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[min(620px,calc(78svh-72px))]">
+        <div className="absolute inset-0 -z-20">
+          <Photo mediaBase={mediaBase} src={heroPhoto} alt="" sizes="100vw" priority className="hero-photo" />
+        </div>
+        <div className="absolute inset-0 -z-10 bg-ink/70" />
+        <Reveal className="container-x flex flex-1 flex-col justify-center py-14 lg:py-20">
+          <nav aria-label="Breadcrumb" className="text-small text-on-navy-muted">
+            <ol className="flex items-center gap-2">
+              <li>
+                <Link href="/" className="hover:text-paper">Home</Link>
+              </li>
+              <li aria-hidden>/</li>
+              <li aria-current="page" className="text-paper">Projects</li>
+            </ol>
+          </nav>
+          <h1 className="mt-5 text-display font-semibold">Our projects</h1>
+          <p className="mt-5 max-w-xl text-lead text-paper/90">
+            Homes, offices, warehouses and renovations we have designed and built.
+          </p>
+        </Reveal>
+        {record.length > 0 && projects.length > 0 && (
+          <div className="bg-ink">
+            <Reveal className="container-x grid grid-cols-2 gap-y-6 py-6 sm:grid-cols-4 lg:py-8" stagger={0.06} onLoad delay={0.3}>
               {record.map((r) => (
-                <dl key={r.label} className="bg-navy-2 px-5 py-5">
+                <dl key={r.label}>
                   <dt className="sr-only">{r.label}</dt>
-                  <dd className="text-lead font-semibold whitespace-nowrap tabular-nums">{r.value}</dd>
+                  <dd className="text-lead font-semibold whitespace-nowrap tabular-nums lg:text-head">{r.value}</dd>
                   <dd className="mt-1 text-small text-on-navy-muted">{r.label}</dd>
                 </dl>
               ))}
             </Reveal>
-          )}
-        </div>
+          </div>
+        )}
       </section>
+
       <section className="pt-6 pb-16 lg:pb-24">
         <div className="container-x">
           {projects.length === 0 ? (
@@ -64,11 +82,23 @@ export default async function ProjectsPage() {
                 year: p.year,
                 area: p.areaM2,
                 order,
-                node: <ProjectCard project={p} mediaBase={mediaBase} />,
+                node: <ProjectTile project={p} mediaBase={mediaBase} priority={order < 2} />,
               }))}
             />
           )}
         </div>
+      </section>
+
+      <section className="bg-sand">
+        <Reveal className="container-x grid gap-8 py-14 lg:grid-cols-12 lg:items-center lg:py-16">
+          <div className="lg:col-span-8">
+            <h2 className="text-head font-semibold">Have a project in mind?</h2>
+            <p className="mt-3 max-w-xl">Tell us what you&apos;re building. We reply within one business day with next steps and a free estimate.</p>
+          </div>
+          <div className="lg:col-span-4 lg:justify-self-end">
+            <Link href="/contact" className="btn-primary">Request a quote</Link>
+          </div>
+        </Reveal>
       </section>
     </>
   );

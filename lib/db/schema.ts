@@ -24,6 +24,8 @@ export const settings = sqliteTable("settings", {
   heroVideoKey: text("hero_video_key"),
   aboutTitle: text("about_title").notNull().default(""),
   aboutBody: text("about_body").notNull().default(""),
+  /** "Why choose us" points on the home page, one per line. */
+  strengths: text("strengths").notNull().default(""),
   /** JSON array of { value: string, label: string } */
   stats: text("stats", { mode: "json" }).$type<Stat[]>().notNull().default(sql`'[]'`),
   phone: text("phone").notNull().default(""),
@@ -74,6 +76,10 @@ export const projects = sqliteTable(
     year: integer("year"),
     areaM2: integer("area_m2"),
     client: text("client").notNull().default(""),
+    /** Overview table rows, one per line as "Label: value". */
+    specs: text("specs").notNull().default(""),
+    /** Features or amenities delivered, one per line. */
+    highlights: text("highlights").notNull().default(""),
     coverKey: text("cover_key"),
     featured: integer("featured", { mode: "boolean" }).notNull().default(false),
     published: integer("published", { mode: "boolean" }).notNull().default(false),

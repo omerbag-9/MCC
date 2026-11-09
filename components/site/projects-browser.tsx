@@ -23,16 +23,9 @@ const SORTS = {
 } as const;
 type SortKey = keyof typeof SORTS;
 
-/** Column span (and wider crop) for the first card, so the rows of a 2- and 3-column grid fill. */
+/** In the two-column grid, an odd count makes the first project run across both, wider. */
 function leadClass(count: number) {
-  const md = count % 2 === 1 && count > 1 ? "md:col-span-2 md:[&_[data-card-media]]:aspect-[16/9]" : "";
-  const lg =
-    count % 3 === 1 && count > 1
-      ? "lg:col-span-3 lg:[&_[data-card-media]]:aspect-[21/9]"
-      : count % 3 === 2
-        ? "lg:col-span-2 lg:[&_[data-card-media]]:aspect-[16/9]"
-        : "lg:col-span-1 lg:[&_[data-card-media]]:aspect-[4/3]";
-  return `${md} ${lg}`;
+  return count > 1 && count % 2 === 1 ? "md:col-span-2 md:[&_[data-card-media]]:aspect-[21/9]" : undefined;
 }
 
 /**
@@ -147,8 +140,8 @@ export function ProjectsBrowser({ items }: { items: BrowserItem[] }) {
           </button>
         </div>
       ) : (
-        /* The first project is widened just enough that every row comes out full. */
-        <div className="grid gap-x-8 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
+        /* Two large pictures per row; the rows always come out full. */
+        <div className="grid gap-4 md:grid-cols-2 lg:gap-6">
           {visible.map((i, n) => (
             <FadeContent key={`${active}-${sort}-${i.id}`} duration={0.6} threshold={0.05} className={n === 0 ? leadClass(visible.length) : undefined}>
               {i.node}

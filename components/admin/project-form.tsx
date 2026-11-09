@@ -23,6 +23,26 @@ export function ProjectFields({ project }: { project?: Project }) {
         <TextField name="client" label="Client" defaultValue={project?.client} />
         <TextField name="year" label="Year completed" type="number" defaultValue={project?.year} />
         <TextField name="areaM2" label="Area (m²)" type="number" defaultValue={project?.areaM2} />
+        <div className="sm:col-span-2">
+          <TextArea
+            name="specs"
+            label="Specifications"
+            defaultValue={project?.specs}
+            rows={5}
+            placeholder={"Floors: G + 11\nBasements: 2\nBuilding height: 34 m\nStatus: Completed"}
+            hint="One per line, as “Label: value”. Shown in the project overview table, after the details above."
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <TextArea
+            name="highlights"
+            label="Highlights"
+            defaultValue={project?.highlights}
+            rows={4}
+            placeholder={"Landscaped plaza\nTwo basement parking levels\nGlass curtain-wall facade"}
+            hint="One per line: features, systems or amenities delivered."
+          />
+        </div>
       </Card>
 
       <Card className="space-y-5">
