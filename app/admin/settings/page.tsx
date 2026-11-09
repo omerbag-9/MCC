@@ -1,3 +1,4 @@
+import { EditorForm } from "@/components/admin/editor-form";
 import { ImageField } from "@/components/admin/image-field";
 import { Card, Flash, PageHeader, TextArea, TextField } from "@/components/admin/ui";
 import { saveSettings } from "@/lib/actions/admin";
@@ -20,7 +21,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
       <PageHeader title="Settings" />
       <Flash searchParams={await searchParams} />
 
-      <form action={saveSettings} className="max-w-3xl space-y-8">
+      <EditorForm action={saveSettings} className="max-w-3xl space-y-8">
         <section>
           <h2 className="mb-3 font-semibold">Company</h2>
           <Card className="grid gap-5 sm:grid-cols-2">
@@ -85,8 +86,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
           </Card>
         </section>
 
-        <button className="btn-primary">Save settings</button>
-      </form>
+      </EditorForm>
     </>
   );
 }

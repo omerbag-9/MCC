@@ -1,5 +1,6 @@
 import { asc } from "drizzle-orm";
 import { ConfirmButton } from "@/components/admin/confirm-button";
+import { SortableList } from "@/components/admin/sortable-list";
 import { ImageField } from "@/components/admin/image-field";
 import { Badge, Card, Checkbox, Flash, PageHeader } from "@/components/admin/ui";
 import { mediaUrl } from "@/lib/media";
@@ -37,10 +38,6 @@ function ServiceFields({ service, mediaBase, uploads }: { service?: Service; med
       <input type="hidden" name="icon" value={service?.icon ?? "building"} />
       <div />
       <div className="space-y-4">
-        <div>
-          <label htmlFor={`${prefix}sortOrder`} className="label">Sort order</label>
-          <input id={`${prefix}sortOrder`} name="sortOrder" type="number" defaultValue={service?.sortOrder ?? 0} className="field" />
-        </div>
         <Checkbox name="published" label="Published" defaultChecked={service?.published ?? true} />
       </div>
     </div>
@@ -62,9 +59,14 @@ export default async function ServicesAdmin({ searchParams }: { searchParams: Pr
       <PageHeader title="Services" />
       <Flash searchParams={await searchParams} />
 
-      <div className="space-y-3">
-        {rows.map((s) => (
-          <details key={s.id} className="group rounded-lg bg-white shadow-sm ring-1 ring-line">
+      <SortableList
+        kind="services"
+        noun="Service order"
+        items={rows.map((s) => ({
+          id: s.id,
+          label: s.title,
+          node: (
+          <details className="group">
             <summary className="flex cursor-pointer list-none items-center gap-4 px-5 py-4 [&::-webkit-details-marker]:hidden">
               <span className="flex h-10 w-14 items-center justify-center overflow-hidden rounded-md bg-sand">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -84,8 +86,9 @@ export default async function ServicesAdmin({ searchParams }: { searchParams: Pr
               </form>
             </div>
           </details>
-        ))}
-      </div>
+          ),
+        }))}
+      />
 
       <Card className="mt-8">
         <h2 className="mb-4 font-semibold">Add a service</h2>

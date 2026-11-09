@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { uploadMedia, type UploadFolder } from "@/lib/client/upload";
 
@@ -26,6 +26,20 @@ export function ImageField({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const id = `img-${name}`;
+  const hidden = useRef<HTMLInputElement>(null);
+
+  // Tell the surrounding form (EditorForm) that something changed, and follow its Discard (reset).
+  const change = (next: string) => {
+    setKey(next);
+    requestAnimationFrame(() => hidden.current?.dispatchEvent(new Event("input", { bubbles: true })));
+  };
+  useEffect(() => {
+    const form = hidden.current?.form;
+    if (!form) return;
+    const onReset = () => setKey(defaultKey ?? "");
+    form.addEventListener("reset", onReset);
+    return () => form.removeEventListener("reset", onReset);
+  }, [defaultKey]);
   const preview = mediaUrl(key, mediaBase);
 
   async function onFile(file: File | undefined) {
@@ -34,7 +48,7 @@ export function ImageField({
     setError(null);
     try {
       const uploaded = await uploadMedia(file, folder);
-      setKey(uploaded.key);
+      change(uploaded.key);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");
     } finally {
@@ -45,7 +59,7 @@ export function ImageField({
   return (
     <div>
       <span className="label">{label}</span>
-      <input type="hidden" name={name} value={key} />
+      <input ref={hidden} type="hidden" name={name} value={key} />
       <div className="flex items-center gap-4">
         <div className="flex h-20 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md bg-sand ring-1 ring-line">
           {preview ? (
@@ -62,7 +76,7 @@ export function ImageField({
           </label>}
           {enabled && <input id={id} type="file" accept="image/jpeg,image/png,image/webp,image/avif" className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />}
           {key && (
-            <button type="button" className="btn py-2 text-red-700 hover:bg-red-50" onClick={() => setKey("")}>
+            <button type="button" className="btn py-2 text-red-700 hover:bg-red-50" onClick={() => change("")}>
               Remove
             </button>
           )}

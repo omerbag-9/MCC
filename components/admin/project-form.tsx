@@ -1,17 +1,10 @@
 import type { Project } from "@/lib/db/schema";
 import { Card, Checkbox, TextArea, TextField } from "./ui";
 
-export function ProjectForm({
-  project,
-  action,
-  submitLabel,
-}: {
-  project?: Project;
-  action: (formData: FormData) => Promise<void>;
-  submitLabel: string;
-}) {
+/** The project's fields. Wrapped by a plain form (new project) or an EditorForm (edit). */
+export function ProjectFields({ project }: { project?: Project }) {
   return (
-    <form action={action} className="space-y-6">
+    <div className="space-y-6">
       <Card className="space-y-5">
         <TextField name="title" label="Title" defaultValue={project?.title} required />
         <TextField
@@ -30,7 +23,6 @@ export function ProjectForm({
         <TextField name="client" label="Client" defaultValue={project?.client} />
         <TextField name="year" label="Year completed" type="number" defaultValue={project?.year} />
         <TextField name="areaM2" label="Area (m²)" type="number" defaultValue={project?.areaM2} />
-        <TextField name="sortOrder" label="Sort order" type="number" defaultValue={project?.sortOrder ?? 0} hint="Lower numbers appear first." />
       </Card>
 
       <Card className="space-y-5">
@@ -47,7 +39,6 @@ export function ProjectForm({
         </details>
       </Card>
 
-      <button className="btn-primary">{submitLabel}</button>
-    </form>
+    </div>
   );
 }

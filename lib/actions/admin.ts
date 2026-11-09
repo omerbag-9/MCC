@@ -44,6 +44,8 @@ function fail(path: string, message: string): never {
   redirect(`${path}${path.includes("?") ? "&" : "?"}error=${encodeURIComponent(message)}`);
 }
 
+export type ActionResult = { ok: true } | { ok: false; error: string };
+
 function firstError(error: z.ZodError) {
   const issue = error.issues[0];
   return issue ? `${issue.path.join(".") || "form"}: ${issue.message}` : "Invalid input";
@@ -90,11 +92,11 @@ const settingsSchema = z.object({
   seoDescription: str(300),
 });
 
-export async function saveSettings(formData: FormData) {
+export async function saveSettings(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
   const raw = form(formData);
   const parsed = settingsSchema.safeParse(raw);
-  if (!parsed.success) fail("/admin/settings", firstError(parsed.error));
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
 
   const stats: { value: string; label: string }[] = [];
   for (let i = 0; i < 4; i++) {
@@ -115,7 +117,7 @@ export async function saveSettings(formData: FormData) {
     await deleteObjects([previous.heroImageKey, thumbOf(previous.heroImageKey)]);
   }
   revalidateSite();
-  redirect("/admin/settings?saved=1");
+  return { ok: true };
 }
 
 /* ----------------------------------------------------------------------------- Projects */
@@ -132,7 +134,6 @@ const projectSchema = z.object({
   areaM2: optionalInt,
   featured: checkbox,
   published: checkbox,
-  sortOrder: z.coerce.number().int().min(-10000).max(10000).catch(0),
   seoTitle: str(120),
   seoDescription: str(300),
 });
@@ -165,11 +166,10 @@ export async function createProject(formData: FormData) {
   redirect(`/admin/projects/${row.id}?saved=1`);
 }
 
-export async function updateProject(id: number, formData: FormData) {
+export async function updateProject(id: number, formData: FormData): Promise<ActionResult> {
   await requireAdmin();
-  const path = `/admin/projects/${id}`;
   const parsed = projectSchema.safeParse(form(formData));
-  if (!parsed.success) fail(path, firstError(parsed.error));
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
   const db = await getDb();
   const slug = await uniqueSlug(db, parsed.data.slug || parsed.data.title, id);
   await db
@@ -177,7 +177,7 @@ export async function updateProject(id: number, formData: FormData) {
     .set({ ...parsed.data, slug, updatedAt: new Date() })
     .where(eq(projects.id, id));
   revalidateSite();
-  redirect(`${path}?saved=1`);
+  return { ok: true };
 }
 
 export async function deleteProject(id: number) {
@@ -228,67 +228,80 @@ export async function addProjectMedia(projectId: number, items: unknown) {
   return { ok: true as const };
 }
 
-export async function updateMediaAlt(mediaId: number, projectId: number, formData: FormData) {
+export async function updateMediaAlt(mediaId: number, projectId: number, alt: string): Promise<ActionResult> {
   await requireAdmin();
-  const alt = String(formData.get("alt") ?? "").trim().slice(0, 300);
   const db = await getDb();
-  await db.update(projectMedia).set({ alt }).where(and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)));
+  await db
+    .update(projectMedia)
+    .set({ alt: String(alt ?? "").trim().slice(0, 300) })
+    .where(and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)));
   revalidateSite();
-  redirect(`/admin/projects/${projectId}?saved=1#media`);
+  return { ok: true };
 }
 
-export async function moveMedia(mediaId: number, projectId: number, direction: "up" | "down") {
+export async function setCover(mediaId: number, projectId: number): Promise<ActionResult> {
   await requireAdmin();
   const db = await getDb();
-  const all = await db.query.projectMedia.findMany({
-    where: eq(projectMedia.projectId, projectId),
-    orderBy: (m, { asc }) => [asc(m.sortOrder), asc(m.id)],
+  const media = await db.query.projectMedia.findFirst({
+    where: and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)),
   });
-  const index = all.findIndex((m) => m.id === mediaId);
-  const swap = direction === "up" ? index - 1 : index + 1;
-  if (index < 0 || swap < 0 || swap >= all.length) redirect(`/admin/projects/${projectId}#media`);
-  [all[index], all[swap]] = [all[swap], all[index]];
-  const [first, ...rest] = all.map((m, i) =>
-    db.update(projectMedia).set({ sortOrder: i + 1 }).where(eq(projectMedia.id, m.id)),
+  if (media?.type !== "image") return { ok: false, error: "Only a photo can be the cover" };
+  await db.update(projects).set({ coverKey: media.key, updatedAt: new Date() }).where(eq(projects.id, projectId));
+  revalidateSite();
+  return { ok: true };
+}
+
+export async function deleteMedia(mediaId: number, projectId: number): Promise<ActionResult> {
+  await requireAdmin();
+  const db = await getDb();
+  const media = await db.query.projectMedia.findFirst({
+    where: and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)),
+  });
+  if (!media) return { ok: true };
+  await db.delete(projectMedia).where(eq(projectMedia.id, mediaId));
+  const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
+  if (project?.coverKey === media.key) {
+    const next = await db.query.projectMedia.findFirst({
+      where: and(eq(projectMedia.projectId, projectId), eq(projectMedia.type, "image")),
+      orderBy: (m, { asc }) => [asc(m.sortOrder)],
+    });
+    await db.update(projects).set({ coverKey: next?.key ?? null, updatedAt: new Date() }).where(eq(projects.id, projectId));
+  }
+  await deleteObjects([media.key, media.thumbKey]);
+  revalidateSite();
+  return { ok: true };
+}
+
+/* ----------------------------------------------------------------------------- Ordering */
+
+const REORDERABLE = { projects, services, testimonials, clients } as const;
+export type Reorderable = keyof typeof REORDERABLE;
+
+/** Saves a drag-and-drop order: each id gets its position as sort order. */
+export async function reorder(kind: Reorderable, ids: number[]): Promise<ActionResult> {
+  await requireAdmin();
+  const table = REORDERABLE[kind];
+  const parsed = z.array(z.number().int().positive()).max(500).safeParse(ids);
+  if (!table || !parsed.success || parsed.data.length === 0) return { ok: false, error: "Invalid order" };
+  const db = await getDb();
+  const [first, ...rest] = parsed.data.map((id, i) => db.update(table).set({ sortOrder: i + 1 }).where(eq(table.id, id)));
+  await db.batch([first, ...rest]);
+  revalidateSite();
+  return { ok: true };
+}
+
+/** Saves the order of a project's photos and videos. */
+export async function reorderMedia(projectId: number, ids: number[]): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = z.array(z.number().int().positive()).max(500).safeParse(ids);
+  if (!parsed.success || parsed.data.length === 0) return { ok: false, error: "Invalid order" };
+  const db = await getDb();
+  const [first, ...rest] = parsed.data.map((id, i) =>
+    db.update(projectMedia).set({ sortOrder: i + 1 }).where(and(eq(projectMedia.id, id), eq(projectMedia.projectId, projectId))),
   );
   await db.batch([first, ...rest]);
   revalidateSite();
-  redirect(`/admin/projects/${projectId}#media`);
-}
-
-export async function setCover(mediaId: number, projectId: number) {
-  await requireAdmin();
-  const db = await getDb();
-  const media = await db.query.projectMedia.findFirst({
-    where: and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)),
-  });
-  if (media?.type === "image") {
-    await db.update(projects).set({ coverKey: media.key, updatedAt: new Date() }).where(eq(projects.id, projectId));
-    revalidateSite();
-  }
-  redirect(`/admin/projects/${projectId}?saved=1#media`);
-}
-
-export async function deleteMedia(mediaId: number, projectId: number) {
-  await requireAdmin();
-  const db = await getDb();
-  const media = await db.query.projectMedia.findFirst({
-    where: and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)),
-  });
-  if (media) {
-    await db.delete(projectMedia).where(eq(projectMedia.id, mediaId));
-    const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
-    if (project?.coverKey === media.key) {
-      const next = await db.query.projectMedia.findFirst({
-        where: and(eq(projectMedia.projectId, projectId), eq(projectMedia.type, "image")),
-        orderBy: (m, { asc }) => [asc(m.sortOrder)],
-      });
-      await db.update(projects).set({ coverKey: next?.key ?? null, updatedAt: new Date() }).where(eq(projects.id, projectId));
-    }
-    await deleteObjects([media.key, media.thumbKey]);
-    revalidateSite();
-  }
-  redirect(`/admin/projects/${projectId}#media`);
+  return { ok: true };
 }
 
 /* ----------------------------------------------------------------------------- Services */
@@ -298,7 +311,6 @@ const serviceSchema = z.object({
   description: str(1000),
   icon: str(30),
   imageKey: mediaKey,
-  sortOrder: z.coerce.number().int().min(-10000).max(10000).catch(0),
   published: checkbox,
 });
 
@@ -336,7 +348,6 @@ const testimonialSchema = z.object({
   name: str(120).min(1, "Name is required"),
   role: str(120),
   quote: str(2000).min(1, "Quote is required"),
-  sortOrder: z.coerce.number().int().min(-10000).max(10000).catch(0),
   published: checkbox,
 });
 
@@ -365,7 +376,6 @@ const clientSchema = z.object({
   name: str(120).min(1, "Name is required"),
   url: z.union([z.literal(""), z.string().trim().url().max(300)]),
   logoKey: mediaKey,
-  sortOrder: z.coerce.number().int().min(-10000).max(10000).catch(0),
 });
 
 export async function saveClient(id: number | null, formData: FormData) {

@@ -1,5 +1,6 @@
 import { asc } from "drizzle-orm";
 import { ConfirmButton } from "@/components/admin/confirm-button";
+import { SortableList } from "@/components/admin/sortable-list";
 import { ImageField } from "@/components/admin/image-field";
 import { Card, Flash, PageHeader } from "@/components/admin/ui";
 import { deleteClient, saveClient } from "@/lib/actions/admin";
@@ -26,10 +27,6 @@ function Fields({ c, mediaBase, uploads }: { c?: Client; mediaBase: string; uplo
       <div className="sm:col-span-2">
         <ImageField name="logoKey" label="Logo" folder="clients" defaultKey={c?.logoKey ?? null} mediaBase={mediaBase} enabled={uploads} hint="PNG with a transparent background works best." />
       </div>
-      <div>
-        <label htmlFor={`${p}sortOrder`} className="label">Sort order</label>
-        <input id={`${p}sortOrder`} name="sortOrder" type="number" defaultValue={c?.sortOrder ?? 0} className="field" />
-      </div>
     </div>
   );
 }
@@ -49,11 +46,16 @@ export default async function ClientsAdmin({ searchParams }: { searchParams: Pro
       <PageHeader title="Clients" />
       <p className="-mt-3 mb-6 text-sm text-muted">Logos shown in the “Trusted by” strip on the home page.</p>
       <Flash searchParams={await searchParams} />
-      <div className="space-y-3">
-        {rows.map((c) => {
+      <SortableList
+        kind="clients"
+        noun="Client order"
+        items={rows.map((c) => {
           const logo = mediaUrl(c.logoKey, mediaBase);
-          return (
-            <details key={c.id} className="group rounded-lg bg-white shadow-sm ring-1 ring-line">
+          return {
+            id: c.id,
+            label: c.name,
+            node: (
+            <details className="group">
               <summary className="flex cursor-pointer list-none items-center gap-4 px-5 py-4 [&::-webkit-details-marker]:hidden">
                 <span className="flex h-10 w-20 items-center justify-center">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -72,9 +74,10 @@ export default async function ClientsAdmin({ searchParams }: { searchParams: Pro
                 </form>
               </div>
             </details>
-          );
+          ),
+          };
         })}
-      </div>
+      />
       <Card className="mt-8">
         <h2 className="mb-4 font-semibold">Add a client</h2>
         <form action={saveClient.bind(null, null)} className="space-y-4">

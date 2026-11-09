@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { ConfirmButton } from "@/components/admin/confirm-button";
-import { MediaUploader } from "@/components/admin/media-uploader";
-import { ProjectForm } from "@/components/admin/project-form";
-import { BackLink, Badge, Card, Flash, PageHeader } from "@/components/admin/ui";
-import { deleteMedia, deleteProject, moveMedia, setCover, updateMediaAlt, updateProject } from "@/lib/actions/admin";
+import { EditorForm } from "@/components/admin/editor-form";
+import { PhotoManager } from "@/components/admin/photo-manager";
+import { ProjectFields } from "@/components/admin/project-form";
+import { BackLink, Badge, Flash, PageHeader } from "@/components/admin/ui";
+import { deleteProject, updateProject } from "@/lib/actions/admin";
 import { ensureAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import { projectMedia, projects } from "@/lib/db/schema";
@@ -39,74 +40,53 @@ export default async function EditProject({
       <PageHeader
         title={project.title}
         action={
-          project.published ? (
-            <Link href={`/projects/${project.slug}`} target="_blank" className="text-sm text-brand-dark hover:underline">View on site ↗</Link>
-          ) : (
-            <Badge>Draft, not visible on the site</Badge>
-          )
+          <div className="flex items-center gap-3">
+            {project.published ? <Badge tone="green">Published</Badge> : <Badge>Draft</Badge>}
+            {project.published && (
+              <Link href={`/projects/${project.slug}`} target="_blank" className="btn border border-line bg-white py-2 text-ink hover:bg-sand">
+                View on site ↗
+              </Link>
+            )}
+          </div>
         }
       />
       <Flash searchParams={await searchParams} />
 
-      <div className="grid gap-8 2xl:grid-cols-2">
-        <ProjectForm project={project} action={updateProject.bind(null, project.id)} submitLabel="Save changes" />
+      <div className="grid gap-8 2xl:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+        <section aria-labelledby="details-title">
+          <h2 id="details-title" className="mb-3 text-lg font-semibold">Details</h2>
+          <EditorForm action={updateProject.bind(null, project.id)}>
+            <ProjectFields project={project} />
+          </EditorForm>
+        </section>
 
-        <section id="media" className="space-y-4">
-          <h2 className="text-lg font-semibold">Photos & videos</h2>
-          <MediaUploader projectId={project.id} enabled={!!bucket} />
-          {media.length > 0 && (
-            <ul className="space-y-3">
-              {media.map((m, i) => {
-                const src = mediaUrl(m.thumbKey ?? m.key, mediaBase)!;
-                const isCover = project.coverKey === m.key;
-                return (
-                  <li key={m.id}>
-                    <Card className="flex flex-col gap-4 !p-4 sm:flex-row sm:items-center">
-                      <div className="h-24 w-full shrink-0 overflow-hidden rounded bg-sand sm:w-36">
-                        {m.type === "image" ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={src} alt="" className="size-full object-cover" />
-                        ) : (
-                          <video src={src} className="size-full object-cover" muted preload="metadata" />
-                        )}
-                      </div>
-                      <div className="min-w-0 flex-1 space-y-2">
-                        <div className="flex flex-wrap gap-1.5">
-                          <Badge tone={m.type === "video" ? "blue" : "gray"}>{m.type}</Badge>
-                          {isCover && <Badge tone="amber">Cover</Badge>}
-                        </div>
-                        <form action={updateMediaAlt.bind(null, m.id, project.id)} className="flex gap-2">
-                          <input name="alt" defaultValue={m.alt} placeholder="Describe the photo (for SEO & accessibility)" className="field py-1.5" aria-label="Alt text" />
-                          <button className="btn border border-line py-1.5 text-ink hover:bg-sand">Save</button>
-                        </form>
-                      </div>
-                      <div className="flex shrink-0 flex-wrap gap-1.5">
-                        <form action={moveMedia.bind(null, m.id, project.id, "up")}>
-                          <button className="btn border border-line px-3 py-1.5 text-ink hover:bg-sand disabled:opacity-30" disabled={i === 0} aria-label="Move up">↑</button>
-                        </form>
-                        <form action={moveMedia.bind(null, m.id, project.id, "down")}>
-                          <button className="btn border border-line px-3 py-1.5 text-ink hover:bg-sand disabled:opacity-30" disabled={i === media.length - 1} aria-label="Move down">↓</button>
-                        </form>
-                        {m.type === "image" && !isCover && (
-                          <form action={setCover.bind(null, m.id, project.id)}>
-                            <button className="btn border border-line px-3 py-1.5 text-ink hover:bg-sand">Set cover</button>
-                          </form>
-                        )}
-                        <form action={deleteMedia.bind(null, m.id, project.id)}>
-                          <ConfirmButton message="Delete this file?" className="btn px-3 py-1.5 text-red-700 hover:bg-red-50">Delete</ConfirmButton>
-                        </form>
-                      </div>
-                    </Card>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+        <section id="media" aria-labelledby="media-title">
+          <h2 id="media-title" className="mb-3 text-lg font-semibold">
+            Photos & videos <span className="font-normal text-muted">({media.length})</span>
+          </h2>
+          <PhotoManager
+            projectId={project.id}
+            coverKey={project.coverKey}
+            uploadsEnabled={!!bucket}
+            media={media.map((m) => ({
+              id: m.id,
+              key: m.key,
+              type: m.type,
+              alt: m.alt,
+              src: mediaUrl(m.key, mediaBase)!,
+              thumb: mediaUrl(m.thumbKey ?? m.key, mediaBase)!,
+            }))}
+          />
         </section>
       </div>
 
-      <form action={deleteProject.bind(null, project.id)} className="mt-12 border-t border-line pt-6">
-        <ConfirmButton message="Delete this project and all its photos and videos? This cannot be undone." className="btn text-red-700 hover:bg-red-50">
+      <form action={deleteProject.bind(null, project.id)} className="mt-12 pt-6">
+        <ConfirmButton
+          message={`Delete “${project.title}”?`}
+          body="The project and all its photos and videos are removed from the website. This cannot be undone."
+          confirmLabel="Delete project"
+          className="btn px-0 text-red-700 hover:underline"
+        >
           Delete project
         </ConfirmButton>
       </form>
