@@ -113,20 +113,6 @@ export const getPublishedProjectBySlug = cache((slug: string) =>
   }),
 );
 
-/** The latest photographs from published projects, for the strip on the home page. */
-export const getRecentProjectPhotos = cache((limit = 6) =>
-  safe([], async () => {
-    const db = await getDb();
-    return db
-      .select({ key: projectMedia.key, thumbKey: projectMedia.thumbKey, alt: projectMedia.alt, slug: projects.slug, title: projects.title })
-      .from(projectMedia)
-      .innerJoin(projects, eq(projectMedia.projectId, projects.id))
-      .where(and(eq(projects.published, true), eq(projectMedia.type, "image")))
-      .orderBy(asc(projects.sortOrder), asc(projectMedia.sortOrder))
-      .limit(limit);
-  }),
-);
-
 export const getClients = cache(() =>
   safe([], async () => {
     const db = await getDb();

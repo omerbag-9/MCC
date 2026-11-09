@@ -80,6 +80,73 @@ export const SERVICE_ICONS = {
   ),
 } as const;
 
+/** Icons for the "Why choose us" points, drawn at 32px with a slightly heavier line. */
+const STRENGTH_ICONS = {
+  blueprint: (p: IconProps) => (
+    <svg {...base(p)}>
+      <path d="M3 5a2 2 0 0 1 2-2h14v15H5a2 2 0 0 0-2 2z" />
+      <path d="M3 20a2 2 0 0 0 2 2h16V6" />
+      <path d="M8 7h7v7H8zM11.5 7v3.5H15" />
+    </svg>
+  ),
+  crew: (p: IconProps) => (
+    <svg {...base(p)}>
+      <path d="M5 13a7 7 0 0 1 14 0" />
+      <path d="M3 13h18v2.5H3zM10 6.4V4h4v2.4" />
+      <path d="M7 19.5c1.4 1 3.1 1.5 5 1.5s3.6-.5 5-1.5" />
+    </svg>
+  ),
+  price: (p: IconProps) => (
+    <svg {...base(p)}>
+      <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z" />
+      <circle cx="7.5" cy="7.5" r="1.5" />
+      <path d="M10.5 14.5 14.5 10.5" />
+    </svg>
+  ),
+  schedule: (p: IconProps) => (
+    <svg {...base(p)}>
+      <rect x="3" y="4.5" width="18" height="16.5" rx="1.5" />
+      <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+      <path d="m8.5 15 2.5 2.5 4.5-4.5" />
+    </svg>
+  ),
+  safety: (p: IconProps) => (
+    <svg {...base(p)}>
+      <path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6z" />
+      <path d="m8.5 12 2.5 2.5 4.5-5" />
+    </svg>
+  ),
+  handover: (p: IconProps) => (
+    <svg {...base(p)}>
+      <circle cx="8" cy="15" r="4.5" />
+      <path d="m11.2 11.8 8.8-8.8M16.5 6.5l3 3M13.5 9.5l2 2" />
+    </svg>
+  ),
+  quality: (p: IconProps) => (
+    <svg {...base(p)}>
+      <circle cx="12" cy="9" r="6" />
+      <path d="m9 14.2-1.5 7.3L12 19l4.5 2.5-1.5-7.3" />
+      <path d="m9.8 9 1.6 1.6 2.9-3" />
+    </svg>
+  ),
+} as const;
+
+const STRENGTH_MATCH: [RegExp, keyof typeof STRENGTH_ICONS][] = [
+  [/safe|secur|insur|health/i, "safety"],
+  [/price|pricing|cost|budget|fixed|transparen|quote/i, "price"],
+  [/schedul|time|deadline|deliver|on-time|fast|month/i, "schedule"],
+  [/engineer|crew|team|staff|expert|in-house|people/i, "crew"],
+  [/design|build|plan|drawing|architect|contract/i, "blueprint"],
+  [/support|handover|warrant|after|maintenan|keys?\b/i, "handover"],
+];
+
+/** Picks an icon for a "Why choose us" point from its words; quality mark when nothing matches. */
+export function StrengthIcon({ text, ...props }: { text: string } & IconProps) {
+  const name = STRENGTH_MATCH.find(([re]) => re.test(text))?.[1] ?? "quality";
+  const Icon = STRENGTH_ICONS[name];
+  return <Icon strokeWidth={1.6} {...props} />;
+}
+
 export type ServiceIconName = keyof typeof SERVICE_ICONS;
 
 export function ServiceIcon({ name, ...props }: { name: string } & IconProps) {
