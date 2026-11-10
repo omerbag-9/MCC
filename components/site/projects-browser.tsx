@@ -70,7 +70,7 @@ export function ProjectsBrowser({ items }: { items: BrowserItem[] }) {
 
   return (
     <>
-      <div className="z-30 -mx-5 mb-12 bg-paper lg:sticky lg:top-[72px] px-5 py-4 sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
+      <div className="z-30 -mx-5 mb-12 bg-paper lg:sticky lg:top-24 px-5 py-4 sm:-mx-8 sm:px-8 lg:-mx-10 lg:px-10">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           {categories.length > 1 && (
             <div className="flex flex-wrap gap-1" role="group" aria-label="Filter by category">

@@ -59,7 +59,7 @@ export async function NewsList({ page }: { page: number }) {
 
   return (
     <>
-      <section className="relative isolate flex min-h-[360px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[min(520px,calc(66svh-72px))]">
+      <section className="relative isolate flex min-h-[360px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[min(520px,calc(66svh-96px))]">
         <div className="absolute inset-0 -z-20">
           <Photo mediaBase={mediaBase} src={heroPhoto} alt="" sizes="100vw" priority className="hero-photo" />
         </div>

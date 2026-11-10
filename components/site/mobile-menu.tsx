@@ -8,7 +8,7 @@ export function MobileMenu({ children, summary }: { children: React.ReactNode; s
   return (
     <details
       ref={ref}
-      className="group lg:hidden"
+      className="group ml-auto lg:hidden"
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("a") && ref.current) ref.current.open = false;
       }}
