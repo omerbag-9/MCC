@@ -105,7 +105,7 @@ export function LeadForm({
 
       <div className="sm:col-span-2">
         <button type="submit" className="btn-primary w-full sm:w-auto" disabled={pending}>
-          {pending ? "Sending…" : (labels?.button ?? "Request a free quote")}
+          {pending ? "Sending…" : (labels?.button ?? "Send message")}
         </button>
       </div>
     </form>

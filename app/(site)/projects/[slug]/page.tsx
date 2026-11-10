@@ -147,14 +147,11 @@ export default async function ProjectPage({ params }: Props) {
                 {p}
               </p>
             ))}
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link href="/contact" className="btn-primary">{c.quoteButton}</Link>
-              {wa && (
-                <WhatsAppLink href={wa} className="btn-whatsapp">
-                  <WhatsAppIcon width={18} height={18} /> Ask on WhatsApp
-                </WhatsAppLink>
-              )}
-            </div>
+            {wa && (
+              <WhatsAppLink href={wa} className="btn-whatsapp mt-9">
+                <WhatsAppIcon width={18} height={18} /> Ask on WhatsApp
+              </WhatsAppLink>
+            )}
           </Reveal>
           <Reveal className="relative lg:col-span-6">
             <div className="absolute top-6 right-0 bottom-0 left-6 bg-ink lg:top-10 lg:left-10" aria-hidden />
@@ -288,18 +285,6 @@ export default async function ProjectPage({ params }: Props) {
         </nav>
       )}
 
-      <section className="bg-sand">
-        <Reveal className="container-x grid gap-8 py-14 lg:grid-cols-12 lg:items-center lg:py-16">
-          <div className="lg:col-span-8">
-            <h2 className="text-head font-semibold">{c.projectCtaTitle}</h2>
-            <p className="mt-3 max-w-xl">{c.projectCtaText}</p>
-          </div>
-          <div className="flex flex-wrap gap-3 lg:col-span-4 lg:justify-end">
-            <Link href="/contact" className="btn-primary">{c.quoteButton}</Link>
-            <Link href="/projects" className="btn bg-paper text-ink hover:bg-brand-soft">All projects</Link>
-          </div>
-        </Reveal>
-      </section>
     </>
   );
 }

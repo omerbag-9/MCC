@@ -223,17 +223,6 @@ export default async function NewsPostPage({ params }: Props) {
         </section>
       )}
 
-      <section className="bg-ink text-paper">
-        <Reveal className="container-x grid gap-8 py-14 lg:grid-cols-12 lg:items-center lg:py-16">
-          <div className="lg:col-span-8">
-            <h2 className="text-head font-semibold">{c.newsCtaTitle}</h2>
-            <p className="mt-3 max-w-xl text-on-navy-muted">{c.newsCtaText}</p>
-          </div>
-          <div className="flex flex-wrap gap-3 lg:col-span-4 lg:justify-end">
-            <Link href="/contact" className="btn-light">{c.quoteButton}</Link>
-          </div>
-        </Reveal>
-      </section>
     </>
   );
 }

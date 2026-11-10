@@ -3,14 +3,13 @@ import { Footer } from "@/components/site/footer";
 import { Header, TopBar } from "@/components/site/header";
 import { ScrollToTop } from "@/components/site/scroll-to-top";
 import { WhatsAppFloat } from "@/components/site/whatsapp";
-import { getContent, getFeaturedProjects, getPublishedServices, getSettings } from "@/lib/db/queries";
+import { getFeaturedProjects, getPublishedServices, getSettings } from "@/lib/db/queries";
 import { getVar } from "@/lib/env";
 import { whatsappLink } from "@/lib/whatsapp";
 
 export default async function SiteLayout({ children }: { children: React.ReactNode }) {
-  const [settings, content, services, projects, analyticsToken] = await Promise.all([
+  const [settings, services, projects, analyticsToken] = await Promise.all([
     getSettings(),
-    getContent(),
     getPublishedServices(),
     getFeaturedProjects(),
     getVar("CF_ANALYTICS_TOKEN"),
@@ -24,9 +23,9 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
       </a>
       <ScrollToTop />
       <TopBar settings={settings} />
-      <Header companyName={settings.companyName} phone={settings.phone} quoteLabel={content.quoteButton} />
+      <Header companyName={settings.companyName} phone={settings.phone} />
       <main id="main">{children}</main>
-      <Footer settings={settings} services={services} projects={projects} quoteLabel={content.quoteButton} />
+      <Footer settings={settings} services={services} projects={projects} />
       {wa && <WhatsAppFloat href={wa} />}
       {analyticsToken && (
         <Script

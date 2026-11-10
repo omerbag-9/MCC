@@ -45,7 +45,7 @@ check("projects page has a heading", /<h1[\s>]/.test(projects.body));
 
 const contact = await get("/contact");
 check("contact page returns 200", contact.status === 200, `HTTP ${contact.status}`);
-check("contact page has the quote form", /<form[\s>]/.test(contact.body));
+check("contact page has the contact form", /<form[\s>]/.test(contact.body));
 
 const sitemap = await get("/sitemap.xml");
 check("sitemap.xml returns 200", sitemap.status === 200, `HTTP ${sitemap.status}`);
