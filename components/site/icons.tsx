@@ -258,40 +258,10 @@ export const SocialIcon = ({ network, ...p }: { network: string } & IconProps) =
   }
 };
 
-export const TrophyIcon = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M8 4h8v5a4 4 0 0 1-8 0z" />
-    <path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4" />
-    <path d="M12 13v4M8.5 21h7M9.5 17h5v4h-5z" />
-  </svg>
-);
-
-export const HardHatIcon = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M4 16a8 8 0 0 1 16 0" />
-    <path d="M2 16h20v3H2zM10 8V5h4v3" />
-  </svg>
-);
-
-export const ProgressIcon = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M3 21h18" />
-    <path d="M6 17v-4M11 17V9M16 17V5" />
-    <path d="m14 7 2-2 2 2" />
-  </svg>
-);
-
 export const CheckCircleIcon = (p: IconProps) => (
   <svg {...base(p)}>
     <circle cx="12" cy="12" r="9" />
     <path d="m8 12.5 2.8 2.8L16.5 9.5" />
-  </svg>
-);
-
-export const MegaphoneIcon = (p: IconProps) => (
-  <svg {...base(p)}>
-    <path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1z" />
-    <path d="M17 9a4 4 0 0 1 0 6M7 15l1.5 5h2.5l-1-4.5" />
   </svg>
 );
 
@@ -316,18 +286,70 @@ export const CopyIcon = (p: IconProps) => (
   </svg>
 );
 
+/* Icons for the kinds of news: drawn as one set (24 grid, 1.6 line, round joins). */
+
+/** Project won: a signed contract with its seal. */
+export const ContractIcon = (p: IconProps) => (
+  <svg {...base({ strokeWidth: 1.6, ...p })}>
+    <path d="M14 3H6.5A1.5 1.5 0 0 0 5 4.5v15A1.5 1.5 0 0 0 6.5 21H11" />
+    <path d="M14 3v4h4M14 3l4 4v3.5" />
+    <path d="M8 8.5h3.5M8 11.5h6M8 14.5h3" />
+    <circle cx="17" cy="15.5" r="3" />
+    <path d="m15.4 18.1-.9 3.4 2.5-1.2 2.5 1.2-.9-3.4" />
+  </svg>
+);
+
+/** Work started: an excavator. */
+export const ExcavatorIcon = (p: IconProps) => (
+  <svg {...base({ strokeWidth: 1.6, ...p })}>
+    <path d="M3 18.5a2 2 0 0 1 2-2h8a2 2 0 0 1 0 4H5a2 2 0 0 1-2-2z" />
+    <path d="M5 16.5V12h7l1 4.5" />
+    <path d="M7.5 12V9.5h3V12" />
+    <path d="M12 12 16.5 5l4 5" />
+    <path d="M20.5 10 18 14.5h3.5z" />
+  </svg>
+);
+
+/** Progress update: a tower crane over a building going up. */
+export const CraneIcon = (p: IconProps) => (
+  <svg {...base({ strokeWidth: 1.6, ...p })}>
+    <path d="M6 21V4M3 6.5h18M6 4l-3 2.5M6 4l9 2.5" />
+    <path d="M17 6.5V10" />
+    <path d="M12 21v-8.5h8V21M2 21h20" />
+    <path d="M14.5 15h3M14.5 18h3" />
+  </svg>
+);
+
+/** Project completed: a finished building with a check badge. */
+export const HandoverIcon = (p: IconProps) => (
+  <svg {...base({ strokeWidth: 1.6, ...p })}>
+    <path d="M4 21V5.5A1.5 1.5 0 0 1 5.5 4h7A1.5 1.5 0 0 1 14 5.5V10" />
+    <path d="M2 21h10M7.5 8h3M7.5 11.5h3M7.5 15h1.5M8 21v-3" />
+    <circle cx="17" cy="16" r="5" />
+    <path d="m14.8 16.1 1.5 1.5 2.9-3" />
+  </svg>
+);
+
+/** Company news: a newspaper. */
+export const NewspaperIcon = (p: IconProps) => (
+  <svg {...base({ strokeWidth: 1.6, ...p })}>
+    <path d="M17 20H5a2 2 0 0 1-2-2V5a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13a2 2 0 0 0 4 0V9h-4" />
+    <path d="M6.5 8h7v4h-7zM6.5 15h7M6.5 17.5h4.5" />
+  </svg>
+);
+
 /** The icon that marks each kind of news post. */
 export const NewsKindIcon = ({ kind, ...p }: { kind: string } & IconProps) => {
   switch (kind) {
     case "won":
-      return <TrophyIcon {...p} />;
+      return <ContractIcon {...p} />;
     case "started":
-      return <HardHatIcon {...p} />;
+      return <ExcavatorIcon {...p} />;
     case "progress":
-      return <ProgressIcon {...p} />;
+      return <CraneIcon {...p} />;
     case "completed":
-      return <CheckCircleIcon {...p} />;
+      return <HandoverIcon {...p} />;
     default:
-      return <MegaphoneIcon {...p} />;
+      return <NewspaperIcon {...p} />;
   }
 };
