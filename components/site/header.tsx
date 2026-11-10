@@ -60,13 +60,14 @@ export function TopBar({ settings }: { settings: Settings }) {
   );
 }
 
-/** Sticky dark navy bar on every page. */
+/** Sticky dark navy bar on every page, with the logo on a white block at its start. */
 export function Header({ companyName, phone }: { companyName: string; phone: string }) {
   return (
     <header className="sticky top-0 z-40 bg-ink text-paper">
       <div className="container-x flex h-[72px] items-center justify-between gap-6">
-        <Link href="/" className="flex shrink-0 items-center" aria-label={`${companyName}, home`}>
-          <Logo height={56} alt={companyName} className="h-12 w-auto lg:h-14" />
+        {/* The logo on a white block cut into the dark bar, its full height. */}
+        <Link href="/" className="flex shrink-0 items-center self-stretch bg-paper px-5 lg:px-8" aria-label={`${companyName}, home`}>
+          <Logo height={48} tone="brand" alt={companyName} className="h-10 w-auto lg:h-12" />
         </Link>
 
         <nav className="hidden items-center gap-1 text-[15px] font-medium lg:flex" aria-label="Main">
