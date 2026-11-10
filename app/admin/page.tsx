@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { count, desc, eq, gte, sql } from "drizzle-orm";
+import { count, desc, eq, gte } from "drizzle-orm";
 import { Badge, Card, Flash, LEAD_STATUS_TONE, PageHeader } from "@/components/admin/ui";
 import { refreshSite } from "@/lib/actions/admin";
 import { ensureAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { leads, projects, settings, whatsappClicks } from "@/lib/db/schema";
+import { leads, projects, settings } from "@/lib/db/schema";
 import { getMediaBase } from "@/lib/env";
 import { mediaUrl } from "@/lib/media";
 import { formatDate } from "@/lib/format";
@@ -18,18 +18,10 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const db = await getDb();
   const weekAgo = daysAgo(7);
 
-  const [[newLeads], [weekLeads], [publishedProjects], [waWeek], topPages, recent, site, allProjects, serviceRows, mediaBase] = await Promise.all([
+  const [[newLeads], [weekLeads], [publishedProjects], recent, site, allProjects, serviceRows, mediaBase] = await Promise.all([
     db.select({ n: count() }).from(leads).where(eq(leads.status, "new")),
     db.select({ n: count() }).from(leads).where(gte(leads.createdAt, weekAgo)),
     db.select({ n: count() }).from(projects).where(eq(projects.published, true)),
-    db.select({ n: count() }).from(whatsappClicks).where(gte(whatsappClicks.createdAt, weekAgo)),
-    db
-      .select({ page: whatsappClicks.pageSource, n: sql<number>`count(*)` })
-      .from(whatsappClicks)
-      .where(gte(whatsappClicks.createdAt, weekAgo))
-      .groupBy(whatsappClicks.pageSource)
-      .orderBy(desc(sql`count(*)`))
-      .limit(5),
     db.query.leads.findMany({ orderBy: [desc(leads.createdAt)], limit: 6 }),
     db.query.settings.findFirst({ where: eq(settings.id, 1) }),
     db.query.projects.findMany({ columns: { id: true, title: true, coverKey: true, published: true, featured: true }, orderBy: (p, { asc }) => [asc(p.sortOrder), desc(p.id)] }),
@@ -43,7 +35,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
   const stats = [
     { label: "New leads", value: newLeads.n, href: "/admin/leads?status=new" },
     { label: "Leads this week", value: weekLeads.n, href: "/admin/leads" },
-    { label: "WhatsApp clicks (7 days)", value: waWeek.n },
     { label: "Published projects", value: publishedProjects.n, href: "/admin/projects" },
   ];
 
@@ -67,7 +58,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
       </p>
       <Flash searchParams={await searchParams} />
 
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {stats.map((s) => {
           const inner = (
             <Card className="h-full">
@@ -130,8 +121,8 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         </Card>
       </div>
 
-      <div className="mt-8 grid gap-6 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      <div className="mt-8">
+        <Card>
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Latest leads</h2>
             <Link href="/admin/leads" className="text-sm text-brand-dark hover:underline">View all</Link>
@@ -158,21 +149,6 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           )}
         </Card>
 
-        <Card>
-          <h2 className="font-semibold">Top WhatsApp pages (7 days)</h2>
-          {topPages.length === 0 ? (
-            <p className="mt-4 text-sm text-muted">No clicks yet.</p>
-          ) : (
-            <ul className="mt-4 space-y-2 text-sm">
-              {topPages.map((p) => (
-                <li key={p.page} className="flex justify-between gap-3">
-                  <span className="truncate font-mono text-xs">{p.page}</span>
-                  <span className="font-semibold">{p.n}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
       </div>
     </>
   );

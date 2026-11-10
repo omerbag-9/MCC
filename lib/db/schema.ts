@@ -33,6 +33,7 @@ export const settings = sqliteTable("settings", {
   phone: text("phone").notNull().default(""),
   email: text("email").notNull().default(""),
   /** International format, digits only, e.g. 201001234567 */
+  // WhatsApp was removed from the site; these two columns stay so older deploys can roll back.
   whatsappNumber: text("whatsapp_number").notNull().default(""),
   whatsappMessage: text("whatsapp_message").notNull().default("Hello, I'd like to ask about a project."),
   address: text("address").notNull().default(""),
@@ -192,6 +193,7 @@ export const leads = sqliteTable(
   (t) => [index("leads_status_idx").on(t.status, t.createdAt)],
 );
 
+// No longer written or read (WhatsApp was removed); the table stays so older deploys can roll back.
 export const whatsappClicks = sqliteTable(
   "whatsapp_clicks",
   {

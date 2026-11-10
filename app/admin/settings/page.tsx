@@ -61,12 +61,10 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
         </section>
 
         <section>
-          <h2 className="mb-3 font-semibold">Contact & WhatsApp</h2>
+          <h2 className="mb-3 font-semibold">Contact</h2>
           <Card className="grid gap-5 sm:grid-cols-2">
             <TextField name="phone" label="Phone" defaultValue={s.phone} />
             <TextField name="email" label="Email" type="email" defaultValue={s.email} />
-            <TextField name="whatsappNumber" label="WhatsApp number" defaultValue={s.whatsappNumber} hint="International format with country code, e.g. 201001234567. Leave empty to hide WhatsApp buttons." />
-            <TextField name="whatsappMessage" label="Default WhatsApp message" defaultValue={s.whatsappMessage} />
             <div className="sm:col-span-2">
               <TextField name="address" label="Address" defaultValue={s.address} />
             </div>

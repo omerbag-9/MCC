@@ -7,7 +7,6 @@ import { ensureAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import { LEAD_STATUSES, leads } from "@/lib/db/schema";
 import { formatDate } from "@/lib/format";
-import { whatsappLink } from "@/lib/whatsapp";
 
 export const metadata = { title: "Lead" };
 
@@ -25,7 +24,6 @@ export default async function LeadPage({
   const lead = await db.query.leads.findFirst({ where: eq(leads.id, id) });
   if (!lead) notFound();
 
-  const wa = whatsappLink(lead.phone, `Hello ${lead.name}, thank you for contacting us.`);
   const rows: [string, React.ReactNode][] = [
     ["Phone", lead.phone ? <a href={`tel:${lead.phone}`} className="text-brand-dark hover:underline">{lead.phone}</a> : "—"],
     ["Email", lead.email ? <a href={`mailto:${lead.email}`} className="text-brand-dark hover:underline">{lead.email}</a> : "—"],
@@ -55,9 +53,6 @@ export default async function LeadPage({
             <p className="text-xs font-medium text-muted uppercase">Message</p>
             <p className="mt-2 text-sm whitespace-pre-wrap">{lead.message || "—"}</p>
           </div>
-          {wa && (
-            <a href={wa} target="_blank" rel="noopener noreferrer" className="btn-whatsapp mt-6">Reply on WhatsApp</a>
-          )}
         </Card>
 
         <Card>

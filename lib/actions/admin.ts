@@ -113,8 +113,6 @@ const settingsSchema = z.object({
   strengths: str(2000),
   phone: str(40),
   email: z.union([z.literal(""), z.string().trim().email().max(200)]),
-  whatsappNumber: str(20).regex(/^[\d+\s-]*$/, "digits only"),
-  whatsappMessage: str(300),
   address: str(300),
   workingHours: str(200),
   mapEmbedUrl: z.union([z.literal(""), z.string().trim().url().max(2000)]),
@@ -140,7 +138,7 @@ export async function saveSettings(formData: FormData): Promise<ActionResult> {
     if (value && label) stats.push({ value, label });
   }
 
-  const data = { ...parsed.data, whatsappNumber: parsed.data.whatsappNumber.replace(/\D/g, ""), stats };
+  const data = { ...parsed.data, stats };
   const db = await getDb();
   const previous = await db.query.settings.findFirst({ where: eq(settings.id, 1) });
   await db

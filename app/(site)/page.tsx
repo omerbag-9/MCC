@@ -3,7 +3,7 @@ import Link from "next/link";
 import SplitText from "@/components/reactbits/SplitText";
 import { ClientsLoop } from "@/components/site/clients-loop";
 import { HeroVideo } from "@/components/site/hero-video";
-import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, StrengthIcon, WhatsAppIcon } from "@/components/site/icons";
+import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, StrengthIcon } from "@/components/site/icons";
 import { LeadForm } from "@/components/site/lead-form";
 import { NewsCard } from "@/components/site/news-card";
 import { ProjectFacts } from "@/components/site/project-facts";
@@ -12,7 +12,6 @@ import { Photo, photoPool } from "@/components/site/photo";
 import { Reveal } from "@/components/site/reveal";
 import { ServicesExplorer } from "@/components/site/services-explorer";
 import { Stat } from "@/components/site/stat";
-import { WhatsAppLink } from "@/components/site/whatsapp";
 import {
   getClients,
   getContent,
@@ -25,7 +24,6 @@ import { getMediaBase, getSiteUrl, getVar } from "@/lib/env";
 import { lines, paragraphs, specRows } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { jsonLdScript, organizationJsonLd } from "@/lib/seo";
-import { whatsappLink } from "@/lib/whatsapp";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -44,7 +42,6 @@ export default async function HomePage() {
     getVar("TURNSTILE_SITE_KEY"),
   ]);
 
-  const wa = whatsappLink(settings.whatsappNumber, settings.whatsappMessage);
   const pool = photoPool(settings.heroImageKey, ...featured.map((p) => p.coverKey));
   const heroPhoto = pool.next();
   const aboutPhoto = c.aboutImage || (pool.next() ?? heroPhoto);
@@ -318,17 +315,6 @@ export default async function HomePage() {
                       <span className="font-semibold">{settings.phone}</span>
                     </span>
                   </a>
-                </li>
-              )}
-              {wa && (
-                <li>
-                  <WhatsAppLink href={wa} className="flex items-center gap-4 bg-navy-2 px-5 py-4 transition-colors hover:bg-ink-soft">
-                    <WhatsAppIcon width={20} height={20} />
-                    <span>
-                      <span className="block text-small text-on-navy-muted">WhatsApp</span>
-                      <span className="font-semibold">Message us</span>
-                    </span>
-                  </WhatsAppLink>
                 </li>
               )}
               {settings.email && (
