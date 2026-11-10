@@ -31,9 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <aside className="bg-ink text-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-64 lg:shrink-0 lg:flex-col">
         <div className="flex items-center justify-between px-4 py-4 lg:px-5 lg:py-6">
           <Link href="/admin" className="flex flex-col gap-2" aria-label="Website admin">
-            <span className="self-start bg-paper px-4 py-3">
-              <Logo height={40} tone="brand" alt="" className="h-9 w-auto lg:h-10" />
-            </span>
+            <Logo height={44} alt="" className="h-10 w-auto lg:h-11" />
             <span className="text-xs font-medium text-white/60">Website admin</span>
           </Link>
           <Link href="/" target="_blank" className="text-xs text-white/60 hover:text-white lg:hidden">View site ↗</Link>

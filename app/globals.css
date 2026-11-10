@@ -62,9 +62,6 @@
   /* Sections land below the sticky header when scrolled to. */
   [id] {
     scroll-margin-top: 4.5rem;
-    @media (width >= 64rem) {
-      scroll-margin-top: 6rem;
-    }
   }
 }
 

@@ -34,7 +34,7 @@ export default async function ProjectsPage() {
   return (
     <>
       {/* Header: a photograph of the work under a veil, the title, and the record along its foot */}
-      <section className="relative isolate flex min-h-[420px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[min(620px,calc(78svh-96px))]">
+      <section className="relative isolate flex min-h-[420px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[min(620px,calc(78svh-72px))]">
         <div className="absolute inset-0 -z-20">
           <Photo mediaBase={mediaBase} src={heroPhoto} alt="" sizes="100vw" priority className="hero-photo" />
         </div>
