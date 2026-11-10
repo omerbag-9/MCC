@@ -399,7 +399,8 @@ const newsSchema = z.object({
   coverKey: mediaKey,
   projectId: optionalId,
   /** Name of a project that is not in the list yet (an announced win): it is created as a draft. */
-  newProject: str(200),
+  // Only on the new-post form, so missing when an existing post is saved.
+  newProject: z.preprocess((v) => v ?? "", str(200)),
   postedAt: day,
   published: checkbox,
   // Only on the edit form (a post is shared after it is published).
@@ -418,10 +419,12 @@ async function applyNewsToProject(db: Db, data: NewsInput): Promise<{ projectId:
   let projectId = data.projectId;
 
   if (!projectId && data.newProject) {
+    // Starts at the first stage; the step below moves it to the post's stage, the same way as an
+    // existing project (so "completed" also publishes it, and a draft post leaves it alone).
     const slug = await uniqueSlug(db, data.newProject);
     const [row] = await db
       .insert(projects)
-      .values({ title: data.newProject, slug, summary: data.summary, status: KIND_TO_STATUS[data.kind] ?? "awarded", published: false })
+      .values({ title: data.newProject, slug, summary: data.summary, status: "awarded", published: false })
       .returning({ id: projects.id });
     projectId = row.id;
   }
