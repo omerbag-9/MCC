@@ -23,7 +23,7 @@ const area = (key: string, label: string, value: string, hint?: string): Content
 const image = (key: string, label: string, hint?: string): ContentField => ({ key, label, kind: "image", default: "", hint });
 const toggle = (key: string, label: string, on = true): ContentField => ({ key, label, kind: "toggle", default: on ? "1" : "0" });
 
-const REPLY = "Tell us what you're building. We reply within one business day.";
+const REPLY = "Send us a message and we will get back to you within one business day.";
 
 export const CONTENT_GROUPS: ContentGroup[] = [
   {
@@ -62,7 +62,7 @@ export const CONTENT_GROUPS: ContentGroup[] = [
       toggle("showNews", "Show the latest news"),
       text("homeNewsTitle", "Latest news heading", "Latest news", "The three most recent posts from News."),
 
-      text("contactTitle", "Contact section heading", "Have a project in mind?"),
+      text("contactTitle", "Contact section heading", "Contact us"),
       area("contactIntro", "Contact section text", REPLY),
       image("contactImage", "Contact section background photo", "Shown dark behind the section. If empty, a project photo is used."),
       text("formTitle", "Contact form heading", "Send us a message"),
@@ -107,11 +107,9 @@ export const CONTENT_GROUPS: ContentGroup[] = [
     title: "Contact page",
     fields: [
       text("contactPageTitle", "Heading", "Contact us"),
-      area("contactPageIntro", "Text under the heading", "Tell us about your project. We reply within one business day."),
+      area("contactPageIntro", "Text under the heading", REPLY),
       image("contactPageImage", "Photo beside the form", "If empty, a featured project's photo is used."),
       text("contactDetailsTitle", "Contact details heading", "Contact details"),
-      toggle("showContactRecent", "Show recent projects"),
-      text("contactRecentTitle", "Recent projects heading", "Recent projects"),
     ],
   },
   {
@@ -134,14 +132,21 @@ export type Content = Record<string, string> & {
 
 /** Saved values over the defaults, with {company} filled in. */
 /**
- * Earlier defaults that asked for a quote. Saving the content page stores every field, so a saved
+ * Earlier defaults that asked for a quote or about a project. Saving the content page stores every field, so a saved
  * value equal to one of these was never written by the admin: it gets today's default instead.
  */
 const RETIRED: Record<string, string[]> = {
-  contactIntro: ["Tell us what you're building. We reply within one business day with next steps and a free estimate."],
+  contactTitle: ["Have a project in mind?"],
+  contactIntro: [
+    "Tell us what you're building. We reply within one business day with next steps and a free estimate.",
+    "Tell us what you're building. We reply within one business day.",
+  ],
   formTitle: ["Request a free quote"],
   contactPageTitle: ["Request a quote"],
-  contactPageIntro: ["Tell us about your project. We reply within one business day with next steps and a free estimate."],
+  contactPageIntro: [
+    "Tell us about your project. We reply within one business day with next steps and a free estimate.",
+    "Tell us about your project. We reply within one business day.",
+  ],
   formButton: ["Request a free quote"],
   formSuccessTitle: ["Thank you! We received your request."],
 };
