@@ -29,7 +29,10 @@ export function SaveBar({
       role="region"
       aria-label="Unsaved changes"
       inert={!on}
-      className={`fixed inset-x-0 bottom-0 z-50 transition-transform duration-300 ease-out lg:left-64 ${on ? "translate-y-0" : "translate-y-full"}`}
+      // Hidden means invisible, not just moved below the screen: otherwise it still counts as visible
+      // (to tests and assistive tech) and its shadow shows at the bottom edge. Visibility flips at the
+      // end of the slide-out, so the animation still plays.
+      className={`fixed inset-x-0 bottom-0 z-50 transition-[translate,visibility] duration-300 ease-out lg:left-64 ${on ? "visible translate-y-0" : "invisible translate-y-full"}`}
     >
       <div className="mx-auto flex max-w-3xl items-center gap-3 bg-ink px-5 py-3 text-paper shadow-2xl shadow-black/30 sm:mb-5">
         <span className="mr-auto flex items-center gap-2.5 text-[15px]">
