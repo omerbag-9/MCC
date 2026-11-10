@@ -7,6 +7,7 @@ const PAGES = [
   { href: "/#about", label: "About us" },
   { href: "/#services", label: "Services" },
   { href: "/projects", label: "Projects" },
+  { href: "/news", label: "News" },
   { href: "/contact", label: "Request a quote" },
 ];
 

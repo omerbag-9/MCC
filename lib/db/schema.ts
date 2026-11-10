@@ -1,4 +1,4 @@
-import { sql } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 const createdAt = () =>
@@ -64,6 +64,10 @@ export const services = sqliteTable("services", {
   updatedAt: updatedAt(),
 });
 
+/** Where a project stands: won (not started), under construction, or handed over. */
+export const PROJECT_STATUSES = ["awarded", "in_progress", "completed"] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
 export const projects = sqliteTable(
   "projects",
   {
@@ -83,6 +87,8 @@ export const projects = sqliteTable(
     /** Features or amenities delivered, one per line. */
     highlights: text("highlights").notNull().default(""),
     coverKey: text("cover_key"),
+    /** Only completed projects appear in the public portfolio; the others show in News. */
+    status: text("status", { enum: PROJECT_STATUSES }).notNull().default("completed"),
     featured: integer("featured", { mode: "boolean" }).notNull().default(false),
     published: integer("published", { mode: "boolean" }).notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),
@@ -114,6 +120,46 @@ export const projectMedia = sqliteTable(
   },
   (t) => [index("project_media_project_idx").on(t.projectId, t.sortOrder)],
 );
+
+/**
+ * What a news post announces. won / started / completed move the linked project to the matching
+ * status; progress and general leave it as it is.
+ */
+export const NEWS_KINDS = ["won", "started", "progress", "completed", "general"] as const;
+export type NewsKind = (typeof NEWS_KINDS)[number];
+
+export const newsPosts = sqliteTable(
+  "news_posts",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    slug: text("slug").notNull().unique(),
+    kind: text("kind", { enum: NEWS_KINDS }).notNull().default("general"),
+    title: text("title").notNull(),
+    /** One or two sentences for cards, Google and the LinkedIn preview. */
+    summary: text("summary").notNull().default(""),
+    /** Plain text; blank lines separate paragraphs. */
+    body: text("body").notNull().default(""),
+    coverKey: text("cover_key"),
+    projectId: integer("project_id").references(() => projects.id, { onDelete: "set null" }),
+    /** The date shown on the post (the day of the win, the start, the handover...). */
+    postedAt: integer("posted_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    published: integer("published", { mode: "boolean" }).notNull().default(true),
+    /** Address of the same news on LinkedIn, once shared; shown as "Also on LinkedIn". */
+    linkedinPostUrl: text("linkedin_post_url").notNull().default(""),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("news_posts_published_idx").on(t.published, t.postedAt),
+    index("news_posts_project_idx").on(t.projectId),
+  ],
+);
+
+export const newsPostsRelations = relations(newsPosts, ({ one }) => ({
+  project: one(projects, { fields: [newsPosts.projectId], references: [projects.id] }),
+}));
 
 export const clients = sqliteTable("clients", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -161,4 +207,5 @@ export type Service = typeof services.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type ProjectMedia = typeof projectMedia.$inferSelect;
 export type Client = typeof clients.$inferSelect;
+export type NewsPost = typeof newsPosts.$inferSelect;
 export type Lead = typeof leads.$inferSelect;

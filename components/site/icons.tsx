@@ -257,3 +257,77 @@ export const SocialIcon = ({ network, ...p }: { network: string } & IconProps) =
       );
   }
 };
+
+export const TrophyIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M8 4h8v5a4 4 0 0 1-8 0z" />
+    <path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4" />
+    <path d="M12 13v4M8.5 21h7M9.5 17h5v4h-5z" />
+  </svg>
+);
+
+export const HardHatIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 16a8 8 0 0 1 16 0" />
+    <path d="M2 16h20v3H2zM10 8V5h4v3" />
+  </svg>
+);
+
+export const ProgressIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3 21h18" />
+    <path d="M6 17v-4M11 17V9M16 17V5" />
+    <path d="m14 7 2-2 2 2" />
+  </svg>
+);
+
+export const CheckCircleIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m8 12.5 2.8 2.8L16.5 9.5" />
+  </svg>
+);
+
+export const MegaphoneIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1z" />
+    <path d="M17 9a4 4 0 0 1 0 6M7 15l1.5 5h2.5l-1-4.5" />
+  </svg>
+);
+
+export const CalendarIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="3" y="5" width="18" height="16" rx="1" />
+    <path d="M3 10h18M8 3v4M16 3v4" />
+  </svg>
+);
+
+export const ExternalLinkIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M14 4h6v6M20 4l-9 9" />
+    <path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+  </svg>
+);
+
+export const CopyIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <rect x="8" y="8" width="12" height="12" rx="1" />
+    <path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" />
+  </svg>
+);
+
+/** The icon that marks each kind of news post. */
+export const NewsKindIcon = ({ kind, ...p }: { kind: string } & IconProps) => {
+  switch (kind) {
+    case "won":
+      return <TrophyIcon {...p} />;
+    case "started":
+      return <HardHatIcon {...p} />;
+    case "progress":
+      return <ProgressIcon {...p} />;
+    case "completed":
+      return <CheckCircleIcon {...p} />;
+    default:
+      return <MegaphoneIcon {...p} />;
+  }
+};

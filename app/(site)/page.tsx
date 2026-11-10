@@ -5,6 +5,7 @@ import { ClientsLoop } from "@/components/site/clients-loop";
 import { HeroVideo } from "@/components/site/hero-video";
 import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, StrengthIcon, WhatsAppIcon } from "@/components/site/icons";
 import { LeadForm } from "@/components/site/lead-form";
+import { NewsCard } from "@/components/site/news-card";
 import { ProjectFacts } from "@/components/site/project-facts";
 import { formatArea } from "@/components/site/project-card";
 import { Photo, photoPool } from "@/components/site/photo";
@@ -16,6 +17,7 @@ import {
   getClients,
   getContent,
   getFeaturedProjects,
+  getPublishedNews,
   getPublishedServices,
   getSettings,
 } from "@/lib/db/queries";
@@ -30,12 +32,13 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 const thumbOf = (key: string | null) => (key ? key.replace(/\.(\w+)$/, "-thumb.$1") : null);
 
 export default async function HomePage() {
-  const [settings, c, services, featured, clients, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
+  const [settings, c, services, featured, clients, news, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
     getSettings(),
     getContent(),
     getPublishedServices(),
     getFeaturedProjects(),
     getClients(),
+    getPublishedNews(3),
     getMediaBase(),
     getSiteUrl(),
     getVar("TURNSTILE_SITE_KEY"),
@@ -274,6 +277,25 @@ export default async function HomePage() {
           <ClientsLoop
             clients={clients.map((c) => ({ id: c.id, name: c.name, url: c.url, logo: mediaUrl(c.logoKey, mediaBase) }))}
           />
+        </section>
+      )}
+
+      {/* Latest news: the three most recent posts (wins, starts, handovers) */}
+      {c.on("showNews") && news.length > 0 && (
+        <section className="section-y bg-sand" aria-labelledby="news-title">
+          <div className="container-x">
+            <Reveal className="mb-10 flex flex-wrap items-end justify-between gap-6">
+              <h2 id="news-title" className="text-head font-semibold">{c.homeNewsTitle}</h2>
+              <Link href="/news" className="link-arrow">
+                All news <ArrowRightIcon width={18} height={18} />
+              </Link>
+            </Reveal>
+            <Reveal className="grid gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3" stagger={0.08}>
+              {news.map((post) => (
+                <NewsCard key={post.id} post={post} mediaBase={mediaBase} />
+              ))}
+            </Reveal>
+          </div>
         </section>
       )}
 

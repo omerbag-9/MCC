@@ -60,6 +60,9 @@ export const CONTENT_GROUPS: ContentGroup[] = [
 
       toggle("showClients", "Show the clients' logos"),
 
+      toggle("showNews", "Show the latest news"),
+      text("homeNewsTitle", "Latest news heading", "Latest news", "The three most recent posts from News."),
+
       text("contactTitle", "Contact section heading", "Have a project in mind?"),
       area("contactIntro", "Contact section text", REPLY),
       image("contactImage", "Contact section background photo", "Shown dark behind the section. If empty, a project photo is used."),
@@ -76,6 +79,19 @@ export const CONTENT_GROUPS: ContentGroup[] = [
       text("projectsEmpty", "Text when no project is published", "Projects will be published here soon."),
       text("projectsCtaTitle", "Closing heading", "Have a project in mind?"),
       area("projectsCtaText", "Closing text", REPLY),
+    ],
+  },
+  {
+    id: "news",
+    title: "News page",
+    fields: [
+      text("newsTitle", "Heading", "News"),
+      area("newsIntro", "Text under the heading", "Contracts we have won, sites we have opened and projects we have handed over."),
+      image("newsImage", "Header photo", "If empty, the latest post's photo is used."),
+      text("newsEmpty", "Text when no news is published", "News will be published here soon."),
+      text("newsTimelineTitle", "Project timeline heading", "Project timeline", "On a post and on a project's page: the project's news from the win to the handover."),
+      text("newsCtaTitle", "Closing heading", "Have a project in mind?"),
+      area("newsCtaText", "Closing text", REPLY),
     ],
   },
   {

@@ -9,6 +9,9 @@ import {
   clients,
   LEAD_STATUSES,
   leads,
+  NEWS_KINDS,
+  newsPosts,
+  PROJECT_STATUSES,
   projectMedia,
   projects,
   services,
@@ -18,6 +21,7 @@ import { getMediaBucket } from "@/lib/env";
 import { CONTENT_FIELDS } from "@/lib/content";
 import { slugify } from "@/lib/format";
 import { MEDIA_KEY_PATTERN } from "@/lib/media";
+import { defaultNewsTitle, KIND_TO_STATUS, PROJECT_KINDS } from "@/lib/news";
 import { revalidateSite } from "@/lib/revalidate";
 
 /*
@@ -58,9 +62,22 @@ function firstError(error: z.ZodError) {
  * and clients/ keys. The original is removed only once its copy is safe.
  */
 async function deleteObjects(keys: (string | null | undefined)[]) {
-  const valid = keys.filter((k): k is string => !!k && MEDIA_KEY_PATTERN.test(k));
-  if (valid.length === 0) return;
+  const candidates = keys.filter((k): k is string => !!k && MEDIA_KEY_PATTERN.test(k));
+  if (candidates.length === 0) return;
   try {
+    // A news cover can also be a project photo: keep any file another row still points to.
+    const db = await getDb();
+    const inUse = new Set<string>();
+    for (const key of new Set(candidates.map((k) => k.replace("-thumb.", ".")))) {
+      const found = await db.batch([
+        db.select({ id: projectMedia.id }).from(projectMedia).where(eq(projectMedia.key, key)).limit(1),
+        db.select({ id: newsPosts.id }).from(newsPosts).where(eq(newsPosts.coverKey, key)).limit(1),
+        db.select({ id: projects.id }).from(projects).where(eq(projects.coverKey, key)).limit(1),
+      ]);
+      if (found.some((rows) => rows.length > 0)) inUse.add(key);
+    }
+    const valid = candidates.filter((k) => !inUse.has(k.replace("-thumb.", ".")));
+    if (valid.length === 0) return;
     const bucket = await getMediaBucket();
     if (!bucket) return;
     const day = new Date().toISOString().slice(0, 10);
@@ -184,20 +201,24 @@ const projectSchema = z.object({
   areaM2: optionalInt,
   specs: str(4000),
   highlights: str(4000),
+  status: z.enum(PROJECT_STATUSES),
   featured: checkbox,
   published: checkbox,
   seoTitle: str(120),
   seoDescription: str(300),
 });
 
-async function uniqueSlug(db: Awaited<ReturnType<typeof getDb>>, wanted: string, excludeId?: number) {
-  const base = slugify(wanted) || "project";
+type Db = Awaited<ReturnType<typeof getDb>>;
+
+async function uniqueSlug(db: Db, wanted: string, excludeId?: number, table: typeof projects | typeof newsPosts = projects) {
+  const base = slugify(wanted) || (table === projects ? "project" : "news");
   let slug = base;
   for (let i = 2; i < 100; i++) {
-    const clash = await db.query.projects.findFirst({
-      where: excludeId ? and(eq(projects.slug, slug), ne(projects.id, excludeId)) : eq(projects.slug, slug),
-      columns: { id: true },
-    });
+    const [clash] = await db
+      .select({ id: table.id })
+      .from(table)
+      .where(excludeId ? and(eq(table.slug, slug), ne(table.id, excludeId)) : eq(table.slug, slug))
+      .limit(1);
     if (!clash) return slug;
     slug = `${base}-${i}`;
   }
@@ -237,6 +258,8 @@ export async function deleteProject(id: number) {
   const db = await getDb();
   const media = await db.query.projectMedia.findMany({ where: eq(projectMedia.projectId, id) });
   await db.delete(projectMedia).where(eq(projectMedia.projectId, id));
+  // Its news posts stay, as company news.
+  await db.update(newsPosts).set({ projectId: null }).where(eq(newsPosts.projectId, id));
   await db.delete(projects).where(eq(projects.id, id));
   await deleteObjects(media.flatMap((m) => [m.key, m.thumbKey]));
   revalidateSite();
@@ -354,6 +377,149 @@ export async function reorderMedia(projectId: number, ids: number[]): Promise<Ac
   await db.batch([first, ...rest]);
   revalidateSite();
   return { ok: true };
+}
+
+/* ----------------------------------------------------------------------------- News */
+
+const optionalId = z.preprocess(
+  (v) => (v === "" || v == null || v === "0" ? null : Number(v)),
+  z.number().int().positive().nullable(),
+);
+const day = z.preprocess(
+  (v) => (v === "" || v == null ? null : v),
+  z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "pick a date").nullable(),
+);
+
+const newsSchema = z.object({
+  kind: z.enum(NEWS_KINDS),
+  title: str(200),
+  slug: str(80),
+  summary: str(400),
+  body: str(20000),
+  coverKey: mediaKey,
+  projectId: optionalId,
+  /** Name of a project that is not in the list yet (an announced win): it is created as a draft. */
+  newProject: str(200),
+  postedAt: day,
+  published: checkbox,
+  // Only on the edit form (a post is shared after it is published).
+  linkedinPostUrl: z.preprocess((v) => v ?? "", z.union([z.literal(""), z.string().trim().url().max(500)])),
+});
+
+type NewsInput = z.infer<typeof newsSchema>;
+
+/**
+ * Resolves (or creates) the project a post is about, and moves it to the stage the post
+ * announces. A completed project is published to the portfolio, and the post's photo becomes its
+ * first photo if it has none.
+ */
+async function applyNewsToProject(db: Db, data: NewsInput): Promise<{ projectId: number | null; projectTitle: string } | { error: string }> {
+  const needsProject = PROJECT_KINDS.includes(data.kind);
+  let projectId = data.projectId;
+
+  if (!projectId && data.newProject) {
+    const slug = await uniqueSlug(db, data.newProject);
+    const [row] = await db
+      .insert(projects)
+      .values({ title: data.newProject, slug, summary: data.summary, status: KIND_TO_STATUS[data.kind] ?? "awarded", published: false })
+      .returning({ id: projects.id });
+    projectId = row.id;
+  }
+  if (!projectId) return needsProject ? { error: "Project: choose the project, or type the name of a new one" } : { projectId: null, projectTitle: "" };
+
+  const project = await db.query.projects.findFirst({ where: eq(projects.id, projectId) });
+  if (!project) return { error: "Project not found" };
+
+  // Stages only move forward, so re-saving an old "won" post never reopens a finished project.
+  // (A mistake is corrected with the project's own Stage field.)
+  const status = KIND_TO_STATUS[data.kind];
+  if (status && data.published && PROJECT_STATUSES.indexOf(status) > PROJECT_STATUSES.indexOf(project.status)) {
+    const completed = status === "completed";
+    const postedYear = data.postedAt ? Number(data.postedAt.slice(0, 4)) : new Date().getUTCFullYear();
+    await db
+      .update(projects)
+      .set({
+        status,
+        ...(completed && { published: true, year: project.year ?? postedYear }),
+        updatedAt: new Date(),
+      })
+      .where(eq(projects.id, projectId));
+  }
+
+  if (data.coverKey && !project.coverKey) {
+    const existing = await db.query.projectMedia.findFirst({
+      where: and(eq(projectMedia.projectId, projectId), eq(projectMedia.key, data.coverKey)),
+      columns: { id: true },
+    });
+    if (!existing) {
+      await db.insert(projectMedia).values({ projectId, type: "image", key: data.coverKey, thumbKey: thumbOf(data.coverKey), alt: project.title, sortOrder: 0 });
+    }
+    await db.update(projects).set({ coverKey: data.coverKey, updatedAt: new Date() }).where(eq(projects.id, projectId));
+  }
+  return { projectId, projectTitle: project.title };
+}
+
+function newsValues(data: NewsInput, projectTitle: string) {
+  return {
+    kind: data.kind,
+    title: data.title || defaultNewsTitle(data.kind, projectTitle || "Company news"),
+    summary: data.summary,
+    body: data.body,
+    coverKey: data.coverKey,
+    published: data.published,
+    linkedinPostUrl: data.linkedinPostUrl,
+    ...(data.postedAt && { postedAt: new Date(`${data.postedAt}T12:00:00Z`) }),
+  };
+}
+
+export async function createNews(formData: FormData) {
+  await requireAdmin();
+  const parsed = newsSchema.safeParse(form(formData));
+  const back = `/admin/news/new?kind=${encodeURIComponent(String(formData.get("kind") ?? ""))}`;
+  if (!parsed.success) fail(back, firstError(parsed.error));
+  const db = await getDb();
+  const linked = await applyNewsToProject(db, parsed.data);
+  if ("error" in linked) fail(back, linked.error);
+  const values = newsValues(parsed.data, linked.projectTitle);
+  const slug = await uniqueSlug(db, parsed.data.slug || values.title, undefined, newsPosts);
+  const [row] = await db
+    .insert(newsPosts)
+    .values({ ...values, slug, projectId: linked.projectId })
+    .returning({ id: newsPosts.id });
+  revalidateSite();
+  redirect(`/admin/news/${row.id}?saved=1${parsed.data.published ? "&share=1" : ""}`);
+}
+
+export async function updateNews(id: number, formData: FormData): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = newsSchema.safeParse(form(formData));
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  const db = await getDb();
+  const previous = await db.query.newsPosts.findFirst({ where: eq(newsPosts.id, id) });
+  if (!previous) return { ok: false, error: "Post not found" };
+  const linked = await applyNewsToProject(db, parsed.data);
+  if ("error" in linked) return { ok: false, error: linked.error };
+  const values = newsValues(parsed.data, linked.projectTitle);
+  const slug = await uniqueSlug(db, parsed.data.slug || values.title, id, newsPosts);
+  await db
+    .update(newsPosts)
+    .set({ ...values, slug, projectId: linked.projectId, updatedAt: new Date() })
+    .where(eq(newsPosts.id, id));
+  if (previous.coverKey && previous.coverKey !== parsed.data.coverKey) {
+    await deleteObjects([previous.coverKey, thumbOf(previous.coverKey)]);
+  }
+  revalidateSite();
+  return { ok: true };
+}
+
+export async function deleteNews(id: number) {
+  await requireAdmin();
+  const db = await getDb();
+  const previous = await db.query.newsPosts.findFirst({ where: eq(newsPosts.id, id) });
+  await db.delete(newsPosts).where(eq(newsPosts.id, id));
+  await deleteObjects([previous?.coverKey, thumbOf(previous?.coverKey ?? null)]);
+  revalidateSite();
+  redirect("/admin/news?deleted=1");
 }
 
 /* ----------------------------------------------------------------------------- Services */

@@ -6,6 +6,7 @@ import { resolveContent } from "@/lib/content";
 import { getDb } from "./client";
 import {
   clients,
+  newsPosts,
   projectMedia,
   projects,
   services,
@@ -89,7 +90,7 @@ export const getPublishedProjects = cache(() =>
   safe([], async () => {
     const db = await getDb();
     return db.query.projects.findMany({
-      where: eq(projects.published, true),
+      where: and(eq(projects.published, true), eq(projects.status, "completed")),
       orderBy: [asc(projects.sortOrder), desc(projects.year), desc(projects.id)],
     });
   }),
@@ -99,7 +100,7 @@ export const getFeaturedProjects = cache(() =>
   safe([], async () => {
     const db = await getDb();
     return db.query.projects.findMany({
-      where: and(eq(projects.published, true), eq(projects.featured, true)),
+      where: and(eq(projects.published, true), eq(projects.status, "completed"), eq(projects.featured, true)),
       orderBy: [asc(projects.sortOrder), desc(projects.id)],
       limit: 6,
     });
@@ -110,7 +111,7 @@ export const getPublishedProjectBySlug = cache((slug: string) =>
   safe(null, async () => {
     const db = await getDb();
     const project = await db.query.projects.findFirst({
-      where: and(eq(projects.slug, slug), eq(projects.published, true)),
+      where: and(eq(projects.slug, slug), eq(projects.published, true), eq(projects.status, "completed")),
     });
     if (!project) return null;
     const media = await db.query.projectMedia.findMany({
@@ -125,5 +126,51 @@ export const getClients = cache(() =>
   safe([], async () => {
     const db = await getDb();
     return db.query.clients.findMany({ orderBy: [asc(clients.sortOrder), asc(clients.id)] });
+  }),
+);
+
+/* News: the portfolio only lists completed projects, so a post links to its project once it is. */
+
+export const getPublishedNews = cache((limit?: number) =>
+  safe([], async () => {
+    const db = await getDb();
+    return db.query.newsPosts.findMany({
+      where: eq(newsPosts.published, true),
+      orderBy: [desc(newsPosts.postedAt), desc(newsPosts.id)],
+      with: { project: { columns: { title: true, slug: true, status: true, published: true } } },
+      ...(limit && { limit }),
+    });
+  }),
+);
+
+export const getPublishedNewsBySlug = cache((slug: string) =>
+  safe(null, async () => {
+    const db = await getDb();
+    const post = await db.query.newsPosts.findFirst({
+      where: and(eq(newsPosts.slug, slug), eq(newsPosts.published, true)),
+      with: { project: { columns: { id: true, title: true, slug: true, status: true, published: true, coverKey: true } } },
+    });
+    if (!post) return null;
+    // The project's whole story, oldest first: won, started, progress..., completed.
+    const timeline = post.projectId
+      ? await db.query.newsPosts.findMany({
+          where: and(eq(newsPosts.projectId, post.projectId), eq(newsPosts.published, true)),
+          orderBy: [asc(newsPosts.postedAt), asc(newsPosts.id)],
+          columns: { id: true, slug: true, kind: true, title: true, postedAt: true },
+        })
+      : [];
+    return { ...post, timeline };
+  }),
+);
+
+/** A project's published updates, oldest first, for the timeline on its page. */
+export const getProjectNews = cache((projectId: number) =>
+  safe([], async () => {
+    const db = await getDb();
+    return db.query.newsPosts.findMany({
+      where: and(eq(newsPosts.projectId, projectId), eq(newsPosts.published, true)),
+      orderBy: [asc(newsPosts.postedAt), asc(newsPosts.id)],
+      columns: { id: true, slug: true, kind: true, title: true, summary: true, postedAt: true },
+    });
   }),
 );
