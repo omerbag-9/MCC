@@ -33,13 +33,13 @@ export function Footer({
   ).filter(([, url]) => url);
 
   return (
-    <footer className="bg-sand text-ink">
+    <footer className="bg-ink text-paper">
       <div className="container-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-12 lg:py-20">
         <div className="sm:col-span-2 lg:col-span-3">
           <Link href="/" className="inline-block" aria-label={`${settings.companyName}, home`}>
-            <Logo height={96} tone="brand" alt={settings.companyName} className="h-20 w-auto lg:h-24" />
+            <Logo height={96} alt={settings.companyName} className="h-20 w-auto lg:h-24" />
           </Link>
-          {settings.tagline && <p className="mt-5 max-w-xs text-muted">{settings.tagline}</p>}
+          {settings.tagline && <p className="mt-5 max-w-xs text-on-navy-muted">{settings.tagline}</p>}
           {socials.length > 0 && (
             <div className="mt-6 flex gap-2">
               {socials.map(([network, url]) => (
@@ -49,7 +49,7 @@ export function Footer({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={network}
-                  className="flex size-10 items-center justify-center bg-paper text-ink transition-colors hover:bg-ink hover:text-ink"
+                  className="flex size-10 items-center justify-center bg-navy-2 transition-colors hover:bg-paper hover:text-ink"
                 >
                   <SocialIcon network={network} width={18} height={18} />
                 </a>
@@ -60,10 +60,10 @@ export function Footer({
 
         <nav aria-label="Footer" className="lg:col-span-2">
           <p className="font-semibold">Company</p>
-          <ul className="mt-5 space-y-3 text-muted">
+          <ul className="mt-5 space-y-3 text-on-navy-muted">
             {PAGES.map((p) => (
               <li key={p.href}>
-                <Link href={p.href} className="transition-colors hover:text-ink">{p.href === "/contact" ? quoteLabel : p.label}</Link>
+                <Link href={p.href} className="transition-colors hover:text-paper">{p.href === "/contact" ? quoteLabel : p.label}</Link>
               </li>
             ))}
           </ul>
@@ -72,10 +72,10 @@ export function Footer({
         {projects.length > 0 && (
           <nav aria-label="Projects" className="lg:col-span-2">
             <p className="font-semibold">Projects</p>
-            <ul className="mt-5 space-y-3 text-muted">
+            <ul className="mt-5 space-y-3 text-on-navy-muted">
               {projects.slice(0, 5).map((p) => (
                 <li key={p.id}>
-                  <Link href={`/projects/${p.slug}`} className="transition-colors hover:text-ink">{p.title}</Link>
+                  <Link href={`/projects/${p.slug}`} className="transition-colors hover:text-paper">{p.title}</Link>
                 </li>
               ))}
             </ul>
@@ -85,10 +85,10 @@ export function Footer({
         {services.length > 0 && (
           <div className="lg:col-span-2">
             <p className="font-semibold">Services</p>
-            <ul className="mt-5 space-y-3 text-muted">
+            <ul className="mt-5 space-y-3 text-on-navy-muted">
               {services.slice(0, 6).map((s) => (
                 <li key={s.id}>
-                  <Link href="/#services" className="transition-colors hover:text-ink">{s.title}</Link>
+                  <Link href="/#services" className="transition-colors hover:text-paper">{s.title}</Link>
                 </li>
               ))}
             </ul>
@@ -97,28 +97,28 @@ export function Footer({
 
         <div className="lg:col-span-3">
           <p className="font-semibold">Contact</p>
-          <ul className="mt-5 space-y-3.5 text-muted">
+          <ul className="mt-5 space-y-3.5 text-on-navy-muted">
             {settings.phone && (
               <li className="flex gap-3">
-                <PhoneIcon width={18} height={18} className="mt-0.5 shrink-0 text-ink" />
-                <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="hover:text-ink">{settings.phone}</a>
+                <PhoneIcon width={18} height={18} className="mt-0.5 shrink-0 text-paper" />
+                <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="hover:text-paper">{settings.phone}</a>
               </li>
             )}
             {settings.email && (
               <li className="flex gap-3">
-                <MailIcon width={18} height={18} className="mt-0.5 shrink-0 text-ink" />
-                <a href={`mailto:${settings.email}`} className="break-all hover:text-ink">{settings.email}</a>
+                <MailIcon width={18} height={18} className="mt-0.5 shrink-0 text-paper" />
+                <a href={`mailto:${settings.email}`} className="break-all hover:text-paper">{settings.email}</a>
               </li>
             )}
             {settings.address && (
               <li className="flex gap-3">
-                <PinIcon width={18} height={18} className="mt-0.5 shrink-0 text-ink" />
+                <PinIcon width={18} height={18} className="mt-0.5 shrink-0 text-paper" />
                 <span>{settings.address}</span>
               </li>
             )}
             {settings.workingHours && (
               <li className="flex gap-3">
-                <ClockIcon width={18} height={18} className="mt-0.5 shrink-0 text-ink" />
+                <ClockIcon width={18} height={18} className="mt-0.5 shrink-0 text-paper" />
                 <span>{settings.workingHours}</span>
               </li>
             )}
