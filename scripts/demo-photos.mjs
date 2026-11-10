@@ -13,6 +13,9 @@
 // The hero video comes from Wikimedia Commons (free licences: CC0, public domain, CC BY, CC BY-SA);
 // its credit is printed the same way. Only filled while the hero has no video.
 //
+// While there are no news posts at all, the demo news in scripts/demo-news.sql is loaded (every
+// kind of post and case), and its posts get photos from their projects.
+//
 // The seeded demo clients get the demo logos in scripts/demo-logos/ (drawn for the demo, not real
 // companies' marks) while they have no logo.
 //
@@ -41,7 +44,12 @@ const PROJECT_QUERIES = {
   "nile-business-tower": ["office building construction", "office building"],
   "delta-logistics-hub": ["warehouse steel structure", "warehouse", "industrial building", "factory"],
   "zamalek-apartment-renovation": ["apartment interior renovation", "interior renovation", "apartment interior"],
+  // Unfinished demo projects from scripts/demo-news.sql
+  "october-gardens-residences": ["apartment building construction", "residential building construction", "building construction"],
+  "new-cairo-medical-centre": ["hospital building", "clinic building", "modern building"],
 };
+// Demo news posts that stay without a photo, to show how that looks.
+const NEWS_WITHOUT_PHOTO = ["new-cairo-medical-centre-awarded"];
 const SERVICE_QUERIES = [
   [/resident/i, ["house construction"]],
   [/commercial/i, ["commercial building construction"]],
@@ -199,14 +207,24 @@ async function fetchHeroVideo() {
 
 async function main() {
   const [settings] = query("SELECT hero_image_key, hero_video_key FROM settings WHERE id = 1");
+  if (!settings) return;
+
+  // Demo news, only into an empty news table (never next to real posts).
+  const [{ n: newsCount }] = query("SELECT COUNT(*) AS n FROM news_posts");
+  if (newsCount === 0) {
+    console.log("News: loading the demo posts (scripts/demo-news.sql)");
+    wrangler(["d1", "execute", "DB", target, ...envFlag, "--yes", "--file", join(dirname(fileURLToPath(import.meta.url)), "demo-news.sql")]);
+  }
+
   const projects = query(
     "SELECT p.id, p.slug, p.cover_key, (SELECT COUNT(*) FROM project_media m WHERE m.project_id = p.id) AS media FROM projects p ORDER BY p.sort_order, p.id",
   );
   const services = query("SELECT id, title, image_key FROM services ORDER BY sort_order, id");
-  if (!settings) return;
   for (const row of query("SELECT DISTINCT alt FROM project_media WHERE alt != ''")) usedTitles.add(row.alt);
 
   const sql = [];
+  /** Photos added to each project in this run (project id -> keys), for the news covers. */
+  const newPhotos = new Map();
   const fresh = !settings.hero_image_key;
 
   if (fresh) {
@@ -244,6 +262,7 @@ async function main() {
       const photo = await fetchPhoto(queries, "projects");
       if (!photo) break;
       order += 1;
+      newPhotos.set(p.id, [...(newPhotos.get(p.id) ?? []), photo.key]);
       sql.push(
         `INSERT INTO project_media (project_id, type, key, thumb_key, width, height, alt, sort_order) VALUES (${p.id}, 'image', ${sqlString(photo.key)}, ${sqlString(photo.thumbKey)}, ${photo.width}, ${photo.height}, ${sqlString(photo.alt.slice(0, 300))}, ${order});`,
       );
@@ -257,6 +276,26 @@ async function main() {
       console.log(`Service ${s.title}: ${queries.join(" / ") || "construction"}`);
       const photo = await fetchPhoto(queries, "site", { landscape: false });
       if (photo) sql.push(`UPDATE services SET image_key = ${sqlString(photo.key)} WHERE id = ${s.id};`);
+    }
+  }
+
+  // Demo news posts without a photo take one from their project, each a different one where the
+  // project has several. Photos added in this run are included (newPhotos).
+  const skip = NEWS_WITHOUT_PHOTO.map(sqlString).join(", ");
+  const bare = query(`SELECT id, project_id FROM news_posts WHERE cover_key IS NULL AND project_id IS NOT NULL AND slug NOT IN (${skip}) ORDER BY posted_at`);
+  if (bare.length > 0) {
+    const photosOf = new Map();
+    for (const m of query("SELECT project_id, key FROM project_media WHERE type = 'image' ORDER BY project_id, sort_order, id")) {
+      photosOf.set(m.project_id, [...(photosOf.get(m.project_id) ?? []), m.key]);
+    }
+    for (const [projectId, keys] of newPhotos) photosOf.set(projectId, [...(photosOf.get(projectId) ?? []), ...keys]);
+    const used = new Map();
+    for (const post of bare) {
+      const keys = photosOf.get(post.project_id) ?? [];
+      if (keys.length === 0) continue;
+      const i = used.get(post.project_id) ?? 0;
+      used.set(post.project_id, i + 1);
+      sql.push(`UPDATE news_posts SET cover_key = ${sqlString(keys[i % keys.length])} WHERE id = ${post.id};`);
     }
   }
 
