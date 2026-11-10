@@ -48,8 +48,20 @@ const PROJECT_QUERIES = {
   "october-gardens-residences": ["apartment building construction", "residential building construction", "building construction"],
   "new-cairo-medical-centre": ["hospital building", "clinic building", "modern building"],
 };
-// Demo news posts that stay without a photo, to show how that looks.
-const NEWS_WITHOUT_PHOTO = ["new-cairo-medical-centre-awarded"];
+// Photos for demo news posts that have no project photo to borrow (by slug, then by kind).
+const NEWS_QUERIES = {
+  "new-cairo-medical-centre-awarded": ["hospital building", "clinic building", "modern building"],
+  "safety-certification-iso-45001": ["construction safety helmet", "hard hat construction", "construction workers"],
+  "hiring-site-engineers": ["construction engineer", "engineer construction site", "construction workers"],
+  "draft-palm-hills-handover": ["modern villa exterior", "modern house"],
+};
+const NEWS_KIND_QUERIES = {
+  won: ["handshake business", "office building"],
+  started: ["excavator construction site", "construction site"],
+  progress: ["building under construction", "construction site"],
+  completed: ["modern building exterior", "office building"],
+  general: ["construction workers", "construction site"],
+};
 const SERVICE_QUERIES = [
   [/resident/i, ["house construction"]],
   [/commercial/i, ["commercial building construction"]],
@@ -279,10 +291,10 @@ async function main() {
     }
   }
 
-  // Demo news posts without a photo take one from their project, each a different one where the
-  // project has several. Photos added in this run are included (newPhotos).
-  const skip = NEWS_WITHOUT_PHOTO.map(sqlString).join(", ");
-  const bare = query(`SELECT id, project_id FROM news_posts WHERE cover_key IS NULL AND project_id IS NOT NULL AND slug NOT IN (${skip}) ORDER BY posted_at`);
+  // Every news post gets a real photograph: first one of its project's photos (a different one per
+  // post where the project has several, this run's new photos included), otherwise a free photo
+  // searched for the post itself.
+  const bare = query("SELECT id, slug, kind, project_id FROM news_posts WHERE cover_key IS NULL ORDER BY posted_at");
   if (bare.length > 0) {
     const photosOf = new Map();
     for (const m of query("SELECT project_id, key FROM project_media WHERE type = 'image' ORDER BY project_id, sort_order, id")) {
@@ -291,11 +303,18 @@ async function main() {
     for (const [projectId, keys] of newPhotos) photosOf.set(projectId, [...(photosOf.get(projectId) ?? []), ...keys]);
     const used = new Map();
     for (const post of bare) {
-      const keys = photosOf.get(post.project_id) ?? [];
-      if (keys.length === 0) continue;
-      const i = used.get(post.project_id) ?? 0;
-      used.set(post.project_id, i + 1);
-      sql.push(`UPDATE news_posts SET cover_key = ${sqlString(keys[i % keys.length])} WHERE id = ${post.id};`);
+      const keys = post.project_id ? (photosOf.get(post.project_id) ?? []) : [];
+      let key = null;
+      if (keys.length > 0) {
+        const i = used.get(post.project_id) ?? 0;
+        used.set(post.project_id, i + 1);
+        key = keys[i % keys.length];
+      } else {
+        const queries = NEWS_QUERIES[post.slug] ?? NEWS_KIND_QUERIES[post.kind] ?? [];
+        console.log(`News ${post.slug}: ${queries.join(" / ") || "construction"}`);
+        key = (await fetchPhoto(queries, "site"))?.key ?? null;
+      }
+      if (key) sql.push(`UPDATE news_posts SET cover_key = ${sqlString(key)} WHERE id = ${post.id};`);
     }
   }
 
