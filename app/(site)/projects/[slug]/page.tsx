@@ -3,17 +3,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Gallery, type GalleryItem } from "@/components/site/gallery";
 import { NewsTimeline } from "@/components/site/news-timeline";
-import { ArrowRightIcon, WhatsAppIcon } from "@/components/site/icons";
+import { ArrowRightIcon } from "@/components/site/icons";
 import { Photo, photoPool } from "@/components/site/photo";
 import { formatArea } from "@/components/site/project-card";
 import { Reveal } from "@/components/site/reveal";
-import { WhatsAppLink } from "@/components/site/whatsapp";
-import { getContent, getProjectNews, getPublishedProjectBySlug, getPublishedProjects, getSettings } from "@/lib/db/queries";
+import { getContent, getProjectNews, getPublishedProjectBySlug, getPublishedProjects } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl } from "@/lib/env";
 import { lines, paragraphs, specRows } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { jsonLdScript, projectJsonLd } from "@/lib/seo";
-import { whatsappLink } from "@/lib/whatsapp";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -40,9 +38,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ProjectPage({ params }: Props) {
   const { slug } = await params;
-  const [project, settings, c, mediaBase, siteUrl, allProjects] = await Promise.all([
+  const [project, c, mediaBase, siteUrl, allProjects] = await Promise.all([
     getPublishedProjectBySlug(slug),
-    getSettings(),
     getContent(),
     getMediaBase(),
     getSiteUrl(),
@@ -73,7 +70,6 @@ export default async function ProjectPage({ params }: Props) {
     height: m.height,
   }));
 
-  const wa = whatsappLink(settings.whatsappNumber, `Hi, I'm interested in a project like "${project.title}".`);
   const keyFacts = [
     ["Location", project.location],
     ["Completed", project.year?.toString() ?? ""],
@@ -147,11 +143,6 @@ export default async function ProjectPage({ params }: Props) {
                 {p}
               </p>
             ))}
-            {wa && (
-              <WhatsAppLink href={wa} className="btn-whatsapp mt-9">
-                <WhatsAppIcon width={18} height={18} /> Ask on WhatsApp
-              </WhatsAppLink>
-            )}
           </Reveal>
           <Reveal className="relative lg:col-span-6">
             <div className="absolute top-6 right-0 bottom-0 left-6 bg-ink lg:top-10 lg:left-10" aria-hidden />
