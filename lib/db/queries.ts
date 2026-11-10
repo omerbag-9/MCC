@@ -1,6 +1,6 @@
 import "server-only";
 import { cache } from "react";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
 import { isBuildPhase } from "@/lib/env";
 import { resolveContent } from "@/lib/content";
 import { getDb } from "./client";
@@ -140,6 +140,27 @@ export const getPublishedNews = cache((limit?: number) =>
       with: { project: { columns: { title: true, slug: true, status: true, published: true } } },
       ...(limit && { limit }),
     });
+  }),
+);
+
+/** Posts on the News page, newest first. */
+export const NEWS_PER_PAGE = 9;
+
+/** One page of published news (1-based) and the total number of published posts. */
+export const getPublishedNewsPage = cache((page: number) =>
+  safe({ posts: [] as Awaited<ReturnType<typeof getPublishedNews>>, total: 0 }, async () => {
+    const db = await getDb();
+    const [posts, [{ n }]] = await Promise.all([
+      db.query.newsPosts.findMany({
+        where: eq(newsPosts.published, true),
+        orderBy: [desc(newsPosts.postedAt), desc(newsPosts.id)],
+        with: { project: { columns: { title: true, slug: true, status: true, published: true } } },
+        limit: NEWS_PER_PAGE,
+        offset: (page - 1) * NEWS_PER_PAGE,
+      }),
+      db.select({ n: count() }).from(newsPosts).where(eq(newsPosts.published, true)),
+    ]);
+    return { posts, total: n };
   }),
 );
 

@@ -5,11 +5,12 @@
 --   * every kind: won, started, progress, completed, general
 --   * one project followed from win to handover (Nile Business Tower), one under construction with
 --     several updates (October Gardens), one won and not started (New Cairo Medical Centre)
---   * with and without a photo, with and without a project, with and without a LinkedIn link
+--   * with and without a project, with and without a LinkedIn link (every post gets a real photo)
 --   * a long title, a post without a summary, a long story in several paragraphs, a one-line post
 --   * dates from this week back three years, and one unpublished draft (admin only)
 --
--- Photos are added afterwards by demo-photos.mjs from each post's project.
+-- Photos are added afterwards by demo-photos.mjs: each post borrows one of its project's photos, or
+-- gets a free photo searched for it (posts without a project, or whose project has none yet).
 
 -- Two unfinished demo projects. They are not listed on /projects (only completed ones are); their
 -- news links to them.
