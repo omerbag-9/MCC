@@ -169,7 +169,7 @@ export const getPublishedNewsBySlug = cache((slug: string) =>
     const db = await getDb();
     const post = await db.query.newsPosts.findFirst({
       where: and(eq(newsPosts.slug, slug), eq(newsPosts.published, true)),
-      with: { project: { columns: { id: true, title: true, slug: true, status: true, published: true, coverKey: true } } },
+      with: { project: { columns: { id: true, title: true, slug: true, status: true, published: true, coverKey: true, category: true, location: true, areaM2: true, client: true } } },
     });
     if (!post) return null;
     // The project's whole story, oldest first: won, started, progress..., completed.
