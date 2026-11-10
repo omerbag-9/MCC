@@ -89,17 +89,6 @@ export default async function ProjectsPage() {
         </div>
       </section>
 
-      <section className="bg-sand">
-        <Reveal className="container-x grid gap-8 py-14 lg:grid-cols-12 lg:items-center lg:py-16">
-          <div className="lg:col-span-8">
-            <h2 className="text-head font-semibold">{c.projectsCtaTitle}</h2>
-            <p className="mt-3 max-w-xl">{c.projectsCtaText}</p>
-          </div>
-          <div className="lg:col-span-4 lg:justify-self-end">
-            <Link href="/contact" className="btn-primary">{c.quoteButton}</Link>
-          </div>
-        </Reveal>
-      </section>
     </>
   );
 }

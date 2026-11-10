@@ -108,10 +108,7 @@ export default async function HomePage() {
               </Reveal>
             )}
             <Reveal delay={0.5} className="mt-9 flex flex-wrap items-center gap-3">
-              <Link href="/contact" className="btn-light">
-                {c.quoteButton}
-              </Link>
-              <Link href="/projects" className="btn-outline">
+              <Link href="/projects" className="btn-light">
                 {c.projectsButton} <ArrowRightIcon width={18} height={18} />
               </Link>
             </Reveal>
@@ -299,7 +296,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Contact: how to reach us beside the quote form, on ink over a photograph */}
+      {/* Contact: how to reach us beside the contact form, on ink over a photograph */}
       <section id="contact" className="relative isolate overflow-hidden bg-ink text-paper" aria-labelledby="contact-title">
         <div className="absolute inset-0 -z-20">
           <Photo mediaBase={mediaBase} src={ctaPhoto} alt="" sizes="100vw" />

@@ -3,7 +3,7 @@ import { ImageField } from "@/components/admin/image-field";
 import { Card, Checkbox, Flash, PageHeader, TextArea, TextField } from "@/components/admin/ui";
 import { saveContent } from "@/lib/actions/admin";
 import { ensureAdmin } from "@/lib/auth";
-import { CONTENT_GROUPS } from "@/lib/content";
+import { CONTENT_GROUPS, isRetiredDefault } from "@/lib/content";
 import { getDb } from "@/lib/db/client";
 import { getMediaBase, getMediaBucket } from "@/lib/env";
 
@@ -32,7 +32,7 @@ export default async function ContentAdmin({ searchParams }: { searchParams: Pro
             <Card className="space-y-5">
               {g.fields.map((f) => {
                 const name = `c_${f.key}`;
-                const value = saved[f.key];
+                const value = isRetiredDefault(f.key, saved[f.key]) ? undefined : saved[f.key];
                 if (f.kind === "toggle")
                   return <Checkbox key={f.key} name={name} label={f.label} defaultChecked={(value ?? f.default) === "1"} />;
                 if (f.kind === "image")

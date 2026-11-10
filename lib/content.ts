@@ -23,14 +23,13 @@ const area = (key: string, label: string, value: string, hint?: string): Content
 const image = (key: string, label: string, hint?: string): ContentField => ({ key, label, kind: "image", default: "", hint });
 const toggle = (key: string, label: string, on = true): ContentField => ({ key, label, kind: "toggle", default: on ? "1" : "0" });
 
-const REPLY = "Tell us what you're building. We reply within one business day with next steps and a free estimate.";
+const REPLY = "Tell us what you're building. We reply within one business day.";
 
 export const CONTENT_GROUPS: ContentGroup[] = [
   {
     id: "buttons",
-    title: "Buttons used across the site",
+    title: "Buttons",
     fields: [
-      text("quoteButton", "Quote button", "Request a quote", "Header, hero, project pages and calls to action."),
       text("projectsButton", "Projects button (hero)", "View our projects"),
     ],
   },
@@ -66,7 +65,7 @@ export const CONTENT_GROUPS: ContentGroup[] = [
       text("contactTitle", "Contact section heading", "Have a project in mind?"),
       area("contactIntro", "Contact section text", REPLY),
       image("contactImage", "Contact section background photo", "Shown dark behind the section. If empty, a project photo is used."),
-      text("formTitle", "Quote form heading", "Request a free quote"),
+      text("formTitle", "Contact form heading", "Send us a message"),
     ],
   },
   {
@@ -77,8 +76,6 @@ export const CONTENT_GROUPS: ContentGroup[] = [
       area("projectsIntro", "Text under the heading", "Homes, offices, warehouses and renovations we have designed and built."),
       image("projectsImage", "Header photo", "If empty, the first project's cover is used."),
       text("projectsEmpty", "Text when no project is published", "Projects will be published here soon."),
-      text("projectsCtaTitle", "Closing heading", "Have a project in mind?"),
-      area("projectsCtaText", "Closing text", REPLY),
     ],
   },
   {
@@ -90,8 +87,6 @@ export const CONTENT_GROUPS: ContentGroup[] = [
       image("newsImage", "Header photo", "If empty, the latest post's photo is used."),
       text("newsEmpty", "Text when no news is published", "News will be published here soon."),
       text("newsTimelineTitle", "Project timeline heading", "Project timeline", "On a post and on a project's page: the project's news from the win to the handover."),
-      text("newsCtaTitle", "Closing heading", "Have a project in mind?"),
-      area("newsCtaText", "Closing text", REPLY),
     ],
   },
   {
@@ -105,16 +100,14 @@ export const CONTENT_GROUPS: ContentGroup[] = [
       area("projectHighlightsIntro", "Highlights text", "The features, systems and finishes handed over on this project."),
       text("projectVideoTitle", "Video heading", "Video tour"),
       text("projectGalleryTitle", "Gallery heading", "Gallery"),
-      text("projectCtaTitle", "Closing heading", "Planning something similar?"),
-      area("projectCtaText", "Closing text", "Tell us about it and get a free, no-obligation quote within one business day."),
     ],
   },
   {
     id: "contact",
     title: "Contact page",
     fields: [
-      text("contactPageTitle", "Heading", "Request a quote"),
-      area("contactPageIntro", "Text under the heading", "Tell us about your project. We reply within one business day with next steps and a free estimate."),
+      text("contactPageTitle", "Heading", "Contact us"),
+      area("contactPageIntro", "Text under the heading", "Tell us about your project. We reply within one business day."),
       image("contactPageImage", "Photo beside the form", "If empty, a featured project's photo is used."),
       text("contactDetailsTitle", "Contact details heading", "Contact details"),
       toggle("showContactRecent", "Show recent projects"),
@@ -123,10 +116,10 @@ export const CONTENT_GROUPS: ContentGroup[] = [
   },
   {
     id: "form",
-    title: "Quote form",
+    title: "Contact form",
     fields: [
-      text("formButton", "Send button", "Request a free quote"),
-      text("formSuccessTitle", "Message after sending", "Thank you! We received your request."),
+      text("formButton", "Send button", "Send message"),
+      text("formSuccessTitle", "Message after sending", "Thank you! We received your message."),
       text("formSuccessText", "Second line after sending", "Our team will get back to you shortly."),
     ],
   },
@@ -140,11 +133,30 @@ export type Content = Record<string, string> & {
 };
 
 /** Saved values over the defaults, with {company} filled in. */
+/**
+ * Earlier defaults that asked for a quote. Saving the content page stores every field, so a saved
+ * value equal to one of these was never written by the admin: it gets today's default instead.
+ */
+const RETIRED: Record<string, string[]> = {
+  contactIntro: ["Tell us what you're building. We reply within one business day with next steps and a free estimate."],
+  formTitle: ["Request a free quote"],
+  contactPageTitle: ["Request a quote"],
+  contactPageIntro: ["Tell us about your project. We reply within one business day with next steps and a free estimate."],
+  formButton: ["Request a free quote"],
+  formSuccessTitle: ["Thank you! We received your request."],
+};
+
+/** True for a saved value that is an earlier default (see RETIRED): shown and used as unset. */
+export function isRetiredDefault(key: string, value: string | undefined): boolean {
+  return value !== undefined && !!RETIRED[key]?.includes(value);
+}
+
 export function resolveContent(saved: Record<string, string> | null | undefined, companyName: string): Content {
   const values: Record<string, string> = {};
   for (const f of CONTENT_FIELDS) {
     const v = saved?.[f.key];
-    const value = v === undefined || (f.kind !== "image" && f.kind !== "toggle" && v.trim() === "") ? f.default : v;
+    const unset = v === undefined || (f.kind !== "image" && f.kind !== "toggle" && v.trim() === "") || isRetiredDefault(f.key, v);
+    const value = unset ? f.default : v;
     values[f.key] = f.kind === "text" || f.kind === "textarea" ? value.replaceAll("{company}", companyName) : value;
   }
   return Object.assign(values, { on: (key: string) => values[key] === "1" }) as Content;

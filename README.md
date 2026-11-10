@@ -2,7 +2,7 @@
 
 Marketing site and content admin for a construction company, built to run on Cloudflare's free tier.
 
-- **Public site:** home page with services, featured projects, about, client logos and a quote form; `/projects` with a category filter; one page per project with gallery and video; `/contact` with a quote form, map and WhatsApp.
+- **Public site:** home page with services, featured projects, about, client logos and a contact form; `/projects` with a category filter; one page per project with gallery and video; `/contact` with a contact form, map and WhatsApp.
 - **Admin (`/admin`):** edit projects (photo/video upload, ordering, cover), services, client logos, website content (every heading, text, button, section photo and show/hide switch on the public pages; see `lib/content.ts`) and site settings; manage leads (status, notes, CSV export); dashboard with lead and WhatsApp-click counts.
 - **Leads:** saved in the database and emailed to the company. Turnstile blocks spam.
 - **WhatsApp:** click-to-chat buttons with a pre-filled message per page, and click tracking per page.

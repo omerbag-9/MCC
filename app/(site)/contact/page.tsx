@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   return {
     title: "Contact us",
-    description: `Request a free quote from ${settings.companyName}. Call, email or message us on WhatsApp.`,
+    description: `Get in touch with ${settings.companyName}. Send a message, call, email or write to us on WhatsApp.`,
     alternates: { canonical: "/contact" },
   };
 }

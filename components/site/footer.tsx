@@ -8,19 +8,17 @@ const PAGES = [
   { href: "/#services", label: "Services" },
   { href: "/projects", label: "Projects" },
   { href: "/news", label: "News" },
-  { href: "/contact", label: "Request a quote" },
+  { href: "/contact", label: "Contact us" },
 ];
 
 export function Footer({
   settings,
   services,
   projects,
-  quoteLabel = "Request a quote",
 }: {
   settings: Settings;
   services: Service[];
   projects: Project[];
-  quoteLabel?: string;
 }) {
   const socials = (
     [
@@ -63,7 +61,7 @@ export function Footer({
           <ul className="mt-5 space-y-3 text-on-navy-muted">
             {PAGES.map((p) => (
               <li key={p.href}>
-                <Link href={p.href} className="transition-colors hover:text-paper">{p.href === "/contact" ? quoteLabel : p.label}</Link>
+                <Link href={p.href} className="transition-colors hover:text-paper">{p.label}</Link>
               </li>
             ))}
           </ul>
@@ -128,7 +126,6 @@ export function Footer({
       <div className="bg-brand-dark">
         <div className="container-x flex flex-wrap items-center justify-between gap-3 py-5 text-small text-on-navy-muted">
           <p>© {new Date().getFullYear()} {settings.companyName}. All rights reserved.</p>
-          <Link href="/contact" className="hover:text-paper">{quoteLabel}</Link>
         </div>
       </div>
     </footer>

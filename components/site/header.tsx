@@ -61,7 +61,7 @@ export function TopBar({ settings }: { settings: Settings }) {
 }
 
 /** Sticky dark navy bar on every page. */
-export function Header({ companyName, phone, quoteLabel = "Request a quote" }: { companyName: string; phone: string; quoteLabel?: string }) {
+export function Header({ companyName, phone }: { companyName: string; phone: string }) {
   return (
     <header className="sticky top-0 z-40 bg-ink text-paper">
       <div className="container-x flex h-[72px] items-center justify-between gap-6">
@@ -81,17 +81,12 @@ export function Header({ companyName, phone, quoteLabel = "Request a quote" }: {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-6 lg:flex">
-          {phone && (
-            <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-[15px] text-paper/80 hover:text-paper">
-              <PhoneIcon width={17} height={17} />
-              {phone}
-            </a>
-          )}
-          <Link href="/contact" className="btn-light min-h-11 px-5">
-            {quoteLabel}
-          </Link>
-        </div>
+        {phone && (
+          <a href={`tel:${phone.replace(/\s/g, "")}`} className="hidden items-center gap-2 text-[15px] text-paper/80 hover:text-paper lg:flex">
+            <PhoneIcon width={17} height={17} />
+            {phone}
+          </a>
+        )}
 
         <MobileMenu
           summary={
@@ -108,9 +103,6 @@ export function Header({ companyName, phone, quoteLabel = "Request a quote" }: {
                 {item.label}
               </Link>
             ))}
-            <Link href="/contact" className="btn-light mt-5 w-full">
-              {quoteLabel}
-            </Link>
           </nav>
         </MobileMenu>
       </div>
