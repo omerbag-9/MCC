@@ -63,10 +63,10 @@ export function TopBar({ settings }: { settings: Settings }) {
 /** Sticky dark navy bar on every page. */
 export function Header({ companyName, phone, quoteLabel = "Request a quote" }: { companyName: string; phone: string; quoteLabel?: string }) {
   return (
-    <header className="sticky top-0 z-40 bg-ink text-paper">
+    <header className="sticky top-0 z-40 bg-paper text-ink shadow-[0_1px_0_rgba(4,38,48,0.08)]">
       <div className="container-x flex h-[72px] items-center justify-between gap-6">
         <Link href="/" className="flex shrink-0 items-center" aria-label={`${companyName}, home`}>
-          <Logo height={56} alt={companyName} className="h-12 w-auto lg:h-14" />
+          <Logo height={56} tone="brand" alt={companyName} className="h-12 w-auto lg:h-14" />
         </Link>
 
         <nav className="hidden items-center gap-1 text-[15px] font-medium lg:flex" aria-label="Main">
@@ -74,7 +74,7 @@ export function Header({ companyName, phone, quoteLabel = "Request a quote" }: {
             <Link
               key={item.href}
               href={item.href}
-              className="relative px-4 py-2 text-paper/80 transition-colors after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-paper after:transition-transform after:duration-300 hover:text-paper hover:after:scale-x-100"
+              className="relative px-4 py-2 text-ink-soft transition-colors after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-ink after:transition-transform after:duration-300 hover:text-ink hover:after:scale-x-100"
             >
               {item.label}
             </Link>
@@ -83,12 +83,12 @@ export function Header({ companyName, phone, quoteLabel = "Request a quote" }: {
 
         <div className="hidden items-center gap-6 lg:flex">
           {phone && (
-            <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-[15px] text-paper/80 hover:text-paper">
+            <a href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 text-[15px] text-ink-soft hover:text-ink">
               <PhoneIcon width={17} height={17} />
               {phone}
             </a>
           )}
-          <Link href="/contact" className="btn-light min-h-11 px-5">
+          <Link href="/contact" className="btn-primary min-h-11 px-5">
             {quoteLabel}
           </Link>
         </div>
@@ -102,13 +102,13 @@ export function Header({ companyName, phone, quoteLabel = "Request a quote" }: {
             </summary>
           }
         >
-          <nav className="absolute inset-x-0 top-[72px] z-40 hidden bg-ink px-5 pt-2 pb-8 text-paper group-open:block" aria-label="Mobile">
+          <nav className="absolute inset-x-0 top-[72px] z-40 hidden bg-paper px-5 pt-2 pb-8 text-ink shadow-lg shadow-ink/10 group-open:block" aria-label="Mobile">
             {NAV.map((item) => (
               <Link key={item.href} href={item.href} className="block py-3.5 text-lead font-medium">
                 {item.label}
               </Link>
             ))}
-            <Link href="/contact" className="btn-light mt-5 w-full">
+            <Link href="/contact" className="btn-primary mt-5 w-full">
               {quoteLabel}
             </Link>
           </nav>
