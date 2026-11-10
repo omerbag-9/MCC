@@ -91,9 +91,6 @@
 @utility btn-outline {
   @apply btn bg-transparent text-current ring-1 ring-current ring-inset hover:bg-paper/10;
 }
-@utility btn-whatsapp {
-  @apply btn bg-[#15753a] text-white hover:bg-[#106331];
-}
 
 /* Text link with a moving arrow. */
 @utility link-arrow {

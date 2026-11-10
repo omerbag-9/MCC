@@ -79,7 +79,7 @@ export async function submitLead(_prev: LeadFormState, formData: FormData): Prom
     }
   } catch (error) {
     console.error("Saving lead failed", error);
-    return { status: "error", message: "Something went wrong. Please call or WhatsApp us instead." };
+    return { status: "error", message: "Something went wrong. Please call or email us instead." };
   }
 
   return { status: "success" };

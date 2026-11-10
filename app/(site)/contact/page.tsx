@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
-import { PhoneIcon, WhatsAppIcon } from "@/components/site/icons";
+import { PhoneIcon } from "@/components/site/icons";
 import { LeadForm } from "@/components/site/lead-form";
 import { Photo, photoPool } from "@/components/site/photo";
 import { Reveal } from "@/components/site/reveal";
-import { WhatsAppLink } from "@/components/site/whatsapp";
 import { getContent, getFeaturedProjects, getSettings } from "@/lib/db/queries";
 import { getMediaBase, getVar } from "@/lib/env";
-import { whatsappLink } from "@/lib/whatsapp";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   return {
     title: "Contact us",
-    description: `Contact ${settings.companyName}. Send a message, call, email or write to us on WhatsApp.`,
+    description: `Contact ${settings.companyName}. Send a message, call or email us.`,
     alternates: { canonical: "/contact" },
   };
 }
@@ -35,7 +33,6 @@ export default async function ContactPage() {
     getMediaBase(),
     getVar("TURNSTILE_SITE_KEY"),
   ]);
-  const wa = whatsappLink(settings.whatsappNumber, settings.whatsappMessage);
   const map = safeMapUrl(settings.mapEmbedUrl);
   const photo = c.contactPageImage || photoPool(...featured.map((p) => p.coverKey), settings.heroImageKey).next();
 
@@ -61,11 +58,6 @@ export default async function ContactPage() {
                 <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="btn-primary">
                   <PhoneIcon width={18} height={18} /> Call us
                 </a>
-              )}
-              {wa && (
-                <WhatsAppLink href={wa} className="btn-whatsapp">
-                  <WhatsAppIcon width={18} height={18} /> WhatsApp
-                </WhatsAppLink>
               )}
             </div>
             <div className="mt-12">
@@ -96,11 +88,6 @@ export default async function ContactPage() {
                   </div>
                 ))}
               </dl>
-            )}
-            {wa && (
-              <WhatsAppLink href={wa} className="btn-whatsapp mt-8 w-full">
-                <WhatsAppIcon width={18} height={18} /> Chat on WhatsApp
-              </WhatsAppLink>
             )}
           </Reveal>
         </div>
