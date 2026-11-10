@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogoMark } from "./logo";
+import { Logo } from "./logo";
 import type { Project, Service, Settings } from "@/lib/db/schema";
 import { ClockIcon, MailIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
 
@@ -36,9 +36,8 @@ export function Footer({
     <footer className="bg-ink text-paper">
       <div className="container-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-12 lg:py-20">
         <div className="sm:col-span-2 lg:col-span-3">
-          <Link href="/" className="flex items-center gap-3 text-[17px] font-semibold">
-            <LogoMark size={34} className="shrink-0" />
-            {settings.companyName}
+          <Link href="/" className="inline-block" aria-label={`${settings.companyName}, home`}>
+            <Logo height={96} alt={settings.companyName} className="h-20 w-auto lg:h-24" />
           </Link>
           {settings.tagline && <p className="mt-5 max-w-xs text-on-navy-muted">{settings.tagline}</p>}
           {socials.length > 0 && (

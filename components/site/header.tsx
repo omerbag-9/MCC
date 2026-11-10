@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogoMark } from "./logo";
+import { Logo } from "./logo";
 import type { Settings } from "@/lib/db/schema";
 import { ClockIcon, CloseIcon, MailIcon, MenuIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
 import { MobileMenu } from "./mobile-menu";
@@ -65,9 +65,8 @@ export function Header({ companyName, phone, quoteLabel = "Request a quote" }: {
   return (
     <header className="sticky top-0 z-40 bg-ink text-paper">
       <div className="container-x flex h-[72px] items-center justify-between gap-6">
-        <Link href="/" className="flex items-center gap-3 text-[17px] font-semibold tracking-tight">
-          <LogoMark size={34} className="shrink-0" />
-          <span className="truncate">{companyName}</span>
+        <Link href="/" className="flex shrink-0 items-center" aria-label={`${companyName}, home`}>
+          <Logo height={56} alt={companyName} className="h-12 w-auto lg:h-14" />
         </Link>
 
         <nav className="hidden items-center gap-1 text-[15px] font-medium lg:flex" aria-label="Main">
