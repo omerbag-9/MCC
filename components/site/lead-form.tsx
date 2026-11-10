@@ -8,13 +8,11 @@ const initialState: LeadFormState = { status: "idle" };
 
 export function LeadForm({
   pageSource,
-  services,
   turnstileSiteKey,
   dark = false,
   labels,
 }: {
   pageSource: string;
-  services: string[];
   turnstileSiteKey: string;
   dark?: boolean;
   /** Texts from Admin → Website content. */
@@ -36,7 +34,7 @@ export function LeadForm({
             <path d="m5 12 5 5 9-10" />
           </svg>
         </div>
-        <p className="mt-4 text-lg font-semibold">{labels?.successTitle ?? "Thank you! We received your request."}</p>
+        <p className="mt-4 text-lg font-semibold">{labels?.successTitle ?? "Thank you! We received your message."}</p>
         <p className={`mt-1 ${dark ? "text-on-navy-muted" : "text-muted"}`}>{labels?.successText ?? "Our team will get back to you shortly."}</p>
       </div>
     );
@@ -74,21 +72,9 @@ export function LeadForm({
         {err.email && <p className={errCls}>{err.email}</p>}
       </div>
 
-      {services.length > 0 && (
-        <div className="sm:col-span-2">
-          <label htmlFor={`service-${pageSource}`} className={labelCls}>Service</label>
-          <select id={`service-${pageSource}`} name="serviceInterest" className="field" defaultValue="">
-            <option value="">Select a service (optional)</option>
-            {services.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-            <option value="Other">Other</option>
-          </select>
-        </div>
-      )}
 
       <div className="sm:col-span-2">
-        <label htmlFor={`message-${pageSource}`} className={labelCls}>Tell us about your project</label>
+        <label htmlFor={`message-${pageSource}`} className={labelCls}>Message</label>
         <textarea id={`message-${pageSource}`} name="message" rows={4} className="field" aria-invalid={!!err.message} />
         {err.message && <p className={errCls}>{err.message}</p>}
       </div>

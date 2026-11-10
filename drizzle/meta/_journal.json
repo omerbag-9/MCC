@@ -64,6 +64,13 @@
       "when": 1794302091557,
       "tag": "0008_news",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "6",
+      "when": 1794344245773,
+      "tag": "0009_contact_whatsapp_message",
+      "breakpoints": true
     }
   ]
 }

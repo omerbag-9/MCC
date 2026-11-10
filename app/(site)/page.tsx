@@ -357,7 +357,7 @@ export default async function HomePage() {
             <div className="bg-paper p-6 text-ink sm:p-10">
               <h3 className="text-lead font-semibold">{c.formTitle}</h3>
               <div className="mt-6">
-                <LeadForm pageSource="/" services={services.map((s) => s.title)} turnstileSiteKey={turnstileSiteKey} labels={{ button: c.formButton, successTitle: c.formSuccessTitle, successText: c.formSuccessText }} />
+                <LeadForm pageSource="/" turnstileSiteKey={turnstileSiteKey} labels={{ button: c.formButton, successTitle: c.formSuccessTitle, successText: c.formSuccessText }} />
               </div>
             </div>
           </Reveal>

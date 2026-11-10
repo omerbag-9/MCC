@@ -38,7 +38,7 @@ export const DEFAULT_SETTINGS: Settings = {
   phone: "",
   email: "",
   whatsappNumber: "",
-  whatsappMessage: "Hello, I'd like to ask about a project.",
+  whatsappMessage: "Hello, I'd like to get in touch.",
   address: "",
   workingHours: "",
   mapEmbedUrl: "",
