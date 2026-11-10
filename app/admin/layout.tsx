@@ -7,7 +7,7 @@ import { Toaster } from "@/components/admin/toast";
 import { adminLogout } from "@/lib/actions/login";
 import { ensureAdmin, isPasswordLoginEnabled } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { clients, leads, projects, services } from "@/lib/db/schema";
+import { clients, leads, newsPosts, projects, services } from "@/lib/db/schema";
 
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s | Admin" },
@@ -17,10 +17,11 @@ export const metadata: Metadata = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await ensureAdmin();
   const db = await getDb();
-  const [passwordLogin, [newLeads], [projectCount], [serviceCount], [clientCount]] = await Promise.all([
+  const [passwordLogin, [newLeads], [projectCount], [newsCount], [serviceCount], [clientCount]] = await Promise.all([
     isPasswordLoginEnabled(),
     db.select({ n: count() }).from(leads).where(eq(leads.status, "new")),
     db.select({ n: count() }).from(projects),
+    db.select({ n: count() }).from(newsPosts),
     db.select({ n: count() }).from(services),
     db.select({ n: count() }).from(clients),
   ]);
@@ -40,6 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             { href: "/admin", label: "Overview" },
             { href: "/admin/leads", label: "Leads", count: newLeads.n, alert: true },
             { href: "/admin/projects", label: "Projects", count: projectCount.n },
+            { href: "/admin/news", label: "News", count: newsCount.n },
             { href: "/admin/services", label: "Services", count: serviceCount.n },
             { href: "/admin/clients", label: "Clients", count: clientCount.n },
             { href: "/admin/content", label: "Website content" },
@@ -49,6 +51,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="hidden space-y-1 px-3 pb-5 text-sm lg:block">
           <Link href="/admin/projects/new" className="flex items-center gap-2 px-3 py-2.5 text-white/80 hover:bg-white/10 hover:text-white">
             + New project
+          </Link>
+          <Link href="/admin/news/new" className="flex items-center gap-2 px-3 py-2.5 text-white/80 hover:bg-white/10 hover:text-white">
+            + New news post
           </Link>
           <Link href="/" target="_blank" className="flex items-center gap-2 px-3 py-2.5 text-white/80 hover:bg-white/10 hover:text-white">
             View site ↗

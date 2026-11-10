@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Gallery, type GalleryItem } from "@/components/site/gallery";
+import { NewsTimeline } from "@/components/site/news-timeline";
 import { ArrowRightIcon, WhatsAppIcon } from "@/components/site/icons";
 import { Photo, photoPool } from "@/components/site/photo";
 import { formatArea } from "@/components/site/project-card";
 import { Reveal } from "@/components/site/reveal";
 import { WhatsAppLink } from "@/components/site/whatsapp";
-import { getContent, getPublishedProjectBySlug, getPublishedProjects, getSettings } from "@/lib/db/queries";
+import { getContent, getProjectNews, getPublishedProjectBySlug, getPublishedProjects, getSettings } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl } from "@/lib/env";
 import { lines, paragraphs, specRows } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
@@ -48,6 +49,7 @@ export default async function ProjectPage({ params }: Props) {
     getPublishedProjects(),
   ]);
   if (!project) notFound();
+  const timeline = await getProjectNews(project.id);
 
   // Previous and next in the order of the projects page, wrapping round.
   const at = allProjects.findIndex((p) => p.id === project.id);
@@ -205,6 +207,20 @@ export default async function ProjectPage({ params }: Props) {
                   {h}
                 </p>
               ))}
+            </Reveal>
+          </div>
+        </section>
+      )}
+
+      {/* Timeline: the project's news, from the win to the handover */}
+      {timeline.length > 0 && (
+        <section className="section-y" aria-labelledby="timeline-title">
+          <div className="container-x grid gap-10 lg:grid-cols-12 lg:gap-16">
+            <Reveal className="lg:col-span-4">
+              <h2 id="timeline-title" className="text-head font-semibold">{c.newsTimelineTitle}</h2>
+            </Reveal>
+            <Reveal className="lg:col-span-8">
+              <NewsTimeline items={timeline} />
             </Reveal>
           </div>
         </section>

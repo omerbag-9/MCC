@@ -1,4 +1,5 @@
-import type { Project } from "@/lib/db/schema";
+import { PROJECT_STATUSES, type Project } from "@/lib/db/schema";
+import { PROJECT_STATUS_LABEL } from "@/lib/news";
 import { Card, Checkbox, TextArea, TextField } from "./ui";
 
 /** The project's fields. Wrapped by a plain form (new project) or an EditorForm (edit). */
@@ -46,6 +47,17 @@ export function ProjectFields({ project }: { project?: Project }) {
       </Card>
 
       <Card className="space-y-5">
+        <div>
+          <label htmlFor="status" className="label">Stage</label>
+          <select id="status" name="status" defaultValue={project?.status ?? "completed"} className="field">
+            {PROJECT_STATUSES.map((s) => (
+              <option key={s} value={s}>{PROJECT_STATUS_LABEL[s]}</option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-muted">
+            Only completed projects are listed on the projects page. Posting news (won, started, completed) moves the stage for you.
+          </p>
+        </div>
         <div className="flex flex-wrap gap-6">
           <Checkbox name="published" label="Published (visible on the website)" defaultChecked={project?.published ?? false} />
           <Checkbox name="featured" label="Featured on the home page" defaultChecked={project?.featured ?? false} />

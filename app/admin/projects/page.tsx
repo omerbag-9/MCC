@@ -7,6 +7,7 @@ import { getDb } from "@/lib/db/client";
 import { projectMedia, projects } from "@/lib/db/schema";
 import { getMediaBase } from "@/lib/env";
 import { mediaUrl } from "@/lib/media";
+import { PROJECT_STATUS_LABEL } from "@/lib/news";
 
 export const metadata = { title: "Projects" };
 
@@ -23,6 +24,7 @@ export default async function ProjectsAdmin({ searchParams }: { searchParams: Pr
         location: projects.location,
         coverKey: projects.coverKey,
         published: projects.published,
+        status: projects.status,
         featured: projects.featured,
         mediaCount: sql<number>`(select count(*) from ${projectMedia} where ${projectMedia.projectId} = ${projects.id})`,
       })
@@ -69,11 +71,12 @@ export default async function ProjectsAdmin({ searchParams }: { searchParams: Pr
                       </p>
                     </Link>
                     <div className="hidden shrink-0 gap-1.5 sm:flex">
+                      {p.status !== "completed" && <Badge tone="amber">{PROJECT_STATUS_LABEL[p.status]}</Badge>}
                       {p.featured && <Badge tone="blue">Featured</Badge>}
                       {p.published ? <Badge tone="green">Published</Badge> : <Badge>Draft</Badge>}
                     </div>
                     <div className="flex shrink-0 gap-1">
-                      {p.published && (
+                      {p.published && p.status === "completed" && (
                         <Link href={`/projects/${p.slug}`} target="_blank" className="hidden px-3 py-2 text-sm text-muted hover:bg-sand hover:text-ink md:block" title="View on site">
                           View ↗
                         </Link>
