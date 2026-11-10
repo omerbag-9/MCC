@@ -2,7 +2,7 @@ import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
 import { NewsBadge } from "@/components/admin/news-badge";
 import { Badge, EmptyState, Flash, PageHeader } from "@/components/admin/ui";
-import { CheckCircleIcon, HardHatIcon, TrophyIcon } from "@/components/site/icons";
+import { ContractIcon, ExcavatorIcon, HandoverIcon } from "@/components/site/icons";
 import { ensureAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import { newsPosts, projects } from "@/lib/db/schema";
@@ -47,9 +47,9 @@ export default async function NewsAdmin({ searchParams }: { searchParams: Promis
 
       <div className="mb-8 grid gap-3 sm:grid-cols-3">
         {[
-          { kind: "won", icon: TrophyIcon, title: "Announce a win", text: "A new contract. Adds the project as “Won”." },
-          { kind: "started", icon: HardHatIcon, title: "Work has started", text: "Moves the project to “Under construction”." },
-          { kind: "completed", icon: CheckCircleIcon, title: "Project completed", text: "Publishes the project on the projects page." },
+          { kind: "won", icon: ContractIcon, title: "Announce a win", text: "A new contract. Adds the project as “Won”." },
+          { kind: "started", icon: ExcavatorIcon, title: "Work has started", text: "Moves the project to “Under construction”." },
+          { kind: "completed", icon: HandoverIcon, title: "Project completed", text: "Publishes the project on the projects page." },
         ].map(({ kind, icon: Icon, title, text }) => (
           <Link key={kind} href={`/admin/news/new?kind=${kind}`} className="flex gap-3 rounded-lg bg-white p-4 shadow-sm ring-1 ring-line hover:ring-ink">
             <Icon width={22} height={22} className="mt-0.5 shrink-0" />

@@ -14,7 +14,7 @@ import { getMediaBase, getMediaBucket } from "@/lib/env";
 import { mediaUrl } from "@/lib/media";
 import { formatDay, PROJECT_STATUS_LABEL } from "@/lib/news";
 import { NewsBadge } from "@/components/admin/news-badge";
-import { CheckCircleIcon, HardHatIcon, ProgressIcon } from "@/components/site/icons";
+import { CraneIcon, ExcavatorIcon, HandoverIcon } from "@/components/site/icons";
 
 export const metadata = { title: "Edit project" };
 
@@ -66,16 +66,16 @@ export default async function EditProject({
           <div className="flex flex-wrap gap-2">
             {project.status === "awarded" && (
               <Link href={`/admin/news/new?kind=started&project=${project.id}`} className="btn border border-line bg-white py-2 text-sm text-ink hover:bg-sand">
-                <HardHatIcon width={16} height={16} /> Announce work started
+                <ExcavatorIcon width={16} height={16} /> Announce work started
               </Link>
             )}
             {project.status !== "completed" && (
               <>
                 <Link href={`/admin/news/new?kind=progress&project=${project.id}`} className="btn border border-line bg-white py-2 text-sm text-ink hover:bg-sand">
-                  <ProgressIcon width={16} height={16} /> Progress update
+                  <CraneIcon width={16} height={16} /> Progress update
                 </Link>
                 <Link href={`/admin/news/new?kind=completed&project=${project.id}`} className="btn-primary py-2 text-sm">
-                  <CheckCircleIcon width={16} height={16} /> Announce completion
+                  <HandoverIcon width={16} height={16} /> Announce completion
                 </Link>
               </>
             )}
