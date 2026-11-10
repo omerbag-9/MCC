@@ -76,7 +76,7 @@ export default async function HomePage() {
 
       {/* Hero: video (or the photograph) under a veil, the claim, two actions; the figures close the
           first screen, so hero and figures together fill exactly one screen. */}
-      <section className="relative isolate flex min-h-[calc(100svh-72px)] flex-col overflow-hidden bg-ink text-paper lg:min-h-[calc(100svh-112px)]">
+      <section className="relative isolate flex min-h-[calc(100svh-72px)] flex-col overflow-hidden bg-ink text-paper lg:min-h-[calc(100svh-136px)]">
         <div className="absolute inset-0 -z-20">
           {heroVideo ? (
             <HeroVideo src={heroVideo} poster={mediaUrl(heroPhoto, mediaBase)} />

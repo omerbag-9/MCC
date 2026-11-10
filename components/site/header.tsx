@@ -64,18 +64,24 @@ export function TopBar({ settings }: { settings: Settings }) {
 export function Header({ companyName, phone }: { companyName: string; phone: string }) {
   return (
     <header className="sticky top-0 z-40 bg-ink text-paper">
-      <div className="container-x flex h-[72px] items-center justify-between gap-6">
-        {/* The logo on a white block cut into the dark bar, its full height. */}
-        <Link href="/" className="flex shrink-0 items-center self-stretch bg-paper px-5 lg:px-8" aria-label={`${companyName}, home`}>
-          <Logo height={48} tone="brand" alt={companyName} className="h-10 w-auto lg:h-12" />
+      {/* 72px tall on phones, 96px (h-24) from lg; page heights below the header assume these. */}
+      <div className="container-x flex h-[72px] items-center gap-6 lg:h-24 lg:gap-4">
+        {/* As on jacobs.com: the logo on a wide white block cut into the dark bar, its full
+            height, with plenty of white around it; the menu starts right after it. */}
+        <Link
+          href="/"
+          className="flex shrink-0 items-center justify-center self-stretch bg-paper px-6 lg:w-72 lg:px-10"
+          aria-label={`${companyName}, home`}
+        >
+          <Logo height={64} tone="brand" alt={companyName} className="h-10 w-auto lg:h-16" />
         </Link>
 
-        <nav className="hidden items-center gap-1 text-[15px] font-medium lg:flex" aria-label="Main">
+        <nav className="hidden items-center gap-2 text-[17px] font-semibold lg:ml-6 lg:flex" aria-label="Main">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="relative px-4 py-2 text-paper/80 transition-colors after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-paper after:transition-transform after:duration-300 hover:text-paper hover:after:scale-x-100"
+              className="relative px-4 py-2 text-paper transition-colors after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:origin-left after:scale-x-0 after:bg-paper after:transition-transform after:duration-300 hover:text-paper hover:after:scale-x-100"
             >
               {item.label}
             </Link>
@@ -83,7 +89,7 @@ export function Header({ companyName, phone }: { companyName: string; phone: str
         </nav>
 
         {phone && (
-          <a href={`tel:${phone.replace(/\s/g, "")}`} className="hidden items-center gap-2 text-[15px] text-paper/80 hover:text-paper lg:flex">
+          <a href={`tel:${phone.replace(/\s/g, "")}`} className="ml-auto hidden items-center gap-2 text-[15px] text-paper/80 hover:text-paper lg:flex">
             <PhoneIcon width={17} height={17} />
             {phone}
           </a>
