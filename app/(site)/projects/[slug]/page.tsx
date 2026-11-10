@@ -94,7 +94,7 @@ export default async function ProjectPage({ params }: Props) {
       />
 
       {/* Header: the project's photograph across the screen, its name, and its key facts along the foot */}
-      <section className="relative isolate flex min-h-[480px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[calc(82svh-96px)]">
+      <section className="relative isolate flex min-h-[480px] flex-col overflow-hidden bg-ink text-paper lg:min-h-[calc(82svh-72px)]">
         <div className="absolute inset-0 -z-20">
           <Photo mediaBase={mediaBase} src={coverPhoto} alt={project.title} sizes="100vw" priority className="hero-photo" />
         </div>

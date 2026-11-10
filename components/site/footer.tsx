@@ -34,8 +34,8 @@ export function Footer({
     <footer className="bg-ink text-paper">
       <div className="container-x grid gap-12 py-16 sm:grid-cols-2 lg:grid-cols-12 lg:py-20">
         <div className="sm:col-span-2 lg:col-span-3">
-          <Link href="/" className="inline-block bg-paper px-6 py-5" aria-label={`${settings.companyName}, home`}>
-            <Logo height={80} tone="brand" alt={settings.companyName} className="h-16 w-auto lg:h-20" />
+          <Link href="/" className="inline-block" aria-label={`${settings.companyName}, home`}>
+            <Logo height={96} alt={settings.companyName} className="h-20 w-auto lg:h-24" />
           </Link>
           {settings.tagline && <p className="mt-5 max-w-xs text-on-navy-muted">{settings.tagline}</p>}
           {socials.length > 0 && (
