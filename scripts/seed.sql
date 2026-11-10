@@ -1,5 +1,6 @@
 -- Demo content for local development: npm run db:seed:local
 -- Safe to re-run: it clears the content tables first (leads are kept).
+DELETE FROM news_posts;
 DELETE FROM project_media;
 DELETE FROM projects;
 DELETE FROM services;
