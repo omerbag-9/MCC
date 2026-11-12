@@ -71,6 +71,13 @@
       "when": 1794344245773,
       "tag": "0009_contact_whatsapp_message",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1794344345773,
+      "tag": "0010_about_mcc",
+      "breakpoints": true
     }
   ]
 }

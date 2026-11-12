@@ -154,8 +154,8 @@ export default async function HomePage() {
               <Link href="/contact" className="btn-primary">
                 {c.aboutButton}
               </Link>
-              <Link href="/#services" className="link-arrow">
-                Our services <ArrowRightIcon width={18} height={18} />
+              <Link href="/about" className="link-arrow">
+                More about us <ArrowRightIcon width={18} height={18} />
               </Link>
             </div>
           </Reveal>

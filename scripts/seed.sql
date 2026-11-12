@@ -13,10 +13,10 @@ VALUES (1,
   'Building with integrity since 1998',
   'Building what lasts since 1998',
   'Design-build, general contracting and renovation, delivered on time, on budget and to the highest safety standards.',
-  'Over two decades of building trust',
-  'We are a full-service construction company delivering residential, commercial and industrial projects from first sketch to final handover.
+  'About MCC',
+  'MCC is a contracting company specialized in electromechanical works. Founded in 2015, we have expanded in the last 3 years into full finishing works, and we are now building MCC as a group of specialized companies.
 
-Our in-house engineers, project managers and site crews work as one team, so you get a single point of contact, transparent pricing and a schedule we stick to.',
+We are engineers, not ordinary contractors. Accurate costing, precise calculations and precise execution on every project, delivered on time and maintained after we finish. Most of our engineers come from excellent government universities and have been with us for more than 10 years.',
   'Design and build under one contract
 In-house engineers and site crews
 Fixed, transparent pricing

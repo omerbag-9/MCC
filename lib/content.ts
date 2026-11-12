@@ -69,6 +69,71 @@ export const CONTENT_GROUPS: ContentGroup[] = [
     ],
   },
   {
+    id: "about",
+    title: "About page",
+    description: "The page at /about. The short version on the home page is the About text in Site settings. In longer texts, separate paragraphs with an empty line.",
+    fields: [
+      text("aboutPageTitle", "Heading", "Engineers, not ordinary contractors"),
+      area("aboutPageIntro", "Text under the heading", "MCC is a contracting company specialized in electromechanical works and full finishing, run by engineers since 2015."),
+      image("aboutPageImage", "Header photo", "If empty, a featured project's photo is used."),
+
+      text("aboutStoryTitle", "Story heading", "Who we are"),
+      area(
+        "aboutStory",
+        "Story text",
+        [
+          "Founded in 2015, MCC started in electromechanical contracting. In the last 3 years, we expanded into full finishing works.",
+          "Today, we are moving to build MCC as a group, with specialized companies under it, to deliver a different product in the market.",
+        ].join("\n\n"),
+      ),
+      image("aboutStoryImage", "Story photo", "If empty, a featured project's photo is used."),
+      text("aboutLegal", "Company type", "Limited Liability Company (LTD)"),
+      text("aboutOwners", "Owners", "Eng. Karim Osama and Eng. Mohamed Abdelhakim"),
+      area(
+        "aboutOffice",
+        "Engineering office",
+        "MCC Consulting Office, a certified syndicate engineering consulting office and the engineering arm of the group. Founded in 2023 by Eng. Karim Osama and Eng. Wael Idris.",
+      ),
+
+      text("aboutMissionTitle", "Mission heading", "Our mission"),
+      area(
+        "aboutMission",
+        "Mission text",
+        [
+          "We are engineers working with a pure engineering background. We are not ordinary contractors, we are people who work with engineering thinking.",
+          "Our goal is to deliver high-quality work, on time, and to maintain the work after we finish it, to deliver in the end a respectable product. For every project we take on, we ensure accurate costing, precise calculations, and precise execution, to deliver the intended outcome.",
+        ].join("\n\n"),
+      ),
+      text("aboutVisionTitle", "Vision heading", "Our vision"),
+      area(
+        "aboutVision",
+        "Vision text",
+        [
+          "What distinguishes MCC is our team. Most of our engineers graduated from excellent government universities, and most of them have been with the company for more than 10 years.",
+          "We work with disciplined engineering, and we aim to present work that stands out from what is available in the market.",
+        ].join("\n\n"),
+      ),
+
+      text("aboutValuesTitle", "Values heading", "Our values"),
+      text("value1Title", "Value 1", "We think like engineers"),
+      area("value1Text", "Value 1 text", "We are not ordinary contractors. We work with pure engineering thinking, not traditional contracting."),
+      text("value2Title", "Value 2", "We do things right"),
+      area("value2Text", "Value 2 text", "Accurate costing, precise calculations and precise execution, in every project we take on."),
+      text("value3Title", "Value 3", "We deliver and we maintain"),
+      area("value3Text", "Value 3 text", "High-quality work, on time, and we maintain the work after we finish it, to deliver a respectable product."),
+      text("value4Title", "Value 4", "We grow with our people"),
+      area(
+        "value4Text",
+        "Value 4 text",
+        "Our team is our distinction. Most of our engineers are from excellent government universities, and most of them have been with us for more than 10 years.",
+      ),
+
+      text("aboutClosing", "Closing line", "Not ordinary contractors. Engineers with an engineering background."),
+      text("aboutPageButton", "Closing button", "Talk to our team"),
+      image("aboutClosingImage", "Closing section background photo", "Shown dark behind the closing line. If empty, a project photo is used."),
+    ],
+  },
+  {
     id: "projects",
     title: "Projects page",
     fields: [

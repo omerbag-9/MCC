@@ -4,7 +4,7 @@ import type { Project, Service, Settings } from "@/lib/db/schema";
 import { ClockIcon, MailIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
 
 const PAGES = [
-  { href: "/#about", label: "About us" },
+  { href: "/about", label: "About us" },
   { href: "/#services", label: "Services" },
   { href: "/projects", label: "Projects" },
   { href: "/news", label: "News" },

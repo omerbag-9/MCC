@@ -4,12 +4,12 @@ import type { Settings } from "@/lib/db/schema";
 import { ClockIcon, CloseIcon, MailIcon, MenuIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
 import { MobileMenu } from "./mobile-menu";
 
-// Services and About live on the home page: those links scroll smoothly to their sections
-// (html has scroll-behavior: smooth). Projects, News and Contact have their own pages.
+// Services lives on the home page: that link scrolls smoothly to its section (html has
+// scroll-behavior: smooth). About, Projects, News and Contact have their own pages.
 // In the order a visitor meets them on the home page: who we are, what we do, what we've built,
 // what is new, how to reach us. The footer's Company list follows the same order.
 const NAV = [
-  { href: "/#about", label: "About" },
+  { href: "/about", label: "About" },
   { href: "/#services", label: "Services" },
   { href: "/projects", label: "Projects" },
   { href: "/news", label: "News" },
