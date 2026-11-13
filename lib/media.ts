@@ -5,7 +5,7 @@
  */
 export function mediaUrl(key: string | null | undefined, base = ""): string | null {
   if (!key) return null;
-  // Files bundled with the site (public/), e.g. the client logos added by a migration.
+  // Files bundled with the site (public/), e.g. the client logos and project photos added by migrations.
   if (STATIC_ASSET_PATTERN.test(key)) return key;
   const path = key.split("/").map(encodeURIComponent).join("/");
   return base ? `${base.replace(/\/+$/, "")}/${path}` : `/media/${path}`;
@@ -14,5 +14,8 @@ export function mediaUrl(key: string | null | undefined, base = ""): string | nu
 /** Object keys are generated server-side; anything else is rejected. */
 export const MEDIA_KEY_PATTERN = /^(projects|site|clients)\/\d{4}\/[a-f0-9-]{36}(-thumb)?\.(webp|jpg|png|avif|mp4|webm)$/;
 
-/** Images shipped in public/ (not in the bucket) that a row may point to instead of a bucket key. */
-export const STATIC_ASSET_PATTERN = /^\/clients\/[a-z0-9-]+\.(png|jpg|webp|svg)$/;
+/**
+ * Images shipped in public/ (not in the bucket) that a row may point to instead of a bucket key:
+ * the client logos and the project photos added by migrations.
+ */
+export const STATIC_ASSET_PATTERN = /^\/(clients|project-photos\/[a-z0-9-]+)\/[a-z0-9-]+\.(png|jpg|webp|svg)$/;

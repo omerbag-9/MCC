@@ -4,7 +4,7 @@
 //
 // Runs from scripts/deploy.mjs on dev only and only fills empty slots, so it never replaces photos
 // uploaded in the admin: the hero and service photos while the demo is fresh (no hero yet), and
-// the seeded demo projects (scripts/seed.sql slugs) while they have fewer than three photos.
+// news posts without a cover. Projects are real (drizzle/0015_real_projects.sql) and are not touched.
 //
 // Source: the Openverse API (openverse.org), limited to CC0 and public-domain photographs, which
 // are free for commercial use without attribution. Each photo's title, creator, licence and source
@@ -12,9 +12,6 @@
 //
 // The hero video comes from Wikimedia Commons (free licences: CC0, public domain, CC BY, CC BY-SA);
 // its credit is printed the same way. Only filled while the hero has no video.
-//
-// While there are no news posts at all, the demo news in scripts/demo-news.sql is loaded (every
-// kind of post and case), and its posts get photos from their projects.
 //
 // The seeded demo clients get the demo logos in scripts/demo-logos/ (drawn for the demo, not real
 // companies' marks) while they have no logo.
@@ -35,26 +32,9 @@ const BUCKET = "mcc-bucket";
 const envFlag = ["--env", env === "dev" ? "" : env];
 const target = local ? "--local" : "--remote";
 
-// What each slot shows. Projects are matched by the demo slugs in scripts/seed.sql; anything else
-// falls back to a general query.
 // Each slot tries its queries in order until one returns a usable photograph.
 const HERO_QUERY = ["construction site crane", "construction site"];
-const PROJECT_QUERIES = {
-  "palm-hills-villa": ["modern villa exterior", "modern house", "villa"],
-  "nile-business-tower": ["office building construction", "office building"],
-  "delta-logistics-hub": ["warehouse steel structure", "warehouse", "industrial building", "factory"],
-  "zamalek-apartment-renovation": ["apartment interior renovation", "interior renovation", "apartment interior"],
-  // Unfinished demo projects from scripts/demo-news.sql
-  "october-gardens-residences": ["apartment building construction", "residential building construction", "building construction"],
-  "new-cairo-medical-centre": ["hospital building", "clinic building", "modern building"],
-};
-// Photos for demo news posts that have no project photo to borrow (by slug, then by kind).
-const NEWS_QUERIES = {
-  "new-cairo-medical-centre-awarded": ["hospital building", "clinic building", "modern building"],
-  "safety-certification-iso-45001": ["construction safety helmet", "hard hat construction", "construction workers"],
-  "hiring-site-engineers": ["construction engineer", "engineer construction site", "construction workers"],
-  "draft-palm-hills-handover": ["modern villa exterior", "modern house"],
-};
+// Photos for news posts that have no project photo to borrow, by kind.
 const NEWS_KIND_QUERIES = {
   won: ["handshake business", "office building"],
   started: ["excavator construction site", "construction site"],
@@ -75,7 +55,6 @@ const VIDEO_QUERIES = ["construction site crane", "tower crane", "building const
 const COMMONS_API = "https://commons.wikimedia.org/w/api.php";
 const VIDEO_LICENCES = /^(cc0|public domain|pd|cc by(-sa)? [\d.]+)/i;
 const VIDEO_MAX_BYTES = 30 * 1024 * 1024;
-const PHOTOS_PER_PROJECT = 3; // cover + gallery
 
 const used = new Set();
 /** Titles of photos already on the site (stored as alt text), so a later run doesn't add them twice. */
@@ -221,22 +200,10 @@ async function main() {
   const [settings] = query("SELECT hero_image_key, hero_video_key FROM settings WHERE id = 1");
   if (!settings) return;
 
-  // Demo news, only into an empty news table (never next to real posts).
-  const [{ n: newsCount }] = query("SELECT COUNT(*) AS n FROM news_posts");
-  if (newsCount === 0) {
-    console.log("News: loading the demo posts (scripts/demo-news.sql)");
-    wrangler(["d1", "execute", "DB", target, ...envFlag, "--yes", "--file", join(dirname(fileURLToPath(import.meta.url)), "demo-news.sql")]);
-  }
-
-  const projects = query(
-    "SELECT p.id, p.slug, p.cover_key, (SELECT COUNT(*) FROM project_media m WHERE m.project_id = p.id) AS media FROM projects p ORDER BY p.sort_order, p.id",
-  );
   const services = query("SELECT id, title, image_key FROM services ORDER BY sort_order, id");
   for (const row of query("SELECT DISTINCT alt FROM project_media WHERE alt != ''")) usedTitles.add(row.alt);
 
   const sql = [];
-  /** Photos added to each project in this run (project id -> keys), for the news covers. */
-  const newPhotos = new Map();
   const fresh = !settings.hero_image_key;
 
   if (fresh) {
@@ -265,23 +232,6 @@ async function main() {
     sql.push(`UPDATE clients SET logo_key = ${sqlString(key)} WHERE id = ${c.id};`);
   }
 
-  // Only the seeded demo projects, and only up to three photos each.
-  for (const p of projects.filter((p) => PROJECT_QUERIES[p.slug] && p.media < PHOTOS_PER_PROJECT)) {
-    const queries = PROJECT_QUERIES[p.slug];
-    console.log(`Project ${p.slug}: ${queries.join(" / ")}`);
-    let order = p.media;
-    for (let i = p.media; i < PHOTOS_PER_PROJECT; i++) {
-      const photo = await fetchPhoto(queries, "projects");
-      if (!photo) break;
-      order += 1;
-      newPhotos.set(p.id, [...(newPhotos.get(p.id) ?? []), photo.key]);
-      sql.push(
-        `INSERT INTO project_media (project_id, type, key, thumb_key, width, height, alt, sort_order) VALUES (${p.id}, 'image', ${sqlString(photo.key)}, ${sqlString(photo.thumbKey)}, ${photo.width}, ${photo.height}, ${sqlString(photo.alt.slice(0, 300))}, ${order});`,
-      );
-      if (!p.cover_key && i === p.media) sql.push(`UPDATE projects SET cover_key = ${sqlString(photo.key)} WHERE id = ${p.id} AND cover_key IS NULL;`);
-    }
-  }
-
   if (fresh) {
     for (const s of services.filter((s) => !s.image_key)) {
       const queries = SERVICE_QUERIES.find(([re]) => re.test(s.title))?.[1] ?? [];
@@ -292,15 +242,13 @@ async function main() {
   }
 
   // Every news post gets a real photograph: first one of its project's photos (a different one per
-  // post where the project has several, this run's new photos included), otherwise a free photo
-  // searched for the post itself.
+  // post where the project has several), otherwise a free photo searched for the post itself.
   const bare = query("SELECT id, slug, kind, project_id FROM news_posts WHERE cover_key IS NULL ORDER BY posted_at");
   if (bare.length > 0) {
     const photosOf = new Map();
     for (const m of query("SELECT project_id, key FROM project_media WHERE type = 'image' ORDER BY project_id, sort_order, id")) {
       photosOf.set(m.project_id, [...(photosOf.get(m.project_id) ?? []), m.key]);
     }
-    for (const [projectId, keys] of newPhotos) photosOf.set(projectId, [...(photosOf.get(projectId) ?? []), ...keys]);
     const used = new Map();
     for (const post of bare) {
       const keys = post.project_id ? (photosOf.get(post.project_id) ?? []) : [];
@@ -310,7 +258,7 @@ async function main() {
         used.set(post.project_id, i + 1);
         key = keys[i % keys.length];
       } else {
-        const queries = NEWS_QUERIES[post.slug] ?? NEWS_KIND_QUERIES[post.kind] ?? [];
+        const queries = NEWS_KIND_QUERIES[post.kind] ?? [];
         console.log(`News ${post.slug}: ${queries.join(" / ") || "construction"}`);
         key = (await fetchPhoto(queries, "site"))?.key ?? null;
       }
