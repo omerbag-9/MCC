@@ -14,9 +14,9 @@ VALUES (1,
   'Building what lasts since 1998',
   'Design-build, general contracting and renovation, delivered on time, on budget and to the highest safety standards.',
   'About MCC',
-  'MCC is a contracting company specialized in electromechanical works. Founded in 2015, we have expanded in the last 3 years into full finishing works, and we are now building MCC as a group of specialized companies.
+  'MCC is an engineering-driven contracting company specializing in electromechanical solutions and integrated construction services. Established in 2015, we have expanded over the past three years into comprehensive finishing works, and we are now evolving into an integrated group of specialized companies.
 
-We are engineers, not ordinary contractors. Accurate costing, precise calculations and precise execution on every project, delivered on time and maintained after we finish. Most of our engineers come from excellent government universities and have been with us for more than 10 years.',
+Engineering is the foundation of how we think, plan and execute: accurate cost analysis, precise calculations and disciplined execution, with support and maintenance after handover. Most of our engineers have been with MCC for more than a decade.',
   'Design and build under one contract
 In-house engineers and site crews
 Fixed, transparent pricing

@@ -16,11 +16,11 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// The company's own dates and figures from its profile, shown along the foot of the header.
+// The company's own facts from its profile, shown along the foot of the header.
 const RECORD = [
-  { value: "2015", label: "Founded" },
-  { value: "2023", label: "Consulting office opened" },
+  { value: "2015", label: "Established" },
   { value: "10+ years", label: "Most of our engineers with us" },
+  { value: "LTD", label: "Owned by its engineers" },
 ];
 
 export default async function AboutPage() {
@@ -35,12 +35,12 @@ export default async function AboutPage() {
   const company = [
     { label: "Company", value: c.aboutLegal },
     { label: "Owners", value: c.aboutOwners },
-    { label: "Engineering office", value: c.aboutOffice },
+    { label: "What we do", value: c.aboutScope },
   ].filter((f) => f.value);
   const aims = [
-    { id: "mission", title: c.aboutMissionTitle, body: paragraphs(c.aboutMission) },
-    { id: "vision", title: c.aboutVisionTitle, body: paragraphs(c.aboutVision) },
-  ].filter((a) => a.body.length > 0);
+    { id: "mission", title: c.aboutMissionTitle, lead: c.aboutMissionLead, body: paragraphs(c.aboutMission) },
+    { id: "vision", title: c.aboutVisionTitle, lead: c.aboutVisionLead, body: paragraphs(c.aboutVision) },
+  ].filter((a) => a.lead || a.body.length > 0);
   const values = [1, 2, 3, 4].map((n) => ({ title: c[`value${n}Title`], text: c[`value${n}Text`] })).filter((v) => v.title);
 
   return (
@@ -112,9 +112,10 @@ export default async function AboutPage() {
           <Reveal className="container-x grid gap-1 lg:grid-cols-2" stagger={0.1}>
             {aims.map((a) => (
               <article key={a.id} id={a.id} className="bg-paper p-8 sm:p-10 lg:p-14">
-                <h2 className="text-head font-semibold">{a.title}</h2>
+                <h2 className="text-lead font-semibold text-muted">{a.title}</h2>
+                {a.lead && <p className="mt-4 text-[1.375rem] leading-snug font-semibold text-balance sm:text-[1.5rem]">{a.lead}</p>}
                 {a.body.map((t, i) => (
-                  <p key={i} className={i === 0 ? "mt-6 text-lead" : "mt-4"}>
+                  <p key={i} className={i === 0 ? "mt-8" : "mt-4"}>
                     {t}
                   </p>
                 ))}

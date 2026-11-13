@@ -73,62 +73,86 @@ export const CONTENT_GROUPS: ContentGroup[] = [
     title: "About page",
     description: "The page at /about. The short version on the home page is the About text in Site settings. In longer texts, separate paragraphs with an empty line.",
     fields: [
-      text("aboutPageTitle", "Heading", "Engineers, not ordinary contractors"),
-      area("aboutPageIntro", "Text under the heading", "MCC is a contracting company specialized in electromechanical works and full finishing, run by engineers since 2015."),
+      text("aboutPageTitle", "Heading", "Beyond contracting. Driven by engineering."),
+      area(
+        "aboutPageIntro",
+        "Text under the heading",
+        "MCC is an engineering-driven contracting company specializing in electromechanical solutions and integrated construction services.",
+      ),
       image("aboutPageImage", "Header photo", "If empty, a featured project's photo is used."),
 
-      text("aboutStoryTitle", "Story heading", "Who we are"),
+      text("aboutStoryTitle", "Story heading", "About MCC"),
       area(
         "aboutStory",
         "Story text",
         [
-          "Founded in 2015, MCC started in electromechanical contracting. In the last 3 years, we expanded into full finishing works.",
-          "Today, we are moving to build MCC as a group, with specialized companies under it, to deliver a different product in the market.",
+          "Established in 2015, MCC began its journey as a specialized electromechanical contracting company, building its reputation on engineering expertise, technical precision, and commitment to quality.",
+          "Over the past three years, the company has strategically expanded its capabilities into comprehensive finishing works, broadening its scope of services and strengthening its position in the construction market.",
+          "Today, MCC is entering a new phase of growth, with a strategic vision to evolve into an integrated group of specialized companies, each bringing focused expertise and delivering complementary solutions under one unified vision.",
         ].join("\n\n"),
       ),
       image("aboutStoryImage", "Story photo", "If empty, a featured project's photo is used."),
       text("aboutLegal", "Company type", "Limited Liability Company (LTD)"),
       text("aboutOwners", "Owners", "Eng. Karim Osama and Eng. Mohamed Abdelhakim"),
-      area(
-        "aboutOffice",
-        "Engineering office",
-        "MCC Consulting Office, a certified syndicate engineering consulting office and the engineering arm of the group. Founded in 2023 by Eng. Karim Osama and Eng. Wael Idris.",
-      ),
+      text("aboutScope", "What we do", "Electromechanical works and comprehensive finishing works"),
 
       text("aboutMissionTitle", "Mission heading", "Our mission"),
+      area("aboutMissionLead", "Mission statement", "To bring engineering excellence into every aspect of construction.", "Shown large, under the heading."),
       area(
         "aboutMission",
         "Mission text",
         [
-          "We are engineers working with a pure engineering background. We are not ordinary contractors, we are people who work with engineering thinking.",
-          "Our goal is to deliver high-quality work, on time, and to maintain the work after we finish it, to deliver in the end a respectable product. For every project we take on, we ensure accurate costing, precise calculations, and precise execution, to deliver the intended outcome.",
+          "At MCC, engineering is not simply part of what we do; it is the foundation of how we think, plan, and execute.",
+          "We approach every project with an engineering mindset, combining technical knowledge, accurate cost analysis, precise calculations, and disciplined execution to ensure that every solution achieves its intended purpose.",
+          "Our commitment goes beyond project completion. We strive to deliver superior quality, meet project timelines, and provide reliable after-completion support and maintenance.",
+          "Our mission is to deliver projects that reflect professional standards, engineering integrity, and lasting value.",
         ].join("\n\n"),
       ),
       text("aboutVisionTitle", "Vision heading", "Our vision"),
       area(
+        "aboutVisionLead",
+        "Vision statement",
+        "To become a leading engineering and contracting group recognized for its expertise, people, and quality of delivery.",
+        "Shown large, under the heading.",
+      ),
+      area(
         "aboutVision",
         "Vision text",
         [
-          "What distinguishes MCC is our team. Most of our engineers graduated from excellent government universities, and most of them have been with the company for more than 10 years.",
-          "We work with disciplined engineering, and we aim to present work that stands out from what is available in the market.",
+          "We believe that our greatest competitive advantage lies in our people.",
+          "MCC is built around a dedicated team of engineers, most of whom are graduates of leading Egyptian public universities, bringing strong academic foundations and practical engineering experience.",
+          "With the majority of our engineering team having been part of MCC for more than a decade, we have developed a strong foundation of accumulated knowledge, professional consistency, and shared commitment.",
+          "We aim to continuously elevate our standards, expand our capabilities, and deliver projects that set a higher benchmark for quality and professionalism in the market.",
         ].join("\n\n"),
       ),
 
-      text("aboutValuesTitle", "Values heading", "Our values"),
-      text("value1Title", "Value 1", "We think like engineers"),
-      area("value1Text", "Value 1 text", "We are not ordinary contractors. We work with pure engineering thinking, not traditional contracting."),
-      text("value2Title", "Value 2", "We do things right"),
-      area("value2Text", "Value 2 text", "Accurate costing, precise calculations and precise execution, in every project we take on."),
-      text("value3Title", "Value 3", "We deliver and we maintain"),
-      area("value3Text", "Value 3 text", "High-quality work, on time, and we maintain the work after we finish it, to deliver a respectable product."),
-      text("value4Title", "Value 4", "We grow with our people"),
+      text("aboutValuesTitle", "Values heading", "Our core values"),
+      text("value1Title", "Value 1", "Engineering-driven thinking"),
+      area(
+        "value1Text",
+        "Value 1 text",
+        "We approach construction through engineering principles, technical understanding, and systematic problem-solving. Our decisions are guided by engineering logic rather than conventional contracting practices.",
+      ),
+      text("value2Title", "Value 2", "Precision in every detail"),
+      area(
+        "value2Text",
+        "Value 2 text",
+        "We believe that successful projects begin with accurate planning. From cost estimation and technical calculations to procurement and execution, precision is embedded in every stage of our work.",
+      ),
+      text("value3Title", "Value 3", "Commitment beyond delivery"),
+      area(
+        "value3Text",
+        "Value 3 text",
+        "Our responsibility does not end at project handover. We are committed to delivering quality on schedule and providing the necessary support and maintenance to ensure long-term performance.",
+      ),
+      text("value4Title", "Value 4", "People are our strength"),
       area(
         "value4Text",
         "Value 4 text",
-        "Our team is our distinction. Most of our engineers are from excellent government universities, and most of them have been with us for more than 10 years.",
+        "Our team is the foundation of our success. We invest in long-term professional relationships, accumulated experience, and a collaborative engineering culture that drives continuous improvement and sustainable growth.",
       ),
 
-      text("aboutClosing", "Closing line", "Not ordinary contractors. Engineers with an engineering background."),
+      text("aboutClosing", "Closing line", "Engineering excellence, technical precision, commitment to quality."),
       text("aboutPageButton", "Closing button", "Talk to our team"),
       image("aboutClosingImage", "Closing section background photo", "Shown dark behind the closing line. If empty, a project photo is used."),
     ],
@@ -214,6 +238,38 @@ const RETIRED: Record<string, string[]> = {
   ],
   formButton: ["Request a free quote"],
   formSuccessTitle: ["Thank you! We received your request."],
+  // The About page's first wording (replaced by the client's revised profile).
+  aboutPageTitle: ["Engineers, not ordinary contractors"],
+  aboutPageIntro: ["MCC is a contracting company specialized in electromechanical works and full finishing, run by engineers since 2015."],
+  aboutStoryTitle: ["Who we are"],
+  aboutStory: [
+    [
+      "Founded in 2015, MCC started in electromechanical contracting. In the last 3 years, we expanded into full finishing works.",
+      "Today, we are moving to build MCC as a group, with specialized companies under it, to deliver a different product in the market.",
+    ].join("\n\n"),
+  ],
+  aboutMission: [
+    [
+      "We are engineers working with a pure engineering background. We are not ordinary contractors, we are people who work with engineering thinking.",
+      "Our goal is to deliver high-quality work, on time, and to maintain the work after we finish it, to deliver in the end a respectable product. For every project we take on, we ensure accurate costing, precise calculations, and precise execution, to deliver the intended outcome.",
+    ].join("\n\n"),
+  ],
+  aboutVision: [
+    [
+      "What distinguishes MCC is our team. Most of our engineers graduated from excellent government universities, and most of them have been with the company for more than 10 years.",
+      "We work with disciplined engineering, and we aim to present work that stands out from what is available in the market.",
+    ].join("\n\n"),
+  ],
+  aboutValuesTitle: ["Our values"],
+  value1Title: ["We think like engineers"],
+  value1Text: ["We are not ordinary contractors. We work with pure engineering thinking, not traditional contracting."],
+  value2Title: ["We do things right"],
+  value2Text: ["Accurate costing, precise calculations and precise execution, in every project we take on."],
+  value3Title: ["We deliver and we maintain"],
+  value3Text: ["High-quality work, on time, and we maintain the work after we finish it, to deliver a respectable product."],
+  value4Title: ["We grow with our people"],
+  value4Text: ["Our team is our distinction. Most of our engineers are from excellent government universities, and most of them have been with us for more than 10 years."],
+  aboutClosing: ["Not ordinary contractors. Engineers with an engineering background."],
 };
 
 /** True for a saved value that is an earlier default (see RETIRED): shown and used as unset. */
