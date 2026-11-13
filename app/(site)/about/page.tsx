@@ -20,7 +20,6 @@ export async function generateMetadata(): Promise<Metadata> {
 const RECORD = [
   { value: "2015", label: "Established" },
   { value: "10+ years", label: "Most of our engineers with us" },
-  { value: "LTD", label: "Owned by its engineers" },
 ];
 
 export default async function AboutPage() {
@@ -29,7 +28,8 @@ export default async function AboutPage() {
   const pool = photoPool(...featured.map((p) => p.coverKey), settings.heroImageKey);
   const heroPhoto = c.aboutPageImage || pool.next();
   const storyPhoto = c.aboutStoryImage || (pool.next() ?? heroPhoto);
-  const closingPhoto = c.aboutClosingImage || pool.any(2);
+  const valuesPhoto = c.aboutValuesImage || (pool.next() ?? storyPhoto);
+  const closingPhoto = c.aboutClosingImage || pool.any(3);
 
   const story = paragraphs(c.aboutStory);
   const company = [
@@ -63,9 +63,17 @@ export default async function AboutPage() {
           </nav>
           <h1 className="mt-5 max-w-4xl text-display font-semibold">{c.aboutPageTitle}</h1>
           <p className="mt-5 max-w-xl text-lead text-paper/90">{c.aboutPageIntro}</p>
+          <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
+            <Link href="/contact" className="btn-light">
+              {c.aboutPageButton} <ArrowRightIcon width={18} height={18} />
+            </Link>
+            <Link href="/projects" className="link-arrow text-paper">
+              {c.projectsButton} <ArrowRightIcon width={18} height={18} />
+            </Link>
+          </div>
         </Reveal>
         <div className="bg-ink">
-          <Reveal className="container-x grid grid-cols-3 gap-4 py-6 lg:py-8" stagger={0.06} onLoad delay={0.3}>
+          <Reveal className="container-x flex flex-wrap gap-x-16 gap-y-6 py-6 lg:gap-x-28 lg:py-8" stagger={0.06} onLoad delay={0.3}>
             {RECORD.map((r) => (
               <dl key={r.label} className="min-w-0">
                 <dt className="sr-only">{r.label}</dt>
@@ -106,22 +114,26 @@ export default async function AboutPage() {
         </div>
       </section>
 
-      {/* Mission and vision: two panels on a tone step */}
+      {/* Mission and vision: each statement large on the left, the reasoning behind it on the right */}
       {aims.length > 0 && (
         <section className="section-y bg-sand" aria-label={aims.map((a) => a.title).join(" and ")}>
-          <Reveal className="container-x grid gap-1 lg:grid-cols-2" stagger={0.1}>
+          <div className="container-x grid gap-20 lg:gap-28">
             {aims.map((a) => (
-              <article key={a.id} id={a.id} className="bg-paper p-8 sm:p-10 lg:p-14">
-                <h2 className="text-lead font-semibold text-muted">{a.title}</h2>
-                {a.lead && <p className="mt-4 text-[1.375rem] leading-snug font-semibold text-balance sm:text-[1.5rem]">{a.lead}</p>}
-                {a.body.map((t, i) => (
-                  <p key={i} className={i === 0 ? "mt-8" : "mt-4"}>
-                    {t}
-                  </p>
-                ))}
+              <article key={a.id} id={a.id} className="grid gap-8 lg:grid-cols-12 lg:gap-16">
+                <Reveal className="lg:col-span-6">
+                  <h2 className="text-head font-semibold">{a.title}</h2>
+                  {a.lead && <p className="mt-6 text-[1.375rem] leading-snug font-semibold text-balance sm:text-[1.75rem]">{a.lead}</p>}
+                </Reveal>
+                <Reveal className="lg:col-span-6 lg:pt-2" stagger={0.06}>
+                  {a.body.map((t, i) => (
+                    <p key={i} className={i === 0 ? "text-lead" : "mt-4"}>
+                      {t}
+                    </p>
+                  ))}
+                </Reveal>
               </article>
             ))}
-          </Reveal>
+          </div>
         </section>
       )}
 
@@ -129,8 +141,11 @@ export default async function AboutPage() {
       {values.length > 0 && (
         <section className="section-y bg-ink text-paper" aria-labelledby="values-title">
           <div className="container-x grid gap-12 lg:grid-cols-12 lg:gap-16">
-            <Reveal className="lg:col-span-4">
+            <Reveal className="flex flex-col gap-8 lg:col-span-4">
               <h2 id="values-title" className="text-head font-semibold">{c.aboutValuesTitle}</h2>
+              <div className="aspect-[16/10] overflow-hidden bg-navy-2 lg:aspect-auto lg:min-h-[320px] lg:flex-1">
+                <Photo mediaBase={mediaBase} src={valuesPhoto} alt={`${settings.companyName} engineers on site`} sizes="(min-width: 1024px) 33vw, 100vw" />
+              </div>
             </Reveal>
             <Reveal className="grid gap-x-16 gap-y-12 sm:grid-cols-2 lg:col-span-8" stagger={0.08}>
               {values.map((v) => (

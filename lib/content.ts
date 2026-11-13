@@ -127,6 +127,7 @@ export const CONTENT_GROUPS: ContentGroup[] = [
       ),
 
       text("aboutValuesTitle", "Values heading", "Our core values"),
+      image("aboutValuesImage", "Values photo", "Beside the values. If empty, a featured project's photo is used."),
       text("value1Title", "Value 1", "Engineering-driven thinking"),
       area(
         "value1Text",
