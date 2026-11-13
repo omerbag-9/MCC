@@ -3,7 +3,8 @@
 //   node scripts/deploy.mjs dev|staging|production      (npm run deploy:dev, ...)
 //
 // Steps: check wrangler.jsonc ids -> build -> smoke-test the build locally (nothing remote is
-// touched if it fails) -> apply D1 migrations -> (dev) demo content and photos -> wrangler deploy
+// touched if it fails) -> apply D1 migrations -> (dev) demo content and photos -> move the bundled
+// photos into R2 -> wrangler deploy
 // -> copy secrets -> smoke-test the live site -> on failure, roll back to the previous version.
 //
 // Note: a rollback restores the code, not the database. Migrations are additive (new tables and
@@ -28,6 +29,8 @@ const SECRET_NAMES = ["TURNSTILE_SECRET_KEY", "RESEND_API_KEY", "R2_ACCESS_KEY_I
 // 1. wrangler.jsonc must have real ids for this environment
 const config = parseJsonc(readFileSync("wrangler.jsonc", "utf8"));
 const section = env === "dev" ? config : (config.env?.[env] ?? {});
+// The bucket uploads go to; the bundled real photos and logos are moved into it.
+const mediaBucket = (section.r2_buckets ?? []).find((b) => b.binding === "MEDIA")?.bucket_name;
 const placeholders = (section.d1_databases ?? []).filter((d) => /^0{8}/.test(d.database_id ?? "0"));
 if (placeholders.length > 0) {
   fail(`[${env}] wrangler.jsonc still has a placeholder database_id for "${placeholders[0].database_name}". See README.`);
@@ -52,6 +55,10 @@ if (env === "dev") {
   step("Add free construction photos to empty picture slots (only while the demo has none)");
   run("node", ["scripts/demo-photos.mjs", "dev"]);
 }
+
+step("Move the bundled photos and logos (media-import/) into the media bucket");
+if (mediaBucket) run("node", ["scripts/move-to-r2.mjs", mediaBucket, ...envFlag]);
+else console.warn(`⚠️  No MEDIA bucket for ${env} in wrangler.jsonc: the bundled photos were not moved and will not show.`);
 
 // `wrangler deploy` directly (not `opennextjs-cloudflare deploy`): we skip uploading the build-time
 // pages into the cache, so every page renders from D1 on its first visit after a deploy.
@@ -111,6 +118,7 @@ async function checkBuildLocally() {
   const local = ["--local", "--persist-to", dir, ...envFlag];
   run("npx", ["wrangler", "d1", "migrations", "apply", "DB", ...local]);
   run("npx", ["wrangler", "d1", "execute", "DB", ...local, "--yes", "--file", "scripts/seed.sql"]);
+  if (mediaBucket) run("node", ["scripts/move-to-r2.mjs", mediaBucket, "--local", "--persist-to", dir, ...envFlag]);
 
   const server = spawn("npx", ["wrangler", "dev", "--port", String(port), "--persist-to", dir, ...envFlag], {
     stdio: ["ignore", "ignore", "inherit"],

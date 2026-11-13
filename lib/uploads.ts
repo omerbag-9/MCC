@@ -2,8 +2,11 @@ import "server-only";
 import { AwsClient } from "aws4fetch";
 import { getVar } from "@/lib/env";
 
-export const UPLOAD_FOLDERS = ["projects", "site", "clients"] as const;
-export type UploadFolder = (typeof UPLOAD_FOLDERS)[number];
+/**
+ * Where an upload goes in the bucket: an area, then up to two name segments, e.g.
+ * projects/<project slug>, news/<post slug>, clients/<client name>, site/services/<service>.
+ */
+export const UPLOAD_PATH_PATTERN = /^(projects|news|clients|site)(\/[a-z0-9-]{1,80}){0,2}$/;
 
 export const ALLOWED_TYPES: Record<string, { ext: string; kind: "image" | "video"; maxBytes: number }> = {
   "image/webp": { ext: "webp", kind: "image", maxBytes: 15 * 1024 * 1024 },
@@ -17,11 +20,17 @@ export const ALLOWED_TYPES: Record<string, { ext: string; kind: "image" | "video
 /** Files sent through the Worker itself (when R2 S3 credentials are not configured). */
 export const DIRECT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
 
-/** Generates object keys. Images get a matching "-thumb" key (same id) for the small variant. */
-export function newObjectKeys(folder: UploadFolder, contentType: string): { key: string; thumbKey: string | null } {
+/**
+ * Generates object keys under the upload's path: <path>/<date>-<id>.<ext>, with project files split
+ * into photos/ and videos/. Images get a matching "-thumb" key (same id) for the small variant.
+ */
+export function newObjectKeys(path: string, contentType: string): { key: string; thumbKey: string | null } {
   const type = ALLOWED_TYPES[contentType];
   if (!type) throw new Error("Unsupported file type");
-  const base = `${folder}/${new Date().getUTCFullYear()}/${crypto.randomUUID()}`;
+  if (!UPLOAD_PATH_PATTERN.test(path)) throw new Error("Invalid upload path");
+  const sub = path.startsWith("projects/") ? (type.kind === "video" ? "/videos" : "/photos") : "";
+  const id = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  const base = `${path}${sub}/${new Date().toISOString().slice(0, 10)}-${id}`;
   return {
     key: `${base}.${type.ext}`,
     thumbKey: type.kind === "image" ? `${base}-thumb.${type.ext}` : null,

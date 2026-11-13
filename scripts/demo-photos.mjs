@@ -76,6 +76,9 @@ function query(sql) {
   return JSON.parse(out.slice(out.search(/^[[{]/m)))[0].results;
 }
 
+/** Same layout as admin uploads (lib/uploads.ts): <folder>/<date>-<id>. */
+const newKey = (folder) => `${folder}/${new Date().toISOString().slice(0, 10)}-${randomUUID().replace(/-/g, "").slice(0, 12)}`;
+const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const sqlString = (s) => `'${String(s).replace(/'/g, "''")}'`;
 
 const searches = new Map();
@@ -123,7 +126,7 @@ async function fetchFrom(q, folder, landscape) {
       const full = await sharp(input).rotate().resize({ width: 1920, height: 1920, fit: "inside", withoutEnlargement: true }).webp({ quality: 80 }).toBuffer({ resolveWithObject: true });
       const thumb = await sharp(input).rotate().resize({ width: 640, height: 640, fit: "inside", withoutEnlargement: true }).webp({ quality: 76 }).toBuffer();
 
-      const base = `${folder}/${new Date().getUTCFullYear()}/${randomUUID()}`;
+      const base = newKey(folder);
       const dir = mkdtempSync(join(tmpdir(), "mcc-photo-"));
       try {
         writeFileSync(join(dir, "full.webp"), full.data);
@@ -177,7 +180,7 @@ async function fetchHeroVideo() {
         const body = Buffer.from(await file.arrayBuffer());
         if (body.length > VIDEO_MAX_BYTES) continue;
         const [ext, type] = derivative.type.startsWith("video/mp4") ? ["mp4", "video/mp4"] : ["webm", "video/webm"];
-        const key = `site/${new Date().getUTCFullYear()}/${randomUUID()}.${ext}`;
+        const key = `${newKey("site/hero")}.${ext}`;
         const dir = mkdtempSync(join(tmpdir(), "mcc-video-"));
         try {
           writeFileSync(join(dir, `clip.${ext}`), body);
@@ -208,7 +211,7 @@ async function main() {
 
   if (fresh) {
     console.log(`Hero: ${HERO_QUERY.join(" / ")}`);
-    const hero = await fetchPhoto(HERO_QUERY, "site");
+    const hero = await fetchPhoto(HERO_QUERY, "site/hero");
     if (hero) sql.push(`UPDATE settings SET hero_image_key = ${sqlString(hero.key)} WHERE id = 1;`);
   }
 
@@ -226,7 +229,7 @@ async function main() {
   for (const c of query("SELECT id, name FROM clients WHERE logo_key IS NULL OR logo_key = ''")) {
     const file = join(logoDir, `${c.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.png`);
     if (!existsSync(file)) continue;
-    const key = `clients/${new Date().getUTCFullYear()}/${randomUUID()}.png`;
+    const key = `clients/${slug(c.name)}/logo.png`;
     wrangler(["r2", "object", "put", `${BUCKET}/${key}`, "--file", file, "--content-type", "image/png", target, ...envFlag]);
     console.log(`Client logo: ${c.name}`);
     sql.push(`UPDATE clients SET logo_key = ${sqlString(key)} WHERE id = ${c.id};`);
@@ -236,7 +239,7 @@ async function main() {
     for (const s of services.filter((s) => !s.image_key)) {
       const queries = SERVICE_QUERIES.find(([re]) => re.test(s.title))?.[1] ?? [];
       console.log(`Service ${s.title}: ${queries.join(" / ") || "construction"}`);
-      const photo = await fetchPhoto(queries, "site", { landscape: false });
+      const photo = await fetchPhoto(queries, `site/services/${slug(s.title)}`, { landscape: false });
       if (photo) sql.push(`UPDATE services SET image_key = ${sqlString(photo.key)} WHERE id = ${s.id};`);
     }
   }
@@ -260,7 +263,7 @@ async function main() {
       } else {
         const queries = NEWS_KIND_QUERIES[post.kind] ?? [];
         console.log(`News ${post.slug}: ${queries.join(" / ") || "construction"}`);
-        key = (await fetchPhoto(queries, "site"))?.key ?? null;
+        key = (await fetchPhoto(queries, `news/${post.slug}`))?.key ?? null;
       }
       if (key) sql.push(`UPDATE news_posts SET cover_key = ${sqlString(key)} WHERE id = ${post.id};`);
     }

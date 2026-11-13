@@ -41,8 +41,8 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
           <Card className="space-y-5">
             <TextField name="heroTitle" label="Hero title" defaultValue={s.heroTitle} hint="Keep it short, about 35 characters, so it fits on two lines on phones." />
             <TextArea name="heroSubtitle" label="Hero subtitle" defaultValue={s.heroSubtitle} rows={2} />
-            <ImageField name="heroImageKey" label="Hero background image" folder="site" defaultKey={s.heroImageKey} mediaBase={mediaBase} enabled={!!bucket} hint="Wide photo, at least 1920px. Shown while the video loads, and instead of it when there is none. If empty, the first featured project's cover is used." />
-            <ImageField kind="video" name="heroVideoKey" label="Hero background video" folder="site" defaultKey={s.heroVideoKey} mediaBase={mediaBase} enabled={!!bucket} hint="MP4 or WebM, 10–30 seconds, 1080p or 720p, ideally under 15 MB. Plays muted on a loop; sound is removed by the browser." />
+            <ImageField name="heroImageKey" label="Hero background image" path="site/hero" defaultKey={s.heroImageKey} mediaBase={mediaBase} enabled={!!bucket} hint="Wide photo, at least 1920px. Shown while the video loads, and instead of it when there is none. If empty, the first featured project's cover is used." />
+            <ImageField kind="video" name="heroVideoKey" label="Hero background video" path="site/hero" defaultKey={s.heroVideoKey} mediaBase={mediaBase} enabled={!!bucket} hint="MP4 or WebM, 10–30 seconds, 1080p or 720p, ideally under 15 MB. Plays muted on a loop; sound is removed by the browser." />
             <div>
               <span className="label">Figures under the hero (3)</span>
               <div className="grid gap-3">

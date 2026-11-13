@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
-import { uploadMedia, type UploadFolder } from "@/lib/client/upload";
+import { uploadMedia } from "@/lib/client/upload";
+import { slugify } from "@/lib/format";
 
 /** Single image (or video) picker that uploads to R2 and stores the object key in a hidden input. */
 export function ImageField({
   name,
   label,
-  folder,
+  path,
+  nameFrom = [],
   defaultKey,
   mediaBase,
   hint,
@@ -17,7 +19,10 @@ export function ImageField({
 }: {
   name: string;
   label: string;
-  folder: UploadFolder;
+  /** Bucket folder, e.g. "clients" or "site/hero". */
+  path: string;
+  /** Form fields (first one filled in) whose value names a subfolder, e.g. the client's name. */
+  nameFrom?: string[];
   defaultKey: string | null;
   mediaBase: string;
   hint?: string;
@@ -49,7 +54,11 @@ export function ImageField({
     setBusy(true);
     setError(null);
     try {
-      const uploaded = await uploadMedia(file, folder);
+      const form = hidden.current?.form;
+      const named = nameFrom
+        .map((n) => slugify((form?.elements.namedItem(n) as HTMLInputElement | null)?.value ?? ""))
+        .find(Boolean);
+      const uploaded = await uploadMedia(file, named ? `${path}/${named}` : path);
       change(uploaded.key);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed");

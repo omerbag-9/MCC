@@ -37,6 +37,7 @@ npm install
 cp .dev.vars.example .dev.vars
 npm run db:migrate:local   # create tables in the local D1
 npm run db:seed:local      # optional demo content
+npm run db:media:local     # put the real project photos and client logos into the local bucket
 npm run dev                # http://localhost:3000, admin at /admin (no login locally)
 ```
 
@@ -86,7 +87,7 @@ Dev deploys automatically from the `dev` branch to `https://mcc-dev.<your-subdom
 
 **Demo photos:** each dev deploy fills empty demo picture slots (the hero and service photos while there's no hero yet, and news posts without a cover) with free construction photographs: CC0 / public domain only, found through the Openverse API by `scripts/demo-photos.mjs`. The deploy log and the GitHub job summary list every photo with its creator, licence and source page. It never replaces a photo that is already there. Replace them with the company's own photos in the admin.
 
-**Projects:** the company's real projects and their photos are added by the migration `drizzle/0015_real_projects.sql`; the photos are bundled in `public/project-photos/<slug>/` (a 1920 px WebP and a 640 px thumbnail each). Edit, reorder or remove them in Admin → Projects.
+**Real projects and client logos:** the company's projects (`drizzle/0015_real_projects.sql`) and client logos (`0013`, `0014`) are added by migrations. Their files are kept in `media-import/`, and every deploy runs `scripts/move-to-r2.mjs`, which uploads any of them the database still points to into that environment's media bucket and updates the rows. Once an environment is moved it does nothing. Edit, reorder or remove them in Admin → Projects and Admin → Clients.
 
 Open `/admin` on the dev address and sign in with `ADMIN_PASSWORD`. The password login exists **only on dev** and only while Cloudflare Access isn't configured there; staging and production always require Access.
 
@@ -215,6 +216,20 @@ Check the restored data, then point the environment's two D1 entries in `wrangle
 
 ## Media uploads
 
+The bucket is organised by what each file belongs to:
+
+```
+projects/<project>/photos/<file>.webp     each photo, plus <file>-thumb.webp
+projects/<project>/videos/<file>.mp4
+news/<post>/<file>.webp
+clients/<client>/<file>.png
+site/hero/<file>                          hero photo and video
+site/services/<service>/<file>
+site/pages/<section>/<file>               photos set in Admin → Website content
+```
+
+Uploaded files are named `<date>-<id>`; the real photos moved from `media-import/` keep their order as `001`, `002`, … and logos are `logo.<ext>`. Files uploaded before this layout stay at `<area>/<year>/<uuid>` and keep working.
+
 The admin's browser resizes photos before uploading them: a 1920 px WebP plus a 640 px WebP thumbnail. This keeps storage small and avoids paid image resizing.
 
 Without extra setup, files go through the Worker (up to 25 MB each). That covers photos and short clips. For larger videos (up to 100 MB), let the browser upload straight to R2:
@@ -262,6 +277,8 @@ lib/
   client/upload.ts     browser-side resize + upload
 drizzle/               SQL migrations (applied with wrangler)
 scripts/               deploy.mjs (deploy one environment), smoke.mjs (deploy checks), backup.mjs (daily backups),
-                       seed.sql (demo content), demo-photos.mjs (free demo photos on dev)
+                       seed.sql (demo content), demo-photos.mjs (free demo photos on dev),
+                       move-to-r2.mjs (moves media-import/ into the bucket)
+media-import/          the real project photos and client logos, uploaded to R2 on deploy
 .github/workflows/     deploy.yml (push to dev → checks → deploy), backup.yml (daily backup)
 ```

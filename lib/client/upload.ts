@@ -2,7 +2,6 @@
 
 import type { UploadPlan } from "@/app/api/admin/uploads/route";
 
-export type UploadFolder = "projects" | "site" | "clients";
 
 export type UploadedMedia = {
   type: "image" | "video";
@@ -55,11 +54,11 @@ async function put(url: string, body: Blob, contentType: string, onProgress?: (f
   });
 }
 
-async function plan(folder: UploadFolder, contentType: string, size: number): Promise<UploadPlan> {
+async function plan(path: string, contentType: string, size: number): Promise<UploadPlan> {
   const res = await fetch("/api/admin/uploads", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ folder, contentType, size }),
+    body: JSON.stringify({ path, contentType, size }),
   });
   const data = (await res.json().catch(() => ({}))) as UploadPlan & { error?: string };
   if (!res.ok) throw new Error(data.error ?? "Upload failed");
@@ -68,18 +67,19 @@ async function plan(folder: UploadFolder, contentType: string, size: number): Pr
 
 export async function uploadMedia(
   file: File,
-  folder: UploadFolder,
+  /** Bucket folder, e.g. projects/<slug> (see UPLOAD_PATH_PATTERN in lib/uploads.ts). */
+  path: string,
   onProgress?: (fraction: number) => void,
 ): Promise<UploadedMedia> {
   if (file.type.startsWith("image/")) {
     const img = await prepareImage(file);
-    const p = await plan(folder, "image/webp", img.full.size);
+    const p = await plan(path, "image/webp", img.full.size);
     await put(p.file.url, img.full, "image/webp", (f) => onProgress?.(f * 0.85));
     if (p.thumb) await put(p.thumb.url, img.thumb, "image/webp", (f) => onProgress?.(0.85 + f * 0.15));
     return { type: "image", key: p.file.key, thumbKey: p.thumb?.key ?? null, width: img.width, height: img.height };
   }
   if (file.type === "video/mp4" || file.type === "video/webm") {
-    const p = await plan(folder, file.type, file.size);
+    const p = await plan(path, file.type, file.size);
     await put(p.file.url, file, file.type, onProgress);
     return { type: "video", key: p.file.key, thumbKey: null, width: null, height: null };
   }

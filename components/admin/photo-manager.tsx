@@ -100,11 +100,14 @@ function Tile({
  */
 export function PhotoManager({
   projectId,
+  projectSlug,
   coverKey,
   media,
   uploadsEnabled,
 }: {
   projectId: number;
+  /** Uploads go to projects/<slug>/photos and /videos in the bucket. */
+  projectSlug: string;
   coverKey: string | null;
   media: ManagedMedia[];
   uploadsEnabled: boolean;
@@ -189,7 +192,7 @@ export function PhotoManager({
     for (const [i, file] of accepted.entries()) {
       const key = queue[i].key;
       try {
-        const item = await uploadMedia(file, "projects", (f) =>
+        const item = await uploadMedia(file, `projects/${projectSlug}`, (f) =>
           setUploads((u) => u.map((x) => (x.key === key ? { ...x, progress: f } : x))),
         );
         const result = await addProjectMedia(projectId, [item]);
