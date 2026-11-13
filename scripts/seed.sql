@@ -23,10 +23,10 @@ Fixed, transparent pricing
 Schedules we keep
 Safety-first sites
 Support after handover',
-  '[{"value":"EGP 4.2B","label":"Total revenue"},{"value":"350+","label":"Projects completed"},{"value":"25+","label":"Years of experience"}]',
-  '+20 100 123 4567',
-  'info@example.com',
-  '201001234567',
+  '[{"value":"EGP 80M","label":"Total revenue"},{"value":"30+","label":"Projects completed"},{"value":"10+","label":"Years of experience"}]',
+  '+20 107 075 6325',
+  'info@mccltd-eg.com',
+  '201070756325',
   'Hello, I''d like to get in touch.',
   '90th Street, New Cairo, Egypt',
   'Sat–Thu, 9:00–17:00',
