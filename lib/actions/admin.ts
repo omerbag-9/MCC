@@ -35,9 +35,10 @@ const optionalInt = z.preprocess(
   z.number().int().min(0).max(1_000_000_000).nullable(),
 );
 const checkbox = z.preprocess((v) => v === "on" || v === "true", z.boolean());
+// A bucket upload, or an image bundled in public/ (a project cover from a migration is kept on save).
 const mediaKey = z.preprocess(
   (v) => (v === "" || v == null ? null : v),
-  z.string().regex(MEDIA_KEY_PATTERN).nullable(),
+  z.union([z.string().regex(MEDIA_KEY_PATTERN), z.string().regex(STATIC_ASSET_PATTERN)]).nullable(),
 );
 
 function form(formData: FormData) {
