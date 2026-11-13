@@ -25,7 +25,7 @@ function Fields({ c, mediaBase, uploads }: { c?: Client; mediaBase: string; uplo
         <input id={`${p}url`} name="url" type="url" defaultValue={c?.url} placeholder="https://" className="field" />
       </div>
       <div className="sm:col-span-2">
-        <ImageField name="logoKey" label="Logo" path="clients" nameFrom={["name"]} defaultKey={c?.logoKey ?? null} mediaBase={mediaBase} enabled={uploads} hint="PNG with a transparent background works best." />
+        <ImageField name="logoKey" label="Logo" path="clients" nameFrom={["name"]} fromProjects={false} defaultKey={c?.logoKey ?? null} mediaBase={mediaBase} enabled={uploads} hint="PNG with a transparent background works best." />
       </div>
     </div>
   );
