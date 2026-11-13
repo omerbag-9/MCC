@@ -127,6 +127,13 @@
       "when": 1794345045773,
       "tag": "0017_style_design_logo",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1794345145773,
+      "tag": "0018_samir_william_logo",
+      "breakpoints": true
     }
   ]
 }
