@@ -4,7 +4,7 @@ import { SortableList } from "@/components/admin/sortable-list";
 import { Badge, EmptyState, Flash, PageHeader } from "@/components/admin/ui";
 import { ensureAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { projectMedia, projects } from "@/lib/db/schema";
+import { projects } from "@/lib/db/schema";
 import { getMediaBase } from "@/lib/env";
 import { mediaUrl } from "@/lib/media";
 import { PROJECT_STATUS_LABEL } from "@/lib/news";
@@ -26,7 +26,9 @@ export default async function ProjectsAdmin({ searchParams }: { searchParams: Pr
         published: projects.published,
         status: projects.status,
         featured: projects.featured,
-        mediaCount: sql<number>`(select count(*) from ${projectMedia} where ${projectMedia.projectId} = ${projects.id})`,
+        // Table names written out: drizzle leaves columns unqualified here, and a bare "id" inside the
+        // subquery would mean project_media.id, so every project counted 0 photos.
+        mediaCount: sql<number>`(select count(*) from "project_media" where "project_media"."project_id" = "projects"."id")`,
       })
       .from(projects)
       .orderBy(asc(projects.sortOrder), desc(projects.id)),
