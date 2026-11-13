@@ -23,10 +23,10 @@ Fixed, transparent pricing
 Schedules we keep
 Safety-first sites
 Support after handover',
-  '[{"value":"EGP 4.2B","label":"Total revenue"},{"value":"350+","label":"Projects completed"},{"value":"25+","label":"Years of experience"}]',
-  '+20 100 123 4567',
-  'info@example.com',
-  '201001234567',
+  '[{"value":"EGP 80M","label":"Total revenue"},{"value":"30+","label":"Projects completed"},{"value":"10+","label":"Years of experience"}]',
+  '+20 107 075 6325',
+  'info@mccltd-eg.com',
+  '201070756325',
   'Hello, I''d like to get in touch.',
   '90th Street, New Cairo, Egypt',
   'Sat–Thu, 9:00–17:00',
@@ -92,8 +92,9 @@ Custom oak joinery
 New electrical and plumbing
 Structural repairs to the slab' WHERE slug = 'zamalek-apartment-renovation' AND specs = '' AND highlights = '';
 
-INSERT INTO clients (name, url, sort_order) VALUES
-  ('Nile Developments', '', 1),
-  ('Delta Logistics', '', 2),
-  ('Cairo Holdings', '', 3),
-  ('Red Sea Resorts', '', 4);
+INSERT INTO clients (name, logo_key, url, sort_order) VALUES
+  ('Al Ahly Mortgage Finance', '/clients/al-ahly-mortgage-finance.png', '', 1),
+  ('Ayman Shahin Export Co.', '/clients/ayman-shahin-export.png', '', 2),
+  ('Light Logistics', '/clients/light-logistics.png', '', 3),
+  ('Style Design', '/clients/style-design.jpg', '', 4),
+  ('Samir William', '/clients/samir-william.jpg', '', 5);
