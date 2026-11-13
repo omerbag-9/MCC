@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { uploadMedia } from "@/lib/client/upload";
 import { slugify } from "@/lib/format";
+import { ProjectPhotoPicker } from "./project-photo-picker";
 
 /** Single image (or video) picker that uploads to R2 and stores the object key in a hidden input. */
 export function ImageField({
@@ -16,6 +17,7 @@ export function ImageField({
   hint,
   enabled = true,
   kind = "image",
+  fromProjects = kind === "image",
 }: {
   name: string;
   label: string;
@@ -28,6 +30,8 @@ export function ImageField({
   hint?: string;
   enabled?: boolean;
   kind?: "image" | "video";
+  /** Offer "Choose from projects" (reuse a project photo); on for photos unless turned off. */
+  fromProjects?: boolean;
 }) {
   const [key, setKey] = useState(defaultKey ?? "");
   const [busy, setBusy] = useState(false);
@@ -88,6 +92,7 @@ export function ImageField({
             {busy ? "Uploading…" : key ? "Replace" : "Upload"}
           </label>}
           {enabled && <input id={id} type="file" accept={kind === "video" ? "video/mp4,video/webm" : "image/jpeg,image/png,image/webp,image/avif"} className="sr-only" onChange={(e) => onFile(e.target.files?.[0])} />}
+          {fromProjects && <ProjectPhotoPicker current={key} onPick={change} />}
           {key && (
             <button type="button" className="btn py-2 text-red-700 hover:bg-red-50" onClick={() => change("")}>
               Remove

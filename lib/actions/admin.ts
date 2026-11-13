@@ -17,10 +17,10 @@ import {
   services,
   settings,
 } from "@/lib/db/schema";
-import { getMediaBucket } from "@/lib/env";
+import { getMediaBase, getMediaBucket } from "@/lib/env";
 import { CONTENT_FIELDS } from "@/lib/content";
 import { slugify } from "@/lib/format";
-import { MEDIA_KEY_PATTERN } from "@/lib/media";
+import { MEDIA_KEY_PATTERN, mediaUrl } from "@/lib/media";
 import { defaultNewsTitle, KIND_TO_STATUS, PROJECT_KINDS } from "@/lib/news";
 import { revalidateSite } from "@/lib/revalidate";
 
@@ -65,14 +65,26 @@ async function deleteObjects(keys: (string | null | undefined)[]) {
   const candidates = keys.filter((k): k is string => !!k && MEDIA_KEY_PATTERN.test(k));
   if (candidates.length === 0) return;
   try {
-    // A news cover can also be a project photo: keep any file another row still points to.
+    // One file can be used in several places (a project photo chosen for a page section, a news
+    // cover, a hero...): keep any file another row still points to.
     const db = await getDb();
     const inUse = new Set<string>();
     for (const key of new Set(candidates.map((k) => k.replace("-thumb.", ".")))) {
       const found = await db.batch([
         db.select({ id: projectMedia.id }).from(projectMedia).where(eq(projectMedia.key, key)).limit(1),
         db.select({ id: newsPosts.id }).from(newsPosts).where(eq(newsPosts.coverKey, key)).limit(1),
-        db.select({ id: projects.id }).from(projects).where(eq(projects.coverKey, key)).limit(1),
+        db
+          .select({ id: projects.id })
+          .from(projects)
+          .where(sql`${projects.coverKey} = ${key} or ${projects.storyImageKey} = ${key} or ${projects.overviewImageKey} = ${key}`)
+          .limit(1),
+        db.select({ id: services.id }).from(services).where(eq(services.imageKey, key)).limit(1),
+        db.select({ id: clients.id }).from(clients).where(eq(clients.logoKey, key)).limit(1),
+        db
+          .select({ id: settings.id })
+          .from(settings)
+          .where(sql`${settings.heroImageKey} = ${key} or ${settings.heroVideoKey} = ${key} or instr(${settings.content}, ${JSON.stringify(key)}) > 0`)
+          .limit(1),
       ]);
       if (found.some((rows) => rows.length > 0)) inUse.add(key);
     }
@@ -322,6 +334,37 @@ export async function setCover(mediaId: number, projectId: number): Promise<Acti
   await db.update(projects).set({ coverKey: media.key, updatedAt: new Date() }).where(eq(projects.id, projectId));
   revalidateSite();
   return { ok: true };
+}
+
+export type ProjectPhotos = {
+  id: number;
+  title: string;
+  photos: { key: string; thumb: string; alt: string; n: number }[];
+};
+
+/** Every project's photos, for "Choose from projects" beside a photo field in the admin. */
+export async function listProjectPhotos(): Promise<ProjectPhotos[]> {
+  await requireAdmin();
+  const db = await getDb();
+  const [rows, media, mediaBase] = await Promise.all([
+    db.query.projects.findMany({
+      columns: { id: true, title: true },
+      orderBy: (p, { asc, desc }) => [asc(p.sortOrder), desc(p.id)],
+    }),
+    db.query.projectMedia.findMany({
+      columns: { projectId: true, key: true, thumbKey: true, alt: true },
+      where: eq(projectMedia.type, "image"),
+      orderBy: (m, { asc }) => [asc(m.sortOrder), asc(m.id)],
+    }),
+    getMediaBase(),
+  ]);
+  return rows.map((p) => ({
+    id: p.id,
+    title: p.title,
+    photos: media
+      .filter((m) => m.projectId === p.id)
+      .map((m, i) => ({ key: m.key, thumb: mediaUrl(m.thumbKey ?? m.key, mediaBase)!, alt: m.alt, n: i + 1 })),
+  }));
 }
 
 /** Sections of a project page whose photo can be chosen; the top banner is the cover (setCover). */
