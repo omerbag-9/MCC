@@ -5,17 +5,18 @@
  */
 export function mediaUrl(key: string | null | undefined, base = ""): string | null {
   if (!key) return null;
-  // Files bundled with the site (public/), e.g. the client logos and project photos added by migrations.
-  if (STATIC_ASSET_PATTERN.test(key)) return key;
   const path = key.split("/").map(encodeURIComponent).join("/");
   return base ? `${base.replace(/\/+$/, "")}/${path}` : `/media/${path}`;
 }
 
-/** Object keys are generated server-side; anything else is rejected. */
-export const MEDIA_KEY_PATTERN = /^(projects|site|clients)\/\d{4}\/[a-f0-9-]{36}(-thumb)?\.(webp|jpg|png|avif|mp4|webm)$/;
-
 /**
- * Images shipped in public/ (not in the bucket) that a row may point to instead of a bucket key:
- * the client logos and the project photos added by migrations.
+ * Object keys are generated server-side; anything else is rejected. The bucket is organised by
+ * what a file belongs to (lib/uploads.ts):
+ *
+ *   projects/<project>/photos/<file>.webp (+ <file>-thumb.webp)   projects/<project>/videos/<file>.mp4
+ *   news/<post>/<file>   clients/<client>/<file>   site/hero/<file>   site/services/<service>/<file>
+ *   site/pages/<section>/<file>
+ *
+ * Older uploads used <area>/<year>/<uuid>.<ext>; those keys still match.
  */
-export const STATIC_ASSET_PATTERN = /^\/(clients|project-photos\/[a-z0-9-]+)\/[a-z0-9-]+\.(png|jpg|webp|svg)$/;
+export const MEDIA_KEY_PATTERN = /^(projects|news|clients|site)(\/[a-z0-9-]{1,100}){1,3}\.(webp|jpg|png|avif|mp4|webm)$/;

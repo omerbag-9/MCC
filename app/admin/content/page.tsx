@@ -6,6 +6,7 @@ import { ensureAdmin } from "@/lib/auth";
 import { CONTENT_GROUPS, isRetiredDefault } from "@/lib/content";
 import { getDb } from "@/lib/db/client";
 import { getMediaBase, getMediaBucket } from "@/lib/env";
+import { slugify } from "@/lib/format";
 
 export const metadata = { title: "Website content" };
 
@@ -37,7 +38,7 @@ export default async function ContentAdmin({ searchParams }: { searchParams: Pro
                   return <Checkbox key={f.key} name={name} label={f.label} defaultChecked={(value ?? f.default) === "1"} />;
                 if (f.kind === "image")
                   return (
-                    <ImageField key={f.key} name={name} label={f.label} folder="site" defaultKey={value || null} mediaBase={mediaBase} enabled={!!bucket} hint={f.hint} />
+                    <ImageField key={f.key} name={name} label={f.label} path={`site/pages/${slugify(f.key.replace(/([a-z])([A-Z])/g, "$1-$2"))}`} defaultKey={value || null} mediaBase={mediaBase} enabled={!!bucket} hint={f.hint} />
                   );
                 if (f.kind === "textarea")
                   return <TextArea key={f.key} name={name} label={f.label} defaultValue={value ?? ""} placeholder={f.default} rows={3} hint={f.hint} />;

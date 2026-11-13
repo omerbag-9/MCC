@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { getAdmin } from "@/lib/auth";
 import { getMediaBucket } from "@/lib/env";
-import { ALLOWED_TYPES, DIRECT_UPLOAD_MAX_BYTES, newObjectKeys, presignUpload, UPLOAD_FOLDERS } from "@/lib/uploads";
+import { ALLOWED_TYPES, DIRECT_UPLOAD_MAX_BYTES, newObjectKeys, presignUpload, UPLOAD_PATH_PATTERN } from "@/lib/uploads";
 
 const bodySchema = z.object({
-  folder: z.enum(UPLOAD_FOLDERS),
+  path: z.string().regex(UPLOAD_PATH_PATTERN),
   contentType: z.string(),
   size: z.number().int().positive(),
 });
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
 
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return Response.json({ error: "Invalid request" }, { status: 400 });
-  const { folder, contentType, size } = parsed.data;
+  const { path, contentType, size } = parsed.data;
 
   const type = ALLOWED_TYPES[contentType];
   if (!type) return Response.json({ error: "This file type is not supported" }, { status: 400 });
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     return Response.json({ error: `File is too large (max ${Math.round(type.maxBytes / 1024 / 1024)} MB)` }, { status: 400 });
   }
 
-  const { key, thumbKey } = newObjectKeys(folder, contentType);
+  const { key, thumbKey } = newObjectKeys(path, contentType);
   const target = async (k: string): Promise<UploadTarget | null> => {
     const presigned = await presignUpload(k);
     if (presigned) return { key: k, url: presigned };

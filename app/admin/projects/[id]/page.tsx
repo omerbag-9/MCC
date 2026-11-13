@@ -110,6 +110,7 @@ export default async function EditProject({
           </h2>
           <PhotoManager
             projectId={project.id}
+            projectSlug={project.slug}
             coverKey={project.coverKey}
             uploadsEnabled={!!bucket}
             media={media.map((m) => ({

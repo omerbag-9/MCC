@@ -95,7 +95,8 @@ export function NewsFields({
         <ImageField
           name="coverKey"
           label="Photo"
-          folder="projects"
+          path="news"
+          nameFrom={["slug", "title"]}
           defaultKey={post?.coverKey ?? null}
           mediaBase={mediaBase}
           enabled={uploadsEnabled}

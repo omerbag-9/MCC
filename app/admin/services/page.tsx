@@ -28,7 +28,8 @@ function ServiceFields({ service, mediaBase, uploads }: { service?: Service; med
         <ImageField
           name="imageKey"
           label="Photo"
-          folder="site"
+          path="site/services"
+          nameFrom={["title"]}
           defaultKey={service?.imageKey ?? null}
           mediaBase={mediaBase}
           enabled={uploads}
