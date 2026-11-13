@@ -228,7 +228,7 @@ site/services/<service>/<file>
 site/pages/<section>/<file>               photos set in Admin → Website content
 ```
 
-Uploaded files are named `<date>-<id>`; the real photos moved from `media-import/` keep their order as `001`, `002`, … and logos are `logo.<ext>`. Files uploaded before this layout (`<area>/<year>/<uuid>`) are moved into their folder by the deploy, named `<year>-<id>`, and the old copy goes to `trash/` for 30 days (`scripts/move-to-r2.mjs`).
+Uploaded files are named `<date>-<id>`; the real photos moved from `media-import/` keep their order as `001`, `002`, … and logos are `logo.<ext>`. Files uploaded before this layout (`<area>/<year>/<uuid>`) are moved into their folder by the deploy, named `<year>-<id>`, and the old copy goes to `trash/` for 30 days (`scripts/move-to-r2.mjs`). The same step moves files that nothing on the site uses any more (older than a day, so unsaved uploads are safe) to `trash/` as well; it needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to list the bucket and is skipped without them.
 
 The admin's browser resizes photos before uploading them: a 1920 px WebP plus a 640 px WebP thumbnail. This keeps storage small and avoids paid image resizing.
 

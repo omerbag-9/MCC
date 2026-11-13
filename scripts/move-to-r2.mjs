@@ -10,6 +10,12 @@
 //   2. Older uploads stored flat as <area>/<year>/<uuid>.<ext>: copied to their folder, and the
 //      old copy is moved to trash/<date>/<old key> (kept 30 days, like a delete in the admin).
 //
+// Then files under projects/, news/, clients/ and site/ that nothing uses any more (left over from
+// the demo content, for example) are moved to the trash the same way. Only files older than a day
+// are touched, so a photo uploaded in the admin but not saved yet is safe. Listing a bucket needs
+// the Cloudflare API (CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID, as in CI); without them, or if
+// the listing fails, this part is skipped with a warning.
+//
 //   node scripts/move-to-r2.mjs <bucket> [--env <name>] [--local --persist-to <dir>]
 //
 // Runs from scripts/deploy.mjs after the migrations, on every environment. It only touches rows
@@ -145,8 +151,81 @@ try {
     const counts = [...moves.values()].reduce((c, m) => ((c[m.old ? "old" : "bundled"] += 1), c), { bundled: 0, old: 0 });
     console.log(`Moved ${counts.bundled} bundled file(s) and ${counts.old} older upload(s) into their folders.`);
   }
+
+  // 3. Unused files: everything in a media folder that no row uses (a photo's thumbnail counts as used).
+  const used = new Set();
+  for (const key of homes.keys()) {
+    const now = moves.get(key)?.to ?? key;
+    used.add(now);
+    used.add(now.replace(/\.(\w+)$/, "-thumb.$1"));
+  }
+  const objects = await listMedia();
+  if (objects) {
+    const dayAgo = Date.now() - 24 * 3600 * 1000;
+    const unused = objects.filter((o) => !used.has(o.key) && o.time && o.time < dayAgo && TYPES[o.key.split(".").pop()]);
+    if (unused.length === 0) {
+      console.log(`No unused files in ${bucket}.`);
+    } else {
+      const day = new Date().toISOString().slice(0, 10);
+      const items = [];
+      for (const [i, o] of unused.entries()) {
+        const ext = o.key.split(".").pop();
+        const file = join(dir, `unused-${i}.${ext}`);
+        if (download(o.key, file)) items.push({ file, ext, from: o.key, to: `trash/${day}/${o.key}` });
+      }
+      upload(items, "Moving unused files to trash/: uploading");
+      for (const { from } of items) wrangler(["r2", "object", "delete", `${bucket}/${from}`, ...target, ...envFlag], { capture: true });
+      console.log(`Moved ${items.length} unused file(s) to trash/${day}/ (removed after 30 days):`);
+      for (const { from } of items) console.log(`  ${from}`);
+    }
+  }
 } finally {
   rmSync(dir, { recursive: true, force: true });
+}
+
+/**
+ * Every object under the media folders, as { key, time } (upload time in ms), through the
+ * Cloudflare API, which wrangler has no command for. Null when it can't be listed.
+ */
+async function listMedia() {
+  // A local run uses the local bucket, which the API can't see (CLOUDFLARE_API_BASE is for testing).
+  if (local && !process.env.CLOUDFLARE_API_BASE) return null;
+  const token = process.env.CLOUDFLARE_API_TOKEN;
+  const account = process.env.CLOUDFLARE_ACCOUNT_ID;
+  if (!token || !account) {
+    console.warn("⚠️  Unused files not checked: listing the bucket needs CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.");
+    return null;
+  }
+  const api = process.env.CLOUDFLARE_API_BASE ?? "https://api.cloudflare.com/client/v4";
+  const objects = [];
+  try {
+    for (const prefix of ["projects/", "news/", "clients/", "site/"]) {
+      let cursor = "";
+      do {
+        const url = new URL(`${api}/accounts/${account}/r2/buckets/${bucket}/objects`);
+        url.searchParams.set("prefix", prefix);
+        url.searchParams.set("per_page", "1000");
+        if (cursor) url.searchParams.set("cursor", cursor);
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.success || !Array.isArray(data.result)) {
+          throw new Error(`HTTP ${res.status} ${JSON.stringify(data?.errors ?? "").slice(0, 300)}`);
+        }
+        for (const o of data.result) objects.push({ key: o.key, time: Date.parse(o.last_modified ?? o.uploaded ?? "") || 0 });
+        cursor = data.result_info?.is_truncated ? (data.result_info.cursor ?? "") : "";
+      } while (cursor);
+    }
+  } catch (error) {
+    console.warn(`⚠️  Unused files not checked: could not list ${bucket} (${error.message}).`);
+    return null;
+  }
+  const dated = objects.filter((o) => o.time).length;
+  console.log(`Listed ${objects.length} file(s) in the media folders of ${bucket} (${dated} with an upload time).`);
+  if (objects.length > 0 && dated === 0) {
+    console.warn("⚠️  Unused files not checked: the listing has no upload times, so recent uploads can't be told apart.");
+    return null;
+  }
+  return objects;
 }
 
 /** Uploads { file, ext, to } items with `wrangler r2 bulk put`, one call per content type. */
