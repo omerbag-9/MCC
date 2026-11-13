@@ -120,6 +120,13 @@
       "when": 1794344945773,
       "tag": "0016_project_section_photos",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1794345045773,
+      "tag": "0017_style_design_logo",
+      "breakpoints": true
     }
   ]
 }

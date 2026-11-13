@@ -44,6 +44,6 @@ INSERT INTO clients (name, logo_key, url, sort_order) VALUES
   ('Al Ahly Mortgage Finance', '/clients/al-ahly-mortgage-finance.png', '', 1),
   ('Ayman Shahin Export Co.', '/clients/ayman-shahin-export.png', '', 2),
   ('Light Logistics', '/clients/light-logistics.png', '', 3),
-  ('Style Design', '/clients/style-design.jpg', '', 4),
+  ('Style Design', '/clients/style-design.png', '', 4),
   ('Samir William', '/clients/samir-william.jpg', '', 5),
   ('VS', '/clients/vs.png', '', 6);
