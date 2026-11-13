@@ -55,10 +55,13 @@ export default async function ProjectPage({ params }: Props) {
 
   const images = project.media.filter((m) => m.type === "image");
   const videos = project.media.filter((m) => m.type === "video");
-  const pool = photoPool(project.coverKey, ...images.map((m) => m.key));
+  // The admin can choose the photo of each section (Admin -> Projects -> Photos); the others take the
+  // next photos in gallery order, skipping the chosen ones so no photo shows twice.
+  const chosen = [project.storyImageKey, project.overviewImageKey].filter(Boolean);
+  const pool = photoPool(project.coverKey, ...images.map((m) => m.key).filter((k) => !chosen.includes(k)));
   const coverPhoto = pool.next();
-  const storyPhoto = pool.next() ?? coverPhoto;
-  const overviewPhoto = pool.next() ?? storyPhoto;
+  const storyPhoto = project.storyImageKey ?? pool.next() ?? coverPhoto;
+  const overviewPhoto = project.overviewImageKey ?? pool.next() ?? storyPhoto;
 
   const gallery: GalleryItem[] = images.map((m) => ({
     id: m.id,
