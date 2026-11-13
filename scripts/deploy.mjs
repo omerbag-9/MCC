@@ -3,8 +3,8 @@
 //   node scripts/deploy.mjs dev|staging|production      (npm run deploy:dev, ...)
 //
 // Steps: check wrangler.jsonc ids -> build -> smoke-test the build locally (nothing remote is
-// touched if it fails) -> apply D1 migrations -> (dev) demo content and photos -> move the bundled
-// photos into R2 -> wrangler deploy
+// touched if it fails) -> apply D1 migrations -> (dev) demo content and photos -> organise the media
+// bucket (scripts/move-to-r2.mjs) -> wrangler deploy
 // -> copy secrets -> smoke-test the live site -> on failure, roll back to the previous version.
 //
 // Note: a rollback restores the code, not the database. Migrations are additive (new tables and
@@ -56,7 +56,7 @@ if (env === "dev") {
   run("node", ["scripts/demo-photos.mjs", "dev"]);
 }
 
-step("Move the bundled photos and logos (media-import/) into the media bucket");
+step("Put the bundled photos and logos (media-import/) and older uploads into the media bucket's folders");
 if (mediaBucket) run("node", ["scripts/move-to-r2.mjs", mediaBucket, ...envFlag]);
 else console.warn(`⚠️  No MEDIA bucket for ${env} in wrangler.jsonc: the bundled photos were not moved and will not show.`);
 
