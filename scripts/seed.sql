@@ -92,8 +92,9 @@ Custom oak joinery
 New electrical and plumbing
 Structural repairs to the slab' WHERE slug = 'zamalek-apartment-renovation' AND specs = '' AND highlights = '';
 
-INSERT INTO clients (name, url, sort_order) VALUES
-  ('Nile Developments', '', 1),
-  ('Delta Logistics', '', 2),
-  ('Cairo Holdings', '', 3),
-  ('Red Sea Resorts', '', 4);
+INSERT INTO clients (name, logo_key, url, sort_order) VALUES
+  ('Al Ahly Mortgage Finance', '/clients/al-ahly-mortgage-finance.png', '', 1),
+  ('Ayman Shahin Export Co.', '/clients/ayman-shahin-export.png', '', 2),
+  ('Light Logistics', '/clients/light-logistics.png', '', 3),
+  ('Style Design', '/clients/style-design.jpg', '', 4),
+  ('Samir William', '/clients/samir-william.jpg', '', 5);
