@@ -20,7 +20,7 @@ import {
 import { getMediaBucket } from "@/lib/env";
 import { CONTENT_FIELDS } from "@/lib/content";
 import { slugify } from "@/lib/format";
-import { MEDIA_KEY_PATTERN } from "@/lib/media";
+import { MEDIA_KEY_PATTERN, STATIC_ASSET_PATTERN } from "@/lib/media";
 import { defaultNewsTitle, KIND_TO_STATUS, PROJECT_KINDS } from "@/lib/news";
 import { revalidateSite } from "@/lib/revalidate";
 
@@ -566,7 +566,11 @@ export async function deleteService(id: number) {
 const clientSchema = z.object({
   name: str(120).min(1, "Name is required"),
   url: z.union([z.literal(""), z.string().trim().url().max(300)]),
-  logoKey: mediaKey,
+  // A bucket upload, or one of the logos bundled in public/clients/ (kept when the client is edited).
+  logoKey: z.preprocess(
+    (v) => (v === "" || v == null ? null : v),
+    z.union([z.string().regex(MEDIA_KEY_PATTERN), z.string().regex(STATIC_ASSET_PATTERN)]).nullable(),
+  ),
 });
 
 export async function saveClient(id: number | null, formData: FormData) {
