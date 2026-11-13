@@ -324,6 +324,29 @@ export async function setCover(mediaId: number, projectId: number): Promise<Acti
   return { ok: true };
 }
 
+/** Sections of a project page whose photo can be chosen; the top banner is the cover (setCover). */
+export type PhotoSection = "story" | "overview";
+const SECTION_COLUMN = { story: "storyImageKey", overview: "overviewImageKey" } as const;
+
+/** Shows one of the project's photos in a section of its page, or (mediaId null) goes back to automatic. */
+export async function setSectionPhoto(section: PhotoSection, mediaId: number | null, projectId: number): Promise<ActionResult> {
+  await requireAdmin();
+  const column = SECTION_COLUMN[section];
+  if (!column) return { ok: false, error: "Unknown section" };
+  const db = await getDb();
+  let key: string | null = null;
+  if (mediaId !== null) {
+    const media = await db.query.projectMedia.findFirst({
+      where: and(eq(projectMedia.id, mediaId), eq(projectMedia.projectId, projectId)),
+    });
+    if (media?.type !== "image") return { ok: false, error: "Only a photo can be used here" };
+    key = media.key;
+  }
+  await db.update(projects).set({ [column]: key, updatedAt: new Date() }).where(eq(projects.id, projectId));
+  revalidateSite();
+  return { ok: true };
+}
+
 export async function deleteMedia(mediaId: number, projectId: number): Promise<ActionResult> {
   await requireAdmin();
   const db = await getDb();
@@ -340,6 +363,9 @@ export async function deleteMedia(mediaId: number, projectId: number): Promise<A
     });
     await db.update(projects).set({ coverKey: next?.key ?? null, updatedAt: new Date() }).where(eq(projects.id, projectId));
   }
+  // A section that showed this photo goes back to automatic.
+  if (project?.storyImageKey === media.key) await db.update(projects).set({ storyImageKey: null }).where(eq(projects.id, projectId));
+  if (project?.overviewImageKey === media.key) await db.update(projects).set({ overviewImageKey: null }).where(eq(projects.id, projectId));
   await deleteObjects([media.key, media.thumbKey]);
   revalidateSite();
   return { ok: true };

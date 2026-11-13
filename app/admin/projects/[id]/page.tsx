@@ -112,6 +112,8 @@ export default async function EditProject({
             projectId={project.id}
             projectSlug={project.slug}
             coverKey={project.coverKey}
+            storyKey={project.storyImageKey}
+            overviewKey={project.overviewImageKey}
             uploadsEnabled={!!bucket}
             media={media.map((m) => ({
               id: m.id,

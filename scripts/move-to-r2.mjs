@@ -55,6 +55,8 @@ const COLUMNS = [
   ["settings", "hero_video_key"],
   ["services", "image_key"],
   ["projects", "cover_key"],
+  ["projects", "story_image_key"],
+  ["projects", "overview_image_key"],
   ["project_media", "key"],
   ["project_media", "thumb_key"],
   ["news_posts", "cover_key"],
@@ -73,7 +75,9 @@ for (const m of query("SELECT m.key, m.thumb_key, m.type, p.slug FROM project_me
   home(m.key, folder);
   home(m.thumb_key, folder);
 }
-for (const p of query("SELECT slug, cover_key FROM projects")) home(p.cover_key, `projects/${p.slug}/photos`);
+for (const p of query("SELECT slug, cover_key, story_image_key, overview_image_key FROM projects")) {
+  for (const k of [p.cover_key, p.story_image_key, p.overview_image_key]) home(k, `projects/${p.slug}/photos`);
+}
 for (const n of query("SELECT slug, cover_key FROM news_posts")) home(n.cover_key, `news/${n.slug}`);
 for (const c of query("SELECT name, logo_key FROM clients")) home(c.logo_key, `clients/${slug(c.name)}`);
 for (const s of query("SELECT title, image_key FROM services")) home(s.image_key, `site/services/${slug(s.title)}`);

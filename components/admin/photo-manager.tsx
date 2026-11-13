@@ -15,7 +15,7 @@ import {
 } from "@dnd-kit/core";
 import { SortableContext, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { addProjectMedia, deleteMedia, reorderMedia, setCover, updateMediaAlt } from "@/lib/actions/admin";
+import { addProjectMedia, deleteMedia, reorderMedia, setCover, setSectionPhoto, updateMediaAlt, type PhotoSection } from "@/lib/actions/admin";
 import { uploadMedia } from "@/lib/client/upload";
 import { toast } from "./toast";
 
@@ -24,16 +24,27 @@ type Upload = { key: string; name: string; preview: string | null; progress: num
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,video/mp4,video/webm";
 
+/** The photo slots of a project page, in page order. "cover" is the top banner (and the card photo). */
+export type Slot = "cover" | PhotoSection;
+const SLOTS: { slot: Slot; label: string; badge: string }[] = [
+  { slot: "cover", label: "Top banner (cover)", badge: "Cover" },
+  { slot: "story", label: "\u201cAbout the project\u201d section", badge: "About" },
+  { slot: "overview", label: "\u201cProject overview\u201d section", badge: "Overview" },
+];
+
 function Tile({
   m,
-  isCover,
-  onCover,
+  slots,
+  onSlot,
+  onClearSlot,
   onDelete,
   onAlt,
 }: {
   m: ManagedMedia;
-  isCover: boolean;
-  onCover: () => void;
+  /** The page sections this photo is chosen for. */
+  slots: Slot[];
+  onSlot: (slot: Slot) => void;
+  onClearSlot: (slot: PhotoSection) => void;
   onDelete: () => void;
   onAlt: (alt: string) => void;
 }) {
@@ -58,7 +69,27 @@ function Tile({
         ) : (
           <video src={m.src} muted preload="metadata" className="size-full object-cover" />
         )}
-        {isCover && <span className="absolute top-2 left-2 bg-ink px-2 py-1 text-xs font-semibold text-paper">Cover</span>}
+        {slots.length > 0 && (
+          <div className="absolute top-2 left-2 flex flex-wrap gap-1">
+            {SLOTS.filter((s) => slots.includes(s.slot)).map((s) => (
+              <span key={s.slot} className="flex items-center bg-ink text-xs font-semibold text-paper">
+                <span className="px-2 py-1">{s.badge}</span>
+                {s.slot !== "cover" && (
+                  <button
+                    type="button"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={() => onClearSlot(s.slot as PhotoSection)}
+                    className="border-l border-paper/20 px-1.5 py-1 hover:bg-ink-soft"
+                    title={`Stop using this photo for ${s.label}; the section picks a photo automatically`}
+                    aria-label={`Remove from ${s.label}`}
+                  >
+                    ×
+                  </button>
+                )}
+              </span>
+            ))}
+          </div>
+        )}
         {m.type === "video" && <span className="absolute top-2 right-2 bg-ink/80 px-2 py-1 text-xs text-paper">Video</span>}
       </div>
       <div className="space-y-1 p-2">
@@ -80,10 +111,20 @@ function Tile({
           </button>
         )}
         <div className="flex justify-end gap-1">
-          {m.type === "image" && !isCover && (
-            <button type="button" onClick={onCover} className="whitespace-nowrap px-2 py-1 text-xs font-semibold text-ink hover:bg-sand" title="Use as the project's cover">
-              Make cover
-            </button>
+          {m.type === "image" && slots.length < SLOTS.length && (
+            <select
+              value=""
+              onChange={(e) => e.target.value && onSlot(e.target.value as Slot)}
+              className="min-w-0 flex-1 cursor-pointer bg-transparent px-1 py-1 text-xs font-semibold text-ink hover:bg-sand"
+              aria-label="Use this photo for a section of the project page"
+            >
+              <option value="">Use for…</option>
+              {SLOTS.filter((s) => !slots.includes(s.slot)).map((s) => (
+                <option key={s.slot} value={s.slot}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
           )}
           <button type="button" onClick={onDelete} className="px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50">
             Delete
@@ -102,6 +143,8 @@ export function PhotoManager({
   projectId,
   projectSlug,
   coverKey,
+  storyKey,
+  overviewKey,
   media,
   uploadsEnabled,
 }: {
@@ -109,6 +152,9 @@ export function PhotoManager({
   /** Uploads go to projects/<slug>/photos and /videos in the bucket. */
   projectSlug: string;
   coverKey: string | null;
+  /** Photos chosen for the "About the project" and "Project overview" sections (null: automatic). */
+  storyKey: string | null;
+  overviewKey: string | null;
   media: ManagedMedia[];
   uploadsEnabled: boolean;
 }) {
@@ -267,10 +313,18 @@ export function PhotoManager({
               <Tile
                 key={m.id}
                 m={m}
-                isCover={m.key === coverKey}
-                onCover={async () => {
-                  const r = await setCover(m.id, projectId).catch(() => null);
-                  toast(r?.ok ? "Cover updated" : "Could not set the cover");
+                slots={([["cover", coverKey], ["story", storyKey], ["overview", overviewKey]] as [Slot, string | null][])
+                  .filter(([, k]) => k === m.key)
+                  .map(([s]) => s)}
+                onSlot={async (slot) => {
+                  const r = await (slot === "cover" ? setCover(m.id, projectId) : setSectionPhoto(slot, m.id, projectId)).catch(() => null);
+                  const label = SLOTS.find((s) => s.slot === slot)!.label;
+                  toast(r?.ok ? `Photo set for the ${label}` : (r && !r.ok && r.error) || "Could not set the photo");
+                  router.refresh();
+                }}
+                onClearSlot={async (slot) => {
+                  const r = await setSectionPhoto(slot, null, projectId).catch(() => null);
+                  toast(r?.ok ? "The section now picks a photo automatically" : "Could not update the section");
                   router.refresh();
                 }}
                 onDelete={() => remove(m)}
@@ -307,6 +361,11 @@ export function PhotoManager({
         </DragOverlay>
       </DndContext>
       {items.length === 0 && uploads.length === 0 && <p className="text-sm text-muted">No photos yet.</p>}
+      {items.some((m) => m.type === "image") && (
+        <p className="text-xs text-muted">
+          Use <strong>Use for…</strong> on a photo to choose the top banner (cover), the &ldquo;About the project&rdquo; photo and the &ldquo;Project overview&rdquo; photo of the project page. A section without a chosen photo uses the next photos after the cover, in gallery order.
+        </p>
+      )}
       {items.length > 1 && (
         <p className="text-xs text-muted">
           Drag photos to reorder, or focus one, press <kbd className="bg-sand px-1">Space</kbd>, move with the arrow keys and press Space again. The order saves at once.

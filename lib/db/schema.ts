@@ -88,6 +88,10 @@ export const projects = sqliteTable(
     /** Features or amenities delivered, one per line. */
     highlights: text("highlights").notNull().default(""),
     coverKey: text("cover_key"),
+    /** Photo for the "About the project" section; null picks the next photo after the cover. */
+    storyImageKey: text("story_image_key"),
+    /** Photo for the "Project overview" section; null picks the next photo after that. */
+    overviewImageKey: text("overview_image_key"),
     /** Only completed projects appear in the public portfolio; the others show in News. */
     status: text("status", { enum: PROJECT_STATUSES }).notNull().default("completed"),
     featured: integer("featured", { mode: "boolean" }).notNull().default(false),
