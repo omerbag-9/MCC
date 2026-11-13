@@ -10,9 +10,9 @@ import { getMediaBase, getMediaBucket } from "@/lib/env";
 export const metadata = { title: "Settings" };
 
 const STAT_HINTS = [
-  ["EGP 4.2B", "Total revenue"],
-  ["350+", "Projects completed"],
-  ["25+", "Years of experience"],
+  ["EGP 80M", "Total revenue"],
+  ["30+", "Projects completed"],
+  ["10+", "Years of experience"],
 ];
 
 export default async function SettingsAdmin({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {

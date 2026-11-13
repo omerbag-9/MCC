@@ -85,6 +85,13 @@
       "when": 1794344445773,
       "tag": "0011_about_mcc_revised",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1794344545773,
+      "tag": "0012_mcc_stats_contact",
+      "breakpoints": true
     }
   ]
 }
