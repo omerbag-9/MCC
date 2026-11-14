@@ -270,6 +270,8 @@ export async function deleteProject(id: number) {
   await db.delete(projectMedia).where(eq(projectMedia.projectId, id));
   // Its news posts stay, as company news.
   await db.update(newsPosts).set({ projectId: null }).where(eq(newsPosts.projectId, id));
+  // Its client keeps its logo, which links to the client's website again.
+  await db.update(clients).set({ projectId: null }).where(eq(clients.projectId, id));
   await db.delete(projects).where(eq(projects.id, id));
   await deleteObjects(media.flatMap((m) => [m.key, m.thumbKey]));
   revalidateSite();
@@ -636,6 +638,7 @@ const clientSchema = z.object({
   name: str(120).min(1, "Name is required"),
   url: z.union([z.literal(""), z.string().trim().url().max(300)]),
   logoKey: mediaKey,
+  projectId: optionalId,
 });
 
 export async function saveClient(id: number | null, formData: FormData) {

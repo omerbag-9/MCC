@@ -269,7 +269,13 @@ export default async function HomePage() {
         <section className="py-14 lg:py-20" aria-labelledby="clients-title">
           <h2 id="clients-title" className="sr-only">Trusted by</h2>
           <ClientsLoop
-            clients={clients.map((c) => ({ id: c.id, name: c.name, url: c.url, logo: mediaUrl(c.logoKey, mediaBase) }))}
+            clients={clients.map((c) => ({
+              id: c.id,
+              name: c.name,
+              // The linked project's page when it is public (completed and published), else the website.
+              url: c.project?.published && c.project.status === "completed" ? `/projects/${c.project.slug}` : c.url,
+              logo: mediaUrl(c.logoKey, mediaBase),
+            }))}
           />
         </section>
       )}
