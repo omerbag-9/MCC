@@ -125,7 +125,10 @@ export const getPublishedProjectBySlug = cache((slug: string) =>
 export const getClients = cache(() =>
   safe([], async () => {
     const db = await getDb();
-    return db.query.clients.findMany({ orderBy: [asc(clients.sortOrder), asc(clients.id)] });
+    return db.query.clients.findMany({
+      orderBy: [asc(clients.sortOrder), asc(clients.id)],
+      with: { project: { columns: { slug: true, status: true, published: true } } },
+    });
   }),
 );
 

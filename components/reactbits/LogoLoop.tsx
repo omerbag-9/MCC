@@ -1268,8 +1268,8 @@ export const LogoLoop = memo<LogoLoopProps>(
                       className={contentClass(item)}
                       href={item.href}
                       aria-label={name || 'logo link'}
-                      target="_blank"
-                      rel="noreferrer noopener"
+                      // Other sites open in a new tab; a page of this site (a client's project) opens here.
+                      {...(/^https?:/.test(item.href) ? { target: '_blank', rel: 'noreferrer noopener' } : {})}
                       draggable={false}
                       tabIndex={isPrimary ? undefined : -1}
                     >

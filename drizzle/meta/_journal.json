@@ -141,6 +141,13 @@
       "when": 1794345245773,
       "tag": "0019_more_clients",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1794689598961,
+      "tag": "0020_client_project",
+      "breakpoints": true
     }
   ]
 }

@@ -171,9 +171,15 @@ export const clients = sqliteTable("clients", {
   name: text("name").notNull(),
   logoKey: text("logo_key"),
   url: text("url").notNull().default(""),
+  /** The project its logo opens (its best one); falls back to url when not set or not public. */
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "set null" }),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: createdAt(),
 });
+
+export const clientsRelations = relations(clients, ({ one }) => ({
+  project: one(projects, { fields: [clients.projectId], references: [projects.id] }),
+}));
 
 export const LEAD_STATUSES = ["new", "contacted", "won", "lost"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
