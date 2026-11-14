@@ -134,6 +134,13 @@
       "when": 1794345145773,
       "tag": "0018_samir_william_logo",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "6",
+      "when": 1794345245773,
+      "tag": "0019_more_clients",
+      "breakpoints": true
     }
   ]
 }
