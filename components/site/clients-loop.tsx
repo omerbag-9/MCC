@@ -6,7 +6,7 @@ import { ClientMark } from "./client-logo";
 type ClientItem = { id: number; name: string; url: string; logo: string | null };
 
 /**
- * The clients' logos only, moving slowly from edge to edge (React Bits LogoLoop). Logos sit in
+ * The clients' logos only, moving steadily from edge to edge (React Bits LogoLoop). Logos sit in
  * the ink tone and take their own colours on hover; it pauses while hovered and can be dragged.
  */
 export function ClientsLoop({ clients }: { clients: ClientItem[] }) {
@@ -29,7 +29,7 @@ export function ClientsLoop({ clients }: { clients: ClientItem[] }) {
         title: c.name,
         ariaLabel: c.name,
       }))}
-      speed={45}
+      speed={65}
       logoHeight={64}
       gap={96}
       pauseOnHover
