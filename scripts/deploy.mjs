@@ -85,14 +85,13 @@ if (!siteUrl || siteUrl.includes("example.")) {
 } else {
   step(`Check the live site: ${siteUrl}`);
   await new Promise((r) => setTimeout(r, 5000)); // let the new version reach every location
-  if (!previousVersion) {
-    // First deploy: a new custom domain or workers.dev route can take a few minutes to answer.
-    console.log("First deploy: waiting until the site answers (up to 5 minutes)");
-    for (let i = 0; i < 60; i++) {
-      const ok = await fetch(siteUrl, { redirect: "manual" }).then((r) => r.status < 500, () => false);
-      if (ok) break;
-      await new Promise((r) => setTimeout(r, 5000));
-    }
+  // A new custom domain or workers.dev route can take a few minutes to answer; an existing one
+  // answers at once, so this only waits when the address is new.
+  for (let i = 0; i < 60; i++) {
+    const ok = await fetch(siteUrl, { redirect: "manual" }).then((r) => r.status < 500, () => false);
+    if (ok) break;
+    if (i === 0) console.log("Waiting until the site answers (up to 5 minutes)");
+    await new Promise((r) => setTimeout(r, 5000));
   }
   const live = spawnSync("node", ["scripts/smoke.mjs", siteUrl], { stdio: "inherit" });
   if (live.status !== 0) {

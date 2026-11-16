@@ -53,7 +53,7 @@ Other scripts: `npm run lint`, `npm run typecheck`, `npm run db:generate` (creat
 
 | Branch | Cloudflare environment | Worker | Database / buckets | URL | Indexed by Google |
 |---|---|---|---|---|---|
-| `dev` (default) | top level of `wrangler.jsonc` | `mcc-dev` | `mcc_db`, `mcc-bucket` (media + page cache) | `https://mcc-dev.<account>.workers.dev` | no |
+| `dev` (default) | top level of `wrangler.jsonc` | `mcc-dev` | `mcc-db`, `mcc-bucket` (media + page cache) | `https://dev.mccltd-eg.com` | no |
 | `staging` | `env.staging` | `mcc-staging` | `mcc-db-staging`, `mcc-media-staging`, `mcc-cache-staging` | `https://staging.example.com` | no |
 | `production` | `env.production` | `mcc` | `mcc-db`, `mcc-media`, `mcc-cache` | `https://example.com` | yes |
 

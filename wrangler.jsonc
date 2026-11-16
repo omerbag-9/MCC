@@ -3,7 +3,7 @@
   /*
    * Three environments, each with its own Worker, D1 database and R2 buckets:
    *
-   *   dev        (top level)        npm run deploy:dev         https://mcc-dev.<account>.workers.dev
+   *   dev        (top level)        npm run deploy:dev         https://dev.mccltd-eg.com
    *   staging    (env.staging)      npm run deploy:staging     https://staging.example.com
    *   production (env.production)   npm run deploy:production  https://mccltd-eg.com
    *
@@ -26,7 +26,8 @@
 
   // ---------------------------------------------------------------- dev (default)
   "name": "mcc-dev",
-  "workers_dev": true,
+  "workers_dev": false,
+  "routes": [{ "pattern": "dev.mccltd-eg.com", "custom_domain": true }],
   "services": [
     // Self-reference required by the OpenNext cache. Must match this environment's worker name.
     { "binding": "WORKER_SELF_REFERENCE", "service": "mcc-dev" }
@@ -48,7 +49,7 @@
   // Non-secret configuration. Secrets: `wrangler secret put NAME [--env ...]` (remote) or .dev.vars (local).
   "vars": {
     "APP_ENV": "dev",
-    "SITE_URL": "https://mcc-dev.mccltd-eg.workers.dev",
+    "SITE_URL": "https://dev.mccltd-eg.com",
     "MEDIA_URL": "",
     "EMAIL_FROM": "Website (dev) <noreply@example.com>",
     "LEADS_NOTIFY_TO": "dev-team@example.com",
