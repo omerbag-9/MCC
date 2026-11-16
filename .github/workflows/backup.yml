@@ -1,7 +1,7 @@
 name: Backup
 
 # Daily database backup into the environment's private R2 bucket (see scripts/backup.mjs).
-# When staging and production exist, add them to the matrix.
+# Add staging to the matrix when it exists.
 on:
   schedule:
     - cron: "17 2 * * *" # 02:17 UTC every day
@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: [dev]
+        environment: [dev, production]
     runs-on: ubuntu-latest
     environment: ${{ matrix.environment }}
     steps:
