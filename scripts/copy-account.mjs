@@ -60,7 +60,9 @@ async function copyDatabase() {
   const schema = readFileSync(schemaFile);
   if (!schema.includes("CREATE TABLE")) fail("The schema export looks empty.");
   const dump = join(dir, "dump.sql");
-  writeFileSync(dump, Buffer.concat([schema, Buffer.from("\n"), readFileSync(dataFile)]));
+  // Data is exported table by table in alphabetical order, so clients (which point at projects)
+  // come before projects: foreign keys are checked at the end of the import instead.
+  writeFileSync(dump, Buffer.concat([Buffer.from("PRAGMA defer_foreign_keys = true;\n"), schema, Buffer.from("\n"), readFileSync(dataFile)]));
 
   const existing = tables(to);
   if (existing.length > 0) {

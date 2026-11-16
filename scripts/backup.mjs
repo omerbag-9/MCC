@@ -47,7 +47,9 @@ try {
   run(["d1", "export", "DB", "--remote", ...envFlag, "--no-schema", "--output", dataFile]);
   const schema = readFileSync(schemaFile);
   if (!schema.includes("CREATE TABLE")) fail("The schema export looks empty; not storing it.");
-  const sql = Buffer.concat([schema, Buffer.from("\n"), readFileSync(dataFile)]);
+  // Rows are exported table by table alphabetically, so clients (which point at projects) come
+  // before projects: the restore checks foreign keys at the end instead of row by row.
+  const sql = Buffer.concat([Buffer.from("PRAGMA defer_foreign_keys = true;\n"), schema, Buffer.from("\n"), readFileSync(dataFile)]);
   writeFileSync(sqlFile, sql);
   writeFileSync(gzFile, gzipSync(sql, { level: 9 }));
 
