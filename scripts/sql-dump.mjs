@@ -6,8 +6,11 @@
 // so the import fails. This puts the schema first and then each table's rows after the tables it
 // references.
 
-/** Joins a schema-only and a data-only export into one dump in a safe order. */
-export function orderedDump(schemaSql, dataSql) {
+/**
+ * Joins a schema-only and a data-only export into one dump in a safe order. Tables listed in
+ * `skipRows` keep their schema but none of their rows.
+ */
+export function orderedDump(schemaSql, dataSql, { skipRows = [] } = {}) {
   const schema = statements(schemaSql);
   const deps = new Map();
   for (const s of schema) {
@@ -25,6 +28,7 @@ export function orderedDump(schemaSql, dataSql) {
       before.push(s);
       continue;
     }
+    if (skipRows.includes(m[1])) continue;
     if (!rows.has(m[1])) rows.set(m[1], []);
     rows.get(m[1]).push(s);
   }

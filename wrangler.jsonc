@@ -5,7 +5,7 @@
    *
    *   dev        (top level)        npm run deploy:dev         https://mcc-dev.<account>.workers.dev
    *   staging    (env.staging)      npm run deploy:staging     https://staging.example.com
-   *   production (env.production)   npm run deploy:production  https://example.com
+   *   production (env.production)   npm run deploy:production  https://mccltd-eg.com
    *
    * Local development (`npm run dev` / `npm run preview`) uses the top-level bindings, simulated
    * locally by Wrangler. Bindings, vars and routes are NOT inherited by environments, so each
@@ -33,9 +33,9 @@
   ],
   "d1_databases": [
     // App data: projects, services, leads, ...
-    { "binding": "DB", "database_name": "mcc_db", "database_id": "1338b2b0-7a68-4da8-8419-2452541e29e8", "migrations_dir": "drizzle" },
+    { "binding": "DB", "database_name": "mcc-db", "database_id": "1338b2b0-7a68-4da8-8419-2452541e29e8", "migrations_dir": "drizzle" },
     // Same database, used by OpenNext to track page revalidations.
-    { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc_db", "database_id": "1338b2b0-7a68-4da8-8419-2452541e29e8" }
+    { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc-db", "database_id": "1338b2b0-7a68-4da8-8419-2452541e29e8" }
   ],
   // Dev uses one bucket for both: uploads live under projects/ site/ clients/ and the page cache
   // under incremental-cache/. (Staging and production use separate buckets.)
@@ -95,13 +95,13 @@
       "name": "mcc",
       "workers_dev": false,
       "routes": [
-        { "pattern": "example.com", "custom_domain": true },
-        { "pattern": "www.example.com", "custom_domain": true }
+        { "pattern": "mccltd-eg.com", "custom_domain": true },
+        { "pattern": "www.mccltd-eg.com", "custom_domain": true }
       ],
       "services": [{ "binding": "WORKER_SELF_REFERENCE", "service": "mcc" }],
       "d1_databases": [
-        { "binding": "DB", "database_name": "mcc-db", "database_id": "00000000-0000-0000-0000-000000000003", "migrations_dir": "drizzle" },
-        { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc-db", "database_id": "00000000-0000-0000-0000-000000000003" }
+        { "binding": "DB", "database_name": "mcc-db-prod", "database_id": "1740576b-2b25-4f66-8a9d-4cfa31123e4d", "migrations_dir": "drizzle" },
+        { "binding": "NEXT_TAG_CACHE_D1", "database_name": "mcc-db-prod", "database_id": "1740576b-2b25-4f66-8a9d-4cfa31123e4d" }
       ],
       "r2_buckets": [
         { "binding": "MEDIA", "bucket_name": "mcc-media" },
@@ -109,9 +109,9 @@
       ],
       "vars": {
         "APP_ENV": "production",
-        "SITE_URL": "https://example.com",
+        "SITE_URL": "https://mccltd-eg.com",
         "MEDIA_URL": "",
-        "EMAIL_FROM": "Website <noreply@example.com>",
+        "EMAIL_FROM": "MCC Website <noreply@mccltd-eg.com>",
         "LEADS_NOTIFY_TO": "info@example.com",
         "CF_ACCESS_TEAM_DOMAIN": "",
         "CF_ACCESS_AUD": "",

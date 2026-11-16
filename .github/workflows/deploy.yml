@@ -1,11 +1,10 @@
 name: Deploy
 
-# Push to dev -> deploys the dev environment (see scripts/deploy.mjs for the steps).
-# When the company Cloudflare account is ready, add staging and production to the branch list
-# and create GitHub environments with the same names and secrets.
+# Push to dev -> deploys dev; push to production -> deploys mccltd-eg.com (see scripts/deploy.mjs
+# for the steps). Each branch uses the GitHub environment of the same name for its secrets.
 on:
   push:
-    branches: [dev]
+    branches: [dev, production]
   workflow_dispatch:
 
 jobs:
