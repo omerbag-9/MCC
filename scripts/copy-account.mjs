@@ -21,6 +21,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { orderedDump } from "./sql-dump.mjs";
 
 const API = "https://api.cloudflare.com/client/v4";
 const SKIP = ["incremental-cache/", "trash/"];
@@ -60,9 +61,8 @@ async function copyDatabase() {
   const schema = readFileSync(schemaFile);
   if (!schema.includes("CREATE TABLE")) fail("The schema export looks empty.");
   const dump = join(dir, "dump.sql");
-  // Data is exported table by table in alphabetical order, so clients (which point at projects)
-  // come before projects: foreign keys are checked at the end of the import instead.
-  writeFileSync(dump, Buffer.concat([Buffer.from("PRAGMA defer_foreign_keys = true;\n"), schema, Buffer.from("\n"), readFileSync(dataFile)]));
+  // Rows of each table after the tables they reference (see scripts/sql-dump.mjs).
+  writeFileSync(dump, orderedDump(schema.toString("utf8"), readFileSync(dataFile, "utf8")));
 
   const existing = tables(to);
   if (existing.length > 0) {

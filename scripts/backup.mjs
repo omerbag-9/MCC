@@ -15,6 +15,7 @@ import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { gzipSync } from "node:zlib";
+import { orderedDump } from "./sql-dump.mjs";
 
 const RULES = [
   { name: "expire-backups", prefix: "backups/", days: 90 },
@@ -37,9 +38,8 @@ try {
   const sqlFile = join(dir, "backup.sql");
   const gzFile = join(dir, "backup.sql.gz");
 
-  // Schema and data are exported separately and written schema-first: a single export lists tables
-  // alphabetically, so rows of project_media come before the projects table exists and the file
-  // does not restore into an empty database. (Tested: this format restores with identical counts.)
+  // Schema and data are exported separately and joined schema-first, with rows in dependency order:
+  // a single export lists tables alphabetically and does not restore into an empty database.
   console.log(`▶ [${env}] Exporting D1 database "${db.database_name}"`);
   const schemaFile = join(dir, "schema.sql");
   const dataFile = join(dir, "data.sql");
@@ -47,9 +47,9 @@ try {
   run(["d1", "export", "DB", "--remote", ...envFlag, "--no-schema", "--output", dataFile]);
   const schema = readFileSync(schemaFile);
   if (!schema.includes("CREATE TABLE")) fail("The schema export looks empty; not storing it.");
-  // Rows are exported table by table alphabetically, so clients (which point at projects) come
-  // before projects: the restore checks foreign keys at the end instead of row by row.
-  const sql = Buffer.concat([Buffer.from("PRAGMA defer_foreign_keys = true;\n"), schema, Buffer.from("\n"), readFileSync(dataFile)]);
+  // Schema first, then each table's rows after the tables they reference, so the file restores
+  // into an empty database (see scripts/sql-dump.mjs).
+  const sql = Buffer.from(orderedDump(schema.toString("utf8"), readFileSync(dataFile, "utf8")));
   writeFileSync(sqlFile, sql);
   writeFileSync(gzFile, gzipSync(sql, { level: 9 }));
 
