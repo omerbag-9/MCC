@@ -1,5 +1,6 @@
 // Copies the site content from one environment's database and media bucket to another's, for
-// example dev -> production before launch (run by .github/workflows/copy-to-production.yml):
+// example dev -> production before launch. It ran once from a one-off GitHub workflow; to use it again,
+// set the variables below and run:
 //
 //   node scripts/copy-data.mjs
 //
