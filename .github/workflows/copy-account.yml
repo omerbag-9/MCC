@@ -1,0 +1,29 @@
+name: Copy dev to the company account
+
+# One-time, run by hand from the Actions tab: copies the dev database and media from the old
+# Cloudflare account (the current CLOUDFLARE_* secrets) to the company account (NEW_CLOUDFLARE_*
+# secrets). See scripts/copy-account.mjs. Delete this workflow once the move is done.
+on:
+  workflow_dispatch:
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: node scripts/copy-account.mjs
+        env:
+          OLD_CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          OLD_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          OLD_D1_DATABASE_ID: 852c51bb-2ce9-45bd-8543-c8283f4ef951
+          OLD_R2_BUCKET: mcc-bucket
+          NEW_CLOUDFLARE_API_TOKEN: ${{ secrets.NEW_CLOUDFLARE_API_TOKEN }}
+          NEW_CLOUDFLARE_ACCOUNT_ID: ${{ secrets.NEW_CLOUDFLARE_ACCOUNT_ID }}
+          NEW_D1_DATABASE_ID: 1338b2b0-7a68-4da8-8419-2452541e29e8
+          NEW_R2_BUCKET: mcc-bucket
