@@ -74,7 +74,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         <Card>
           <div className="flex items-center justify-between">
             <h2 className="font-semibold">Home page</h2>
-            <Link href="/admin/settings" className="text-sm font-medium hover:underline">Edit</Link>
+            <Link href="/admin/content?page=home" className="text-sm font-medium hover:underline">Edit</Link>
           </div>
           <div className="mt-4 aspect-[16/9] overflow-hidden bg-sand">
             {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -158,6 +158,8 @@ export function PhotoManager({
   media: ManagedMedia[];
   uploadsEnabled: boolean;
 }) {
+  // A stable id, so dnd-kit's accessibility ids match between the server and the browser.
+  const dndId = useId();
   const router = useRouter();
   const [items, setItems] = useState(media);
   const [prevMedia, setPrevMedia] = useState(media);
@@ -301,6 +303,7 @@ export function PhotoManager({
       )}
 
       <DndContext
+        id={dndId}
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={(e) => setActiveId(Number(e.active.id))}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "./logo";
 import type { Project, Service, Settings } from "@/lib/db/schema";
 import { ClockIcon, MailIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
+import { mapsLink } from "@/lib/maps";
 
 const PAGES = [
   { href: "/about", label: "About us" },
@@ -29,6 +30,7 @@ export function Footer({
       ["tiktok", settings.tiktokUrl],
     ] as const
   ).filter(([, url]) => url);
+  const mapUrl = mapsLink(settings);
 
   return (
     <footer className="bg-ink text-paper">
@@ -111,7 +113,13 @@ export function Footer({
             {settings.address && (
               <li className="flex gap-3">
                 <PinIcon width={18} height={18} className="mt-0.5 shrink-0 text-paper" />
-                <span>{settings.address}</span>
+                {mapUrl ? (
+                  <a href={mapUrl} target="_blank" rel="noopener noreferrer" className="hover:text-paper">
+                    {settings.address}
+                  </a>
+                ) : (
+                  <span>{settings.address}</span>
+                )}
               </li>
             )}
             {settings.workingHours && (

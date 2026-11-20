@@ -3,6 +3,7 @@ import { Logo } from "./logo";
 import type { Settings } from "@/lib/db/schema";
 import { ClockIcon, CloseIcon, MailIcon, MenuIcon, PhoneIcon, PinIcon, SocialIcon } from "./icons";
 import { MobileMenu } from "./mobile-menu";
+import { mapsLink } from "@/lib/maps";
 
 // Services lives on the home page: that link scrolls smoothly to its section (html has
 // scroll-behavior: smooth). About, Projects, News and Contact have their own pages.
@@ -29,18 +30,24 @@ export function TopBar({ settings }: { settings: Settings }) {
   ).filter(([, url]) => url);
   const items = [
     settings.workingHours && { icon: ClockIcon, text: settings.workingHours },
-    settings.address && { icon: PinIcon, text: settings.address },
+    settings.address && { icon: PinIcon, text: settings.address, href: mapsLink(settings) ?? undefined, external: true },
     settings.email && { icon: MailIcon, text: settings.email, href: `mailto:${settings.email}` },
-  ].filter(Boolean) as { icon: typeof ClockIcon; text: string; href?: string }[];
+  ].filter(Boolean) as { icon: typeof ClockIcon; text: string; href?: string; external?: boolean }[];
   if (items.length === 0 && socials.length === 0) return null;
   return (
     <div className="hidden h-10 bg-brand-dark text-small text-on-navy-muted lg:block">
       <div className="container-x flex h-full items-center justify-between gap-8">
         <ul className="flex items-center gap-8">
-          {items.map(({ icon: Icon, text, href }) => (
+          {items.map(({ icon: Icon, text, href, external }) => (
             <li key={text} className="flex items-center gap-2">
               <Icon width={15} height={15} className="text-paper" />
-              {href ? <a href={href} className="hover:text-paper">{text}</a> : text}
+              {href ? (
+                <a href={href} className="hover:text-paper" {...(external && { target: "_blank", rel: "noopener noreferrer" })}>
+                  {text}
+                </a>
+              ) : (
+                text
+              )}
             </li>
           ))}
         </ul>

@@ -181,6 +181,36 @@ export const clientsRelations = relations(clients, ({ one }) => ({
   project: one(projects, { fields: [clients.projectId], references: [projects.id] }),
 }));
 
+/**
+ * The tabs of the home page's "Project facts" section (Admin → Project facts), in order. Every
+ * empty field follows the tab's project, so a tab with only a project picked stays up to date.
+ */
+export const factTabs = sqliteTable("fact_tabs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  /** The project the tab is about; null for a tab written entirely by hand. */
+  projectId: integer("project_id").references(() => projects.id, { onDelete: "cascade" }),
+  /** Tab name; empty uses the project's title. */
+  title: text("title").notNull().default(""),
+  /** Table rows, one per line as "Label: value"; empty uses the project's facts. */
+  rows: text("rows").notNull().default(""),
+  /** Photo; null uses the project's cover. */
+  imageKey: text("image_key"),
+  /**
+   * Where the button goes: "" the tab's project page, "project:<id>" another project's page, a
+   * site path ("/contact") or a full URL; "none" shows no button.
+   */
+  link: text("link").notNull().default(""),
+  /** Button text; empty is "View <tab name>". */
+  linkLabel: text("link_label").notNull().default(""),
+  visible: integer("visible", { mode: "boolean" }).notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: createdAt(),
+});
+
+export const factTabsRelations = relations(factTabs, ({ one }) => ({
+  project: one(projects, { fields: [factTabs.projectId], references: [projects.id] }),
+}));
+
 export const LEAD_STATUSES = ["new", "contacted", "won", "lost"] as const;
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
@@ -219,5 +249,6 @@ export type Service = typeof services.$inferSelect;
 export type Project = typeof projects.$inferSelect;
 export type ProjectMedia = typeof projectMedia.$inferSelect;
 export type Client = typeof clients.$inferSelect;
+export type FactTab = typeof factTabs.$inferSelect;
 export type NewsPost = typeof newsPosts.$inferSelect;
 export type Lead = typeof leads.$inferSelect;

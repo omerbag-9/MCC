@@ -3,9 +3,11 @@ import { cache } from "react";
 import { and, asc, count, desc, eq } from "drizzle-orm";
 import { isBuildPhase } from "@/lib/env";
 import { resolveContent } from "@/lib/content";
+import { resolveFactTab, type ResolvedFactTab } from "@/lib/facts";
 import { getDb } from "./client";
 import {
   clients,
+  factTabs,
   newsPosts,
   projectMedia,
   projects,
@@ -129,6 +131,19 @@ export const getClients = cache(() =>
       orderBy: [asc(clients.sortOrder), asc(clients.id)],
       with: { project: { columns: { slug: true, status: true, published: true } } },
     });
+  }),
+);
+
+/** The "Project facts" tabs as the home page shows them, in order (Admin → Project facts). */
+export const getFactTabs = cache(() =>
+  safe([] as ResolvedFactTab[], async () => {
+    const db = await getDb();
+    const [tabs, linkable] = await Promise.all([
+      db.query.factTabs.findMany({ orderBy: [asc(factTabs.sortOrder), asc(factTabs.id)], with: { project: true } }),
+      db.select({ id: projects.id, slug: projects.slug, published: projects.published, status: projects.status }).from(projects),
+    ]);
+    const byId = new Map(linkable.map((p) => [p.id, p]));
+    return tabs.map((t) => resolveFactTab(t, t.project ?? null, byId)).filter((t): t is ResolvedFactTab => !!t);
   }),
 );
 

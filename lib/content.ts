@@ -16,7 +16,32 @@ export type ContentField = {
   hint?: string;
 };
 
-export type ContentGroup = { id: string; title: string; description?: string; fields: ContentField[] };
+/** Site settings columns that Website content edits beside a section's own fields. */
+export type SettingsFieldKey = "heroTitle" | "heroSubtitle" | "heroImageKey" | "heroVideoKey" | "stats" | "aboutTitle" | "aboutBody" | "strengths";
+
+/** One section of a page, as one card in Admin → Website content. */
+export type ContentSection = {
+  id: string;
+  title: string;
+  /** Where it is and what it shows, in a sentence. */
+  description?: string;
+  /** Where to see it on the site. */
+  anchor?: string;
+  /** The toggle field that shows or hides the whole section (shown as the card's switch). */
+  toggle?: string;
+  /** Site settings columns edited in this card too. */
+  settings?: SettingsFieldKey[];
+  /** The order of the card's fields (its own and its settings), as they appear on the site. */
+  layout?: string[];
+  /** What the section shows that is managed on another admin page. */
+  elsewhere?: { label: string; href: string }[];
+  /** Edited on that admin page, beside what it controls, instead of on Website content. */
+  adminPage?: string;
+  fields: ContentField[];
+};
+
+/** A page of the site: one tab in Admin → Website content. */
+export type ContentPage = { id: string; title: string; href: string; description?: string; sections: ContentSection[] };
 
 const text = (key: string, label: string, value: string, hint?: string): ContentField => ({ key, label, kind: "text", default: value, hint });
 const area = (key: string, label: string, value: string, hint?: string): ContentField => ({ key, label, kind: "textarea", default: value, hint });
@@ -25,80 +50,189 @@ const toggle = (key: string, label: string, on = true): ContentField => ({ key, 
 
 const REPLY = "Send us a message and we will get back to you within one business day.";
 
-export const CONTENT_GROUPS: ContentGroup[] = [
-  {
-    id: "buttons",
-    title: "Buttons",
-    fields: [
-      text("projectsButton", "Projects button (hero)", "View our projects"),
-    ],
-  },
+export const CONTENT_PAGES: ContentPage[] = [
   {
     id: "home",
     title: "Home page",
-    description: "The hero, figures, about text and 'Why choose us' points are in Site settings.",
-    fields: [
-      image("aboutImage", "About section photo", "If empty, a featured project's photo is used."),
-      text("aboutButton", "About section button", "Talk to our team"),
-
-      toggle("showWhy", "Show the 'Why choose us' section"),
-      text("whyTitle", "'Why choose us' heading", "Why clients choose {company}"),
-      area("whyIntro", "'Why choose us' text", "One accountable team from the first drawing to the keys, and a site you would be proud to visit."),
-      image("whyImage", "'Why choose us' photo", "If empty, a featured project's photo is used."),
-
-      toggle("showServices", "Show the services section"),
-      text("servicesTitle", "Services heading", "What we build"),
-      area("servicesIntro", "Services text", "One team runs design, permits and construction, from the first drawing to the handover."),
-
-      toggle("showFeatured", "Show featured projects"),
-      text("featuredTitle", "Featured projects heading", "Featured projects", "Choose which projects appear with 'Featured on the home page' on each project."),
-
-      toggle("showFacts", "Show the project facts section"),
-      text("factsTitle", "Project facts heading", "Project facts"),
-      area("factsIntro", "Project facts text", "The numbers behind our recent work: size, scope and what was delivered."),
-
-      toggle("showClients", "Show the clients' logos"),
-
-      toggle("showNews", "Show the latest news"),
-      text("homeNewsTitle", "Latest news heading", "Latest news", "The three most recent posts from News."),
-
-      text("contactTitle", "Contact section heading", "Contact us"),
-      area("contactIntro", "Contact section text", REPLY),
-      image("contactImage", "Contact section background photo", "Shown dark behind the section. If empty, a project photo is used."),
-      text("formTitle", "Contact form heading", "Send us a message"),
+    href: "/",
+    sections: [
+      {
+        id: "hero",
+        title: "Top of the page",
+        description: "The first thing visitors see: the title, the photo or video behind it, the button, and the three figures along its foot.",
+        anchor: "/",
+        settings: ["heroTitle", "heroSubtitle", "heroImageKey", "heroVideoKey", "stats"],
+        layout: ["heroTitle", "heroSubtitle", "projectsButton", "stats", "heroImageKey", "heroVideoKey"],
+        fields: [
+          text("projectsButton", "Button text", "View our projects"),
+        ],
+      },
+      {
+        id: "about",
+        title: "About",
+        description: "The company in short, beside a photo. The full story is on the About page tab.",
+        anchor: "/#about",
+        settings: ["aboutTitle", "aboutBody"],
+        layout: ["aboutTitle", "aboutBody", "aboutButton", "aboutImage"],
+        fields: [
+          image("aboutImage", "Photo", "If empty, a featured project's photo is used."),
+          text("aboutButton", "Button text", "Talk to our team"),
+        ],
+      },
+      {
+        id: "why",
+        title: "Why choose us",
+        description: "A short text and photo beside the points that set the company apart.",
+        anchor: "/#why-title",
+        toggle: "showWhy",
+        settings: ["strengths"],
+        layout: ["whyTitle", "whyIntro", "strengths", "whyImage"],
+        fields: [
+          toggle("showWhy", "Show the 'Why choose us' section"),
+          text("whyTitle", "Heading", "Why clients choose {company}"),
+          area("whyIntro", "Text", "One accountable team from the first drawing to the keys, and a site you would be proud to visit."),
+          image("whyImage", "Photo", "If empty, a featured project's photo is used."),
+        ],
+      },
+      {
+        id: "services",
+        title: "Services",
+        description: "The list of services, each with its photo.",
+        anchor: "/#services",
+        toggle: "showServices",
+        elsewhere: [
+          { label: "Add, edit and order the services", href: "/admin/services" },
+        ],
+        fields: [
+          toggle("showServices", "Show the services section"),
+          text("servicesTitle", "Heading", "What we build"),
+          area("servicesIntro", "Text", "One team runs design, permits and construction, from the first drawing to the handover."),
+        ],
+      },
+      {
+        id: "featured",
+        title: "Featured projects",
+        description: "One large and two smaller projects with their photos.",
+        anchor: "/#projects",
+        toggle: "showFeatured",
+        elsewhere: [
+          { label: "Choose the projects: tick 'Featured on the home page' on a project", href: "/admin/projects" },
+        ],
+        fields: [
+          toggle("showFeatured", "Show featured projects"),
+          text("featuredTitle", "Heading", "Featured projects"),
+        ],
+      },
+      {
+        id: "facts",
+        title: "Project facts",
+        description: "Tabs of projects, each with a facts table, a photo and a button.",
+        anchor: "/#facts-title",
+        toggle: "showFacts",
+        adminPage: "/admin/facts",
+        fields: [
+          toggle("showFacts", "Show the project facts section on the home page"),
+          text("factsTitle", "Heading", "Project facts"),
+          area("factsIntro", "Text beside the heading", "The numbers behind our recent work: size, scope and what was delivered."),
+        ],
+      },
+      {
+        id: "clients",
+        title: "Clients",
+        description: "The clients' logos moving across the page.",
+        anchor: "/#clients-title",
+        toggle: "showClients",
+        elsewhere: [
+          { label: "Add, edit and order the logos", href: "/admin/clients" },
+        ],
+        fields: [
+          toggle("showClients", "Show the clients' logos"),
+        ],
+      },
+      {
+        id: "homeNews",
+        title: "Latest news",
+        description: "The three most recent news posts.",
+        anchor: "/#news-title",
+        toggle: "showNews",
+        elsewhere: [
+          { label: "Write and edit news posts", href: "/admin/news" },
+        ],
+        fields: [
+          toggle("showNews", "Show the latest news"),
+          text("homeNewsTitle", "Heading", "Latest news"),
+        ],
+      },
+      {
+        id: "contact",
+        title: "Contact",
+        description: "The last section: how to reach the company, beside the contact form.",
+        anchor: "/#contact",
+        elsewhere: [
+          { label: "Phone, email and address", href: "/admin/settings#contact" },
+          { label: "The form's button and messages", href: "/admin/content?page=contact#form" },
+        ],
+        fields: [
+          text("contactTitle", "Heading", "Contact us"),
+          area("contactIntro", "Text", REPLY),
+          text("formTitle", "Form heading", "Send us a message"),
+          image("contactImage", "Background photo", "Shown dark behind the section. If empty, a project photo is used."),
+        ],
+      },
     ],
   },
   {
     id: "about",
     title: "About page",
-    description: "The page at /about. The short version on the home page is the About text in Site settings. In longer texts, separate paragraphs with an empty line.",
-    fields: [
-      text("aboutPageTitle", "Heading", "Beyond contracting. Driven by engineering."),
-      area(
+    href: "/about",
+    description: "Separate paragraphs with an empty line.",
+    sections: [
+      {
+        id: "aboutHeader",
+        title: "Header",
+        description: "The title and photo at the top of the page.",
+        anchor: "/about",
+        fields: [
+          text("aboutPageTitle", "Heading", "Beyond contracting. Driven by engineering."),
+          area(
         "aboutPageIntro",
         "Text under the heading",
         "MCC is an engineering-driven contracting company specializing in electromechanical solutions and integrated construction services.",
       ),
-      image("aboutPageImage", "Header photo", "If empty, a featured project's photo is used."),
-
-      text("aboutStoryTitle", "Story heading", "About MCC"),
-      area(
+          image("aboutPageImage", "Photo", "If empty, a featured project's photo is used."),
+        ],
+      },
+      {
+        id: "aboutStory",
+        title: "Who we are",
+        description: "The company story, with a small table of company facts, beside a photo.",
+        anchor: "/about",
+        fields: [
+          text("aboutStoryTitle", "Heading", "About MCC"),
+          area(
         "aboutStory",
-        "Story text",
+        "Text",
         [
           "Established in 2015, MCC began its journey as a specialized electromechanical contracting company, building its reputation on engineering expertise, technical precision, and commitment to quality.",
           "Over the past three years, the company has strategically expanded its capabilities into comprehensive finishing works, broadening its scope of services and strengthening its position in the construction market.",
           "Today, MCC is entering a new phase of growth, with a strategic vision to evolve into an integrated group of specialized companies, each bringing focused expertise and delivering complementary solutions under one unified vision.",
         ].join("\n\n"),
       ),
-      image("aboutStoryImage", "Story photo", "If empty, a featured project's photo is used."),
-      text("aboutLegal", "Company type", "Limited Liability Company (LTD)"),
-      text("aboutOwners", "Owners", "Eng. Karim Osama and Eng. Mohamed Abdelhakim"),
-      text("aboutScope", "What we do", "Electromechanical works and comprehensive finishing works"),
-
-      text("aboutMissionTitle", "Mission heading", "Our mission"),
-      area("aboutMissionLead", "Mission statement", "To bring engineering excellence into every aspect of construction.", "Shown large, under the heading."),
-      area(
+          image("aboutStoryImage", "Photo", "If empty, a featured project's photo is used."),
+          text("aboutLegal", "Company type", "Limited Liability Company (LTD)"),
+          text("aboutOwners", "Owners", "Eng. Karim Osama and Eng. Mohamed Abdelhakim"),
+          text("aboutScope", "What we do", "Electromechanical works and comprehensive finishing works"),
+        ],
+      },
+      {
+        id: "aboutAims",
+        title: "Mission and vision",
+        description: "Each statement large on the left, the text behind it on the right.",
+        anchor: "/about#mission",
+        fields: [
+          text("aboutMissionTitle", "Mission heading", "Our mission"),
+          area("aboutMissionLead", "Mission statement", "To bring engineering excellence into every aspect of construction.", "Shown large, under the heading."),
+          area(
         "aboutMission",
         "Mission text",
         [
@@ -108,14 +242,14 @@ export const CONTENT_GROUPS: ContentGroup[] = [
           "Our mission is to deliver projects that reflect professional standards, engineering integrity, and lasting value.",
         ].join("\n\n"),
       ),
-      text("aboutVisionTitle", "Vision heading", "Our vision"),
-      area(
+          text("aboutVisionTitle", "Vision heading", "Our vision"),
+          area(
         "aboutVisionLead",
         "Vision statement",
         "To become a leading engineering and contracting group recognized for its expertise, people, and quality of delivery.",
         "Shown large, under the heading.",
       ),
-      area(
+          area(
         "aboutVision",
         "Vision text",
         [
@@ -125,95 +259,155 @@ export const CONTENT_GROUPS: ContentGroup[] = [
           "We aim to continuously elevate our standards, expand our capabilities, and deliver projects that set a higher benchmark for quality and professionalism in the market.",
         ].join("\n\n"),
       ),
-
-      text("aboutValuesTitle", "Values heading", "Our core values"),
-      image("aboutValuesImage", "Values photo", "Beside the values. If empty, a featured project's photo is used."),
-      text("value1Title", "Value 1", "Engineering-driven thinking"),
-      area(
+        ],
+      },
+      {
+        id: "aboutValues",
+        title: "Core values",
+        description: "The four values beside a photo, on navy.",
+        anchor: "/about#values-title",
+        fields: [
+          text("aboutValuesTitle", "Heading", "Our core values"),
+          image("aboutValuesImage", "Photo", "Beside the values. If empty, a featured project's photo is used."),
+          text("value1Title", "Value 1", "Engineering-driven thinking"),
+          area(
         "value1Text",
         "Value 1 text",
         "We approach construction through engineering principles, technical understanding, and systematic problem-solving. Our decisions are guided by engineering logic rather than conventional contracting practices.",
       ),
-      text("value2Title", "Value 2", "Precision in every detail"),
-      area(
+          text("value2Title", "Value 2", "Precision in every detail"),
+          area(
         "value2Text",
         "Value 2 text",
         "We believe that successful projects begin with accurate planning. From cost estimation and technical calculations to procurement and execution, precision is embedded in every stage of our work.",
       ),
-      text("value3Title", "Value 3", "Commitment beyond delivery"),
-      area(
+          text("value3Title", "Value 3", "Commitment beyond delivery"),
+          area(
         "value3Text",
         "Value 3 text",
         "Our responsibility does not end at project handover. We are committed to delivering quality on schedule and providing the necessary support and maintenance to ensure long-term performance.",
       ),
-      text("value4Title", "Value 4", "People are our strength"),
-      area(
+          text("value4Title", "Value 4", "People are our strength"),
+          area(
         "value4Text",
         "Value 4 text",
         "Our team is the foundation of our success. We invest in long-term professional relationships, accumulated experience, and a collaborative engineering culture that drives continuous improvement and sustainable growth.",
       ),
-
-      text("aboutClosing", "Closing line", "Engineering excellence, technical precision, commitment to quality."),
-      text("aboutPageButton", "Closing button", "Talk to our team"),
-      image("aboutClosingImage", "Closing section background photo", "Shown dark behind the closing line. If empty, a project photo is used."),
+        ],
+      },
+      {
+        id: "aboutClose",
+        title: "Closing",
+        description: "The closing line and the contact button, over a dark photo.",
+        anchor: "/about",
+        fields: [
+          text("aboutClosing", "Closing line", "Engineering excellence, technical precision, commitment to quality."),
+          text("aboutPageButton", "Button text", "Talk to our team"),
+          image("aboutClosingImage", "Background photo", "Shown dark behind the closing line. If empty, a project photo is used."),
+        ],
+      },
     ],
   },
   {
     id: "projects",
     title: "Projects page",
-    fields: [
-      text("projectsTitle", "Heading", "Our projects"),
-      area("projectsIntro", "Text under the heading", "Homes, offices, warehouses and renovations we have designed and built."),
-      image("projectsImage", "Header photo", "If empty, the first project's cover is used."),
-      text("projectsEmpty", "Text when no project is published", "Projects will be published here soon."),
+    href: "/projects",
+    sections: [
+      {
+        id: "projectsPage",
+        title: "Projects page",
+        description: "The header above the list of all projects.",
+        anchor: "/projects",
+        elsewhere: [
+          { label: "Add and edit projects", href: "/admin/projects" },
+        ],
+        fields: [
+          text("projectsTitle", "Heading", "Our projects"),
+          area("projectsIntro", "Text under the heading", "Homes, offices, warehouses and renovations we have designed and built."),
+          image("projectsImage", "Header photo", "If empty, the first project's cover is used."),
+          text("projectsEmpty", "Text when no project is published", "Projects will be published here soon."),
+        ],
+      },
+      {
+        id: "project",
+        title: "Every project page",
+        description: "Headings shared by all project pages. Each project's own text, facts and photos are edited on the project.",
+        elsewhere: [
+          { label: "A project's text, facts and photos", href: "/admin/projects" },
+        ],
+        fields: [
+          text("projectAboutTitle", "Description heading", "About the project"),
+          text("projectOverviewTitle", "Facts table heading", "Project overview"),
+          text("projectHighlightsTitle", "Highlights heading", "What we delivered"),
+          area("projectHighlightsIntro", "Highlights text", "The features, systems and finishes handed over on this project."),
+          text("projectVideoTitle", "Video heading", "Video tour"),
+          text("projectGalleryTitle", "Gallery heading", "Gallery"),
+        ],
+      },
     ],
   },
   {
     id: "news",
     title: "News page",
-    fields: [
-      text("newsTitle", "Heading", "News"),
-      area("newsIntro", "Text under the heading", "Contracts we have won, sites we have opened and projects we have handed over."),
-      image("newsImage", "Header photo", "If empty, the latest post's photo is used."),
-      text("newsEmpty", "Text when no news is published", "News will be published here soon."),
-      text("newsTimelineTitle", "Project timeline heading", "Project timeline", "On a post and on a project's page: the project's news from the win to the handover."),
-    ],
-  },
-  {
-    id: "project",
-    title: "Each project's page",
-    description: "Headings shared by every project page. The project's own text, facts and photos are edited on the project.",
-    fields: [
-      text("projectAboutTitle", "Description heading", "About the project"),
-      text("projectOverviewTitle", "Facts table heading", "Project overview"),
-      text("projectHighlightsTitle", "Highlights heading", "What we delivered"),
-      area("projectHighlightsIntro", "Highlights text", "The features, systems and finishes handed over on this project."),
-      text("projectVideoTitle", "Video heading", "Video tour"),
-      text("projectGalleryTitle", "Gallery heading", "Gallery"),
+    href: "/news",
+    sections: [
+      {
+        id: "newsPage",
+        title: "News page",
+        description: "The header above the news posts, and the timeline heading on posts and project pages.",
+        anchor: "/news",
+        elsewhere: [
+          { label: "Write and edit news posts", href: "/admin/news" },
+        ],
+        fields: [
+          text("newsTitle", "Heading", "News"),
+          area("newsIntro", "Text under the heading", "Contracts we have won, sites we have opened and projects we have handed over."),
+          image("newsImage", "Header photo", "If empty, the latest post's photo is used."),
+          text("newsEmpty", "Text when no news is published", "News will be published here soon."),
+          text("newsTimelineTitle", "Project timeline heading", "Project timeline", "On a post and on a project's page: the project's news from the win to the handover."),
+        ],
+      },
     ],
   },
   {
     id: "contact",
     title: "Contact page",
-    fields: [
-      text("contactPageTitle", "Heading", "Contact us"),
-      area("contactPageIntro", "Text under the heading", REPLY),
-      image("contactPageImage", "Photo beside the form", "If empty, a featured project's photo is used."),
-      text("contactDetailsTitle", "Contact details heading", "Contact details"),
-    ],
-  },
-  {
-    id: "form",
-    title: "Contact form",
-    fields: [
-      text("formButton", "Send button", "Send message"),
-      text("formSuccessTitle", "Message after sending", "Thank you! We received your message."),
-      text("formSuccessText", "Second line after sending", "Our team will get back to you shortly."),
+    href: "/contact",
+    sections: [
+      {
+        id: "contactPage",
+        title: "Contact page",
+        description: "The form on one side, a photo with the contact details on the other.",
+        anchor: "/contact",
+        elsewhere: [
+          { label: "Phone, email, address, hours and map", href: "/admin/settings#contact" },
+        ],
+        fields: [
+          text("contactPageTitle", "Heading", "Contact us"),
+          area("contactPageIntro", "Text under the heading", REPLY),
+          image("contactPageImage", "Photo beside the form", "If empty, a featured project's photo is used."),
+          text("contactDetailsTitle", "Contact details heading", "Contact details"),
+        ],
+      },
+      {
+        id: "form",
+        title: "Contact form",
+        description: "The form on this page and at the foot of the home page.",
+        anchor: "/contact",
+        fields: [
+          text("formButton", "Send button", "Send message"),
+          text("formSuccessTitle", "Message after sending", "Thank you! We received your message."),
+          text("formSuccessText", "Second line after sending", "Our team will get back to you shortly."),
+        ],
+      },
     ],
   },
 ];
 
-export const CONTENT_FIELDS = CONTENT_GROUPS.flatMap((g) => g.fields);
+/** Every section, in page order. */
+export const CONTENT_SECTIONS = CONTENT_PAGES.flatMap((p) => p.sections);
+
+export const CONTENT_FIELDS = CONTENT_SECTIONS.flatMap((s) => s.fields);
 
 export type Content = Record<string, string> & {
   /** True when a toggle field is on. */

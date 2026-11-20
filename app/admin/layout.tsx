@@ -7,7 +7,7 @@ import { Toaster } from "@/components/admin/toast";
 import { adminLogout } from "@/lib/actions/login";
 import { ensureAdmin, isPasswordLoginEnabled } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
-import { clients, leads, newsPosts, projects, services } from "@/lib/db/schema";
+import { clients, factTabs, leads, newsPosts, projects, services } from "@/lib/db/schema";
 
 export const metadata: Metadata = {
   title: { default: "Admin", template: "%s | Admin" },
@@ -17,13 +17,14 @@ export const metadata: Metadata = {
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await ensureAdmin();
   const db = await getDb();
-  const [passwordLogin, [newLeads], [projectCount], [newsCount], [serviceCount], [clientCount]] = await Promise.all([
+  const [passwordLogin, [newLeads], [projectCount], [newsCount], [serviceCount], [clientCount], [factCount]] = await Promise.all([
     isPasswordLoginEnabled(),
     db.select({ n: count() }).from(leads).where(eq(leads.status, "new")),
     db.select({ n: count() }).from(projects),
     db.select({ n: count() }).from(newsPosts),
     db.select({ n: count() }).from(services),
     db.select({ n: count() }).from(clients),
+    db.select({ n: count() }).from(factTabs),
   ]);
 
   return (
@@ -44,6 +45,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             { href: "/admin/news", label: "News", count: newsCount.n },
             { href: "/admin/services", label: "Services", count: serviceCount.n },
             { href: "/admin/clients", label: "Clients", count: clientCount.n },
+            { href: "/admin/facts", label: "Project facts", count: factCount.n },
             { href: "/admin/content", label: "Website content" },
             { href: "/admin/settings", label: "Site settings" },
           ]}
