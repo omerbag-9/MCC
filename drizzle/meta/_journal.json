@@ -169,6 +169,13 @@
       "when": 1794689898961,
       "tag": "0023_samir_william_branch_titles",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1794689998961,
+      "tag": "0024_clearer_client_logos",
+      "breakpoints": true
     }
   ]
 }

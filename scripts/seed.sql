@@ -43,7 +43,7 @@ INSERT INTO services (title, description, icon, sort_order) VALUES
 INSERT INTO clients (name, logo_key, url, sort_order) VALUES
   ('Al Ahly Mortgage Finance', '/clients/al-ahly-mortgage-finance.png', '', 1),
   ('Ayman Shahin Export Co.', '/clients/ayman-shahin-export.png', '', 2),
-  ('Light Logistics', '/clients/light-logistics.png', '', 3),
+  ('Light Logistics', '/clients/light-logistics.webp', '', 3),
   ('Style Design', '/clients/style-design.webp', '', 4),
   ('Samir William', '/clients/samir-william.png', '', 5),
   ('VS', '/clients/vs.png', '', 6),
@@ -51,7 +51,7 @@ INSERT INTO clients (name, logo_key, url, sort_order) VALUES
   ('Sheraton Cairo Hotel & Casino', '/clients/sheraton-cairo.png', '', 8),
   ('Redcon Properties', '/clients/redcon-properties.png', '', 9),
   ('New Giza', '/clients/new-giza.png', '', 10),
-  ('Crimson Bar and Grill', '/clients/crimson.png', '', 11),
+  ('Crimson Bar and Grill', '/clients/crimson.webp', '', 11),
   ('Specialty Coffee', '/clients/specialty-coffee.png', '', 12),
   ('Shanawany Group', '/clients/shanawany-group.png', '', 13),
   ('Italian Hospital Umberto I Cairo', '/clients/italian-hospital-cairo.png', '', 14),
