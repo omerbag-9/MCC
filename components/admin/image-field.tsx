@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { mediaUrl } from "@/lib/media";
 import { uploadMedia } from "@/lib/client/upload";
 import { slugify } from "@/lib/format";
@@ -18,6 +18,7 @@ export function ImageField({
   enabled = true,
   kind = "image",
   fromProjects = kind === "image",
+  fallbackKey = null,
 }: {
   name: string;
   label: string;
@@ -32,11 +33,14 @@ export function ImageField({
   kind?: "image" | "video";
   /** Offer "Choose from projects" (reuse a project photo); on for photos unless turned off. */
   fromProjects?: boolean;
+  /** What the site shows while no image is chosen (e.g. the project's cover), previewed faded. */
+  fallbackKey?: string | null;
 }) {
   const [key, setKey] = useState(defaultKey ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const id = `img-${name}`;
+  // Unique per field: a page can hold several forms with the same field (one per client or tab).
+  const id = `img-${name}-${useId().replace(/:/g, "")}`;
   const hidden = useRef<HTMLInputElement>(null);
 
   // Tell the surrounding form (EditorForm) that something changed, and follow its Discard (reset).
@@ -52,6 +56,7 @@ export function ImageField({
     return () => form.removeEventListener("reset", onReset);
   }, [defaultKey]);
   const preview = mediaUrl(key, mediaBase);
+  const fallback = !key ? mediaUrl(fallbackKey, mediaBase) : null;
 
   async function onFile(file: File | undefined) {
     if (!file) return;
@@ -82,6 +87,12 @@ export function ImageField({
           ) : preview ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={preview} alt="" className="size-full object-cover" />
+          ) : fallback ? (
+            <span className="relative size-full">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={fallback} alt="" className="size-full object-cover opacity-50" />
+              <span className="absolute inset-x-0 bottom-0 bg-white/85 px-1 py-0.5 text-center text-[11px] font-medium text-ink">Automatic</span>
+            </span>
           ) : (
             <span className="text-xs text-muted">{kind === "video" ? "No video" : "No image"}</span>
           )}

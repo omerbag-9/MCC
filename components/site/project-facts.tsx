@@ -7,14 +7,18 @@ import { ArrowRightIcon } from "./icons";
 export type FactsItem = {
   id: number;
   title: string;
-  slug: string;
   rows: [string, string][];
   photo: ReactNode;
+  /** The button's destination, or null for no button. */
+  href: string | null;
+  linkLabel: string;
+  /** Opens in a new tab (another website). */
+  external: boolean;
 };
 
 /**
- * One tab per featured project; each shows the project's facts as a table beside its photograph.
- * Arrow keys move between tabs. Without script the first project is shown.
+ * One tab per item chosen in Admin → Project facts; each shows its facts as a table beside its
+ * photograph. Arrow keys move between tabs. Without script the first tab is shown.
  */
 export function ProjectFacts({ items }: { items: FactsItem[] }) {
   const [active, setActive] = useState(0);
@@ -59,20 +63,29 @@ export function ProjectFacts({ items }: { items: FactsItem[] }) {
         className="grid animate-[toast-in_.45s_ease-out] gap-1 bg-navy-2 p-1 lg:grid-cols-2"
       >
         <div className="bg-ink p-6 sm:p-8">
-          <table className="w-full text-left">
-            <caption className="sr-only">Facts about {item.title}</caption>
-            <tbody>
-              {item.rows.map(([k, v], i) => (
-                <tr key={`${k}-${i}`} className={i % 2 === 0 ? "bg-navy-2" : ""}>
-                  <th scope="row" className="w-2/5 px-4 py-3 align-top font-normal text-on-navy-muted">{k || "—"}</th>
-                  <td className="px-4 py-3 font-semibold">{v}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <Link href={`/projects/${item.slug}`} className="link-arrow mt-8">
-            View {item.title} <ArrowRightIcon width={18} height={18} />
-          </Link>
+          {item.rows.length > 0 && (
+            <table className="mb-8 w-full text-left">
+              <caption className="sr-only">Facts about {item.title}</caption>
+              <tbody>
+                {item.rows.map(([k, v], i) => (
+                  <tr key={`${k}-${i}`} className={i % 2 === 0 ? "bg-navy-2" : ""}>
+                    <th scope="row" className="w-2/5 px-4 py-3 align-top font-normal text-on-navy-muted">{k || "—"}</th>
+                    <td className="px-4 py-3 font-semibold">{v}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {item.href &&
+            (item.external ? (
+              <a href={item.href} target="_blank" rel="noopener noreferrer" className="link-arrow">
+                {item.linkLabel} <ArrowRightIcon width={18} height={18} />
+              </a>
+            ) : (
+              <Link href={item.href} className="link-arrow">
+                {item.linkLabel} <ArrowRightIcon width={18} height={18} />
+              </Link>
+            ))}
         </div>
         <div className="relative min-h-72 overflow-hidden bg-ink">
           <div className="absolute inset-0">{item.photo}</div>

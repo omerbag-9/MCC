@@ -16,7 +16,14 @@ export type ContentField = {
   hint?: string;
 };
 
-export type ContentGroup = { id: string; title: string; description?: string; fields: ContentField[] };
+export type ContentGroup = {
+  id: string;
+  title: string;
+  description?: string;
+  fields: ContentField[];
+  /** Edited on that admin page (beside what it controls) instead of on Website content. */
+  adminPage?: string;
+};
 
 const text = (key: string, label: string, value: string, hint?: string): ContentField => ({ key, label, kind: "text", default: value, hint });
 const area = (key: string, label: string, value: string, hint?: string): ContentField => ({ key, label, kind: "textarea", default: value, hint });
@@ -52,10 +59,6 @@ export const CONTENT_GROUPS: ContentGroup[] = [
 
       toggle("showFeatured", "Show featured projects"),
       text("featuredTitle", "Featured projects heading", "Featured projects", "Choose which projects appear with 'Featured on the home page' on each project."),
-
-      toggle("showFacts", "Show the project facts section"),
-      text("factsTitle", "Project facts heading", "Project facts"),
-      area("factsIntro", "Project facts text", "The numbers behind our recent work: size, scope and what was delivered."),
 
       toggle("showClients", "Show the clients' logos"),
 
@@ -156,6 +159,16 @@ export const CONTENT_GROUPS: ContentGroup[] = [
       text("aboutClosing", "Closing line", "Engineering excellence, technical precision, commitment to quality."),
       text("aboutPageButton", "Closing button", "Talk to our team"),
       image("aboutClosingImage", "Closing section background photo", "Shown dark behind the closing line. If empty, a project photo is used."),
+    ],
+  },
+  {
+    id: "facts",
+    title: "Project facts section",
+    adminPage: "/admin/facts",
+    fields: [
+      toggle("showFacts", "Show the project facts section on the home page"),
+      text("factsTitle", "Heading", "Project facts"),
+      area("factsIntro", "Text beside the heading", "The numbers behind our recent work: size, scope and what was delivered."),
     ],
   },
   {

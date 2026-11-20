@@ -7,6 +7,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getDb } from "@/lib/db/client";
 import {
   clients,
+  factTabs,
   LEAD_STATUSES,
   leads,
   NEWS_KINDS,
@@ -18,9 +19,10 @@ import {
   settings,
 } from "@/lib/db/schema";
 import { getMediaBase, getMediaBucket } from "@/lib/env";
-import { CONTENT_FIELDS } from "@/lib/content";
+import { CONTENT_GROUPS } from "@/lib/content";
 import { slugify } from "@/lib/format";
 import { MEDIA_KEY_PATTERN, mediaUrl } from "@/lib/media";
+import { FACT_LINK_PAGES } from "@/lib/facts";
 import { defaultNewsTitle, KIND_TO_STATUS, PROJECT_KINDS } from "@/lib/news";
 import { revalidateSite } from "@/lib/revalidate";
 
@@ -80,6 +82,7 @@ async function deleteObjects(keys: (string | null | undefined)[]) {
           .limit(1),
         db.select({ id: services.id }).from(services).where(eq(services.imageKey, key)).limit(1),
         db.select({ id: clients.id }).from(clients).where(eq(clients.logoKey, key)).limit(1),
+        db.select({ id: factTabs.id }).from(factTabs).where(eq(factTabs.imageKey, key)).limit(1),
         db
           .select({ id: settings.id })
           .from(settings)
@@ -168,11 +171,20 @@ export async function saveSettings(formData: FormData): Promise<ActionResult> {
   return { ok: true };
 }
 
-/** Saves Admin → Website content: every field of lib/content.ts, as one JSON object. */
+/**
+ * Saves fields of lib/content.ts into one JSON object. Only the groups that were on the form
+ * (named by their hidden c__groups inputs) change, so Website content and the pages that edit a
+ * section beside its items (Admin → Project facts) never overwrite each other.
+ */
 export async function saveContent(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
-  const content: Record<string, string> = {};
-  for (const f of CONTENT_FIELDS) {
+  const db = await getDb();
+  const previous = await db.query.settings.findFirst({ where: eq(settings.id, 1) });
+  const onForm = new Set(formData.getAll("c__groups").map(String));
+  const fields = CONTENT_GROUPS.filter((g) => onForm.has(g.id)).flatMap((g) => g.fields);
+  if (fields.length === 0) return { ok: false, error: "Nothing to save" };
+  const content: Record<string, string> = { ...(previous?.content ?? {}) };
+  for (const f of fields) {
     const raw = String(formData.get(`c_${f.key}`) ?? "").trim();
     if (f.kind === "toggle") content[f.key] = formData.get(`c_${f.key}`) === "on" ? "1" : "0";
     else if (f.kind === "image") {
@@ -181,15 +193,13 @@ export async function saveContent(formData: FormData): Promise<ActionResult> {
     } else content[f.key] = raw.slice(0, f.kind === "textarea" ? 600 : 160);
   }
 
-  const db = await getDb();
-  const previous = await db.query.settings.findFirst({ where: eq(settings.id, 1) });
   await db
     .insert(settings)
     .values({ id: 1, content })
     .onConflictDoUpdate({ target: settings.id, set: { content, updatedAt: new Date() } });
 
   // Photos that were replaced or removed go to the bucket's trash.
-  const replaced = CONTENT_FIELDS.filter((f) => f.kind === "image")
+  const replaced = fields.filter((f) => f.kind === "image")
     .map((f) => previous?.content?.[f.key])
     .filter((k): k is string => !!k && !Object.values(content).includes(k));
   if (replaced.length) await deleteObjects(replaced.flatMap((k) => [k, thumbOf(k)]));
@@ -272,8 +282,12 @@ export async function deleteProject(id: number) {
   await db.update(newsPosts).set({ projectId: null }).where(eq(newsPosts.projectId, id));
   // Its client keeps its logo, which links to the client's website again.
   await db.update(clients).set({ projectId: null }).where(eq(clients.projectId, id));
+  // Its Project facts tabs go; a tab whose button opened it goes back to its own project's page.
+  const tabs = await db.query.factTabs.findMany({ where: eq(factTabs.projectId, id), columns: { imageKey: true } });
+  await db.delete(factTabs).where(eq(factTabs.projectId, id));
+  await db.update(factTabs).set({ link: "" }).where(eq(factTabs.link, `project:${id}`));
   await db.delete(projects).where(eq(projects.id, id));
-  await deleteObjects(media.flatMap((m) => [m.key, m.thumbKey]));
+  await deleteObjects([...media.flatMap((m) => [m.key, m.thumbKey]), ...tabs.flatMap((t) => [t.imageKey, thumbOf(t.imageKey)])]);
   revalidateSite();
   redirect("/admin/projects?deleted=1");
 }
@@ -418,7 +432,7 @@ export async function deleteMedia(mediaId: number, projectId: number): Promise<A
 
 /* ----------------------------------------------------------------------------- Ordering */
 
-const REORDERABLE = { projects, services, clients } as const;
+const REORDERABLE = { projects, services, clients, factTabs } as const;
 export type Reorderable = keyof typeof REORDERABLE;
 
 /** Saves a drag-and-drop order: each id gets its position as sort order. */
@@ -667,6 +681,60 @@ export async function deleteClient(id: number) {
   await deleteObjects([previous?.logoKey, thumbOf(previous?.logoKey ?? null)]);
   revalidateSite();
   redirect("/admin/clients?deleted=1");
+}
+
+/* ----------------------------------------------------------------------------- Project facts */
+
+const factTabSchema = z
+  .object({
+    projectId: optionalId,
+    title: str(120),
+    rows: str(4000),
+    imageKey: mediaKey,
+    /** "" the tab's project page, "none", "project:<id>", one of FACT_LINK_PAGES, or "custom". */
+    linkChoice: z.string().trim().max(40),
+    /** The address typed when linkChoice is "custom": a site path or a full https link. */
+    linkUrl: str(500),
+    linkLabel: str(80),
+    visible: checkbox,
+  })
+  .superRefine((v, ctx) => {
+    if (!v.projectId && !v.title) ctx.addIssue({ code: "custom", path: ["title"], message: "pick a project or write a tab name" });
+    const known = v.linkChoice === "" || v.linkChoice === "none" || /^project:\d+$/.test(v.linkChoice) || FACT_LINK_PAGES.some(([href]) => href === v.linkChoice);
+    if (v.linkChoice === "custom") {
+      const ok = /^\/[^\s]*$/.test(v.linkUrl) || /^https?:\/\/[^\s]+\.[^\s]+$/.test(v.linkUrl);
+      if (!ok) ctx.addIssue({ code: "custom", path: ["linkUrl"], message: "write a page of this site (like /contact) or a full link starting with https://" });
+    } else if (!known) ctx.addIssue({ code: "custom", path: ["linkChoice"], message: "choose where the button goes" });
+    if (!v.projectId && v.linkChoice === "") ctx.addIssue({ code: "custom", path: ["linkChoice"], message: "a tab without a project needs another destination for its button, or no button" });
+  });
+
+export async function saveFactTab(id: number | null, formData: FormData) {
+  await requireAdmin();
+  const parsed = factTabSchema.safeParse(form(formData));
+  if (!parsed.success) fail("/admin/facts", firstError(parsed.error));
+  const { linkChoice, linkUrl, ...rest } = parsed.data;
+  const values = { ...rest, link: linkChoice === "custom" ? linkUrl : linkChoice };
+  const db = await getDb();
+  if (id) {
+    const previous = await db.query.factTabs.findFirst({ where: eq(factTabs.id, id) });
+    await db.update(factTabs).set(values).where(eq(factTabs.id, id));
+    if (previous?.imageKey && previous.imageKey !== values.imageKey) await deleteObjects([previous.imageKey, thumbOf(previous.imageKey)]);
+  } else {
+    const [last] = await db.select({ n: sql<number>`coalesce(max(${factTabs.sortOrder}), 0)` }).from(factTabs);
+    await db.insert(factTabs).values({ ...values, sortOrder: (last?.n ?? 0) + 1 });
+  }
+  revalidateSite();
+  redirect(`/admin/facts?saved=1${id ? `#tab-${id}` : ""}`);
+}
+
+export async function deleteFactTab(id: number) {
+  await requireAdmin();
+  const db = await getDb();
+  const previous = await db.query.factTabs.findFirst({ where: eq(factTabs.id, id) });
+  await db.delete(factTabs).where(eq(factTabs.id, id));
+  await deleteObjects([previous?.imageKey, thumbOf(previous?.imageKey ?? null)]);
+  revalidateSite();
+  redirect("/admin/facts?deleted=1");
 }
 
 /* ----------------------------------------------------------------------------- Leads */

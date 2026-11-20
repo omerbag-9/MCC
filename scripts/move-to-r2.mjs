@@ -64,6 +64,7 @@ const COLUMNS = [
   ["project_media", "thumb_key"],
   ["news_posts", "cover_key"],
   ["clients", "logo_key"],
+  ["fact_tabs", "image_key"],
 ];
 
 const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80) || "unnamed";
@@ -84,6 +85,7 @@ for (const p of query("SELECT slug, cover_key, story_image_key, overview_image_k
 for (const n of query("SELECT slug, cover_key FROM news_posts")) home(n.cover_key, `news/${n.slug}`);
 for (const c of query("SELECT name, logo_key FROM clients")) home(c.logo_key, `clients/${slug(c.name)}`);
 for (const s of query("SELECT title, image_key FROM services")) home(s.image_key, `site/services/${slug(s.title)}`);
+for (const t of query("SELECT image_key FROM fact_tabs")) home(t.image_key, "site/pages/project-facts");
 const [settings] = query("SELECT hero_image_key, hero_video_key, content FROM settings WHERE id = 1");
 home(settings?.hero_image_key, "site/hero");
 home(settings?.hero_video_key, "site/hero");

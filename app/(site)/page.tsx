@@ -7,7 +7,6 @@ import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, StrengthIcon } from "@/co
 import { LeadForm } from "@/components/site/lead-form";
 import { NewsCard } from "@/components/site/news-card";
 import { ProjectFacts } from "@/components/site/project-facts";
-import { formatArea } from "@/components/site/project-card";
 import { Photo, photoPool } from "@/components/site/photo";
 import { Reveal } from "@/components/site/reveal";
 import { ServicesExplorer } from "@/components/site/services-explorer";
@@ -15,13 +14,14 @@ import { Stat } from "@/components/site/stat";
 import {
   getClients,
   getContent,
+  getFactTabs,
   getFeaturedProjects,
   getPublishedNews,
   getPublishedServices,
   getSettings,
 } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl, getVar } from "@/lib/env";
-import { lines, paragraphs, specRows } from "@/lib/format";
+import { lines, paragraphs } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { mapsLink } from "@/lib/maps";
 import { jsonLdScript, organizationJsonLd } from "@/lib/seo";
@@ -31,11 +31,12 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 const thumbOf = (key: string | null) => (key ? key.replace(/\.(\w+)$/, "-thumb.$1") : null);
 
 export default async function HomePage() {
-  const [settings, c, services, featured, clients, news, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
+  const [settings, c, services, featured, factTabs, clients, news, mediaBase, siteUrl, turnstileSiteKey] = await Promise.all([
     getSettings(),
     getContent(),
     getPublishedServices(),
     getFeaturedProjects(),
+    getFactTabs(),
     getClients(),
     getPublishedNews(3),
     getMediaBase(),
@@ -54,21 +55,9 @@ export default async function HomePage() {
   const showcase = featured.slice(0, 3);
   const strengths = lines(settings.strengths);
   const whyPhoto = c.whyImage || (pool.next() ?? aboutPhoto);
-  const facts = featured.slice(0, 4).map((p) => ({
-    id: p.id,
-    title: p.title,
-    slug: p.slug,
-    rows: [
-      ...([
-        ["Category", p.category],
-        ["Location", p.location],
-        ["Completed", p.year?.toString() ?? ""],
-        ["Area", formatArea(p.areaM2) ?? ""],
-        ["Client", p.client],
-      ].filter(([, v]) => v) as [string, string][]),
-      ...specRows(p.specs),
-    ].slice(0, 9),
-    photo: <Photo mediaBase={mediaBase} src={p.coverKey} alt={p.title} sizes="(min-width: 1024px) 50vw, 100vw" />,
+  const facts = factTabs.map(({ imageKey, ...t }) => ({
+    ...t,
+    photo: <Photo mediaBase={mediaBase} src={imageKey} alt={t.title} sizes="(min-width: 1024px) 50vw, 100vw" />,
   }));
 
   return (
@@ -250,7 +239,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Project facts: one tab per featured project, its facts beside its photograph */}
+      {/* Project facts: the tabs chosen in Admin → Project facts, each one's facts beside its photograph */}
       {c.on("showFacts") && facts.length > 0 && (
         <section className="section-y bg-ink text-paper" aria-labelledby="facts-title">
           <div className="container-x">

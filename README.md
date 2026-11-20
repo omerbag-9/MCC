@@ -89,6 +89,8 @@ Dev deploys automatically from the `dev` branch to `https://mcc-dev.<your-subdom
 
 **Photos and logos live only in Cloudflare R2, never in this repository.** Every picture on the site (project photos, client logos, the hero, service and page photos, news photos) is uploaded in the admin and served from the environment's media bucket. The company's projects and clients were first added by migrations (`drizzle/0013`–`0019`) with images bundled in the repository; each live environment uploaded those to its bucket, and the files were then removed from the repository. A fresh local or staging database still gets those rows from the migrations, with pictures that show empty until replaced in the admin. Edit, reorder or remove projects and clients in Admin → Projects and Admin → Clients.
 
+**Project facts (home page):** Admin → Project facts holds the section's switch, heading and text, and its tabs (`fact_tabs`), in order. Each tab picks a project or none, and can set its own name, facts table (one `Label: value` per line), photo and button (the tab's project page, another project, a page of the site, any link, or no button). Anything left empty follows the project and stays up to date (`lib/facts.ts`). Deleting a project removes its tabs.
+
 Open `/admin` on the dev address and sign in with `ADMIN_PASSWORD`. The password login exists **only on dev** and only while Cloudflare Access isn't configured there; staging and production always require Access.
 
 ## First deployment (staging / production)
@@ -225,7 +227,7 @@ news/<post>/<file>.webp
 clients/<client>/<file>.png
 site/hero/<file>                          hero photo and video
 site/services/<service>/<file>
-site/pages/<section>/<file>               photos set in Admin → Website content
+site/pages/<section>/<file>               photos set in Admin → Website content and Admin → Project facts
 ```
 
 Uploaded files are named `<date>-<id>`; the first real photos keep their order as `001`, `002`, … and the first logos are `logo.<ext>`. Files uploaded before this layout (`<area>/<year>/<uuid>`) are moved into their folder by the deploy, named `<year>-<id>`, and the old copy goes to `trash/` for 30 days (`scripts/move-to-r2.mjs`). The same step moves files that nothing on the site uses any more (older than a day, so unsaved uploads are safe) to `trash/` as well; it needs `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` to list the bucket and is skipped without them.

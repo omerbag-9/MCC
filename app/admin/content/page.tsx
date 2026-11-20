@@ -1,12 +1,12 @@
+import Link from "next/link";
+import { ContentFields } from "@/components/admin/content-fields";
 import { EditorForm } from "@/components/admin/editor-form";
-import { ImageField } from "@/components/admin/image-field";
-import { Card, Checkbox, Flash, PageHeader, TextArea, TextField } from "@/components/admin/ui";
+import { Card, Flash, PageHeader } from "@/components/admin/ui";
 import { saveContent } from "@/lib/actions/admin";
 import { ensureAdmin } from "@/lib/auth";
-import { CONTENT_GROUPS, isRetiredDefault } from "@/lib/content";
+import { CONTENT_GROUPS } from "@/lib/content";
 import { getDb } from "@/lib/db/client";
 import { getMediaBase, getMediaBucket } from "@/lib/env";
-import { slugify } from "@/lib/format";
 
 export const metadata = { title: "Website content" };
 
@@ -29,22 +29,22 @@ export default async function ContentAdmin({ searchParams }: { searchParams: Pro
         {CONTENT_GROUPS.map((g) => (
           <section key={g.id} id={g.id}>
             <h2 className="mb-1 font-semibold">{g.title}</h2>
-            {g.description && <p className="mb-3 text-sm text-muted">{g.description}</p>}
-            <Card className="space-y-5">
-              {g.fields.map((f) => {
-                const name = `c_${f.key}`;
-                const value = isRetiredDefault(f.key, saved[f.key]) ? undefined : saved[f.key];
-                if (f.kind === "toggle")
-                  return <Checkbox key={f.key} name={name} label={f.label} defaultChecked={(value ?? f.default) === "1"} />;
-                if (f.kind === "image")
-                  return (
-                    <ImageField key={f.key} name={name} label={f.label} path={`site/pages/${slugify(f.key.replace(/([a-z])([A-Z])/g, "$1-$2"))}`} defaultKey={value || null} mediaBase={mediaBase} enabled={!!bucket} hint={f.hint} />
-                  );
-                if (f.kind === "textarea")
-                  return <TextArea key={f.key} name={name} label={f.label} defaultValue={value ?? ""} placeholder={f.default} rows={3} hint={f.hint} />;
-                return <TextField key={f.key} name={name} label={f.label} defaultValue={value ?? ""} placeholder={f.default} hint={f.hint} />;
-              })}
-            </Card>
+            {g.adminPage ? (
+              <Card>
+                <p className="text-sm text-muted">
+                  Edited with the section itself, in{" "}
+                  <Link href={g.adminPage} className="font-medium text-ink underline underline-offset-4">
+                    {g.title.replace(/ section$/, "")}
+                  </Link>
+                  .
+                </p>
+              </Card>
+            ) : (
+              <>
+                {g.description && <p className="mb-3 text-sm text-muted">{g.description}</p>}
+                <ContentFields group={g} saved={saved} mediaBase={mediaBase} uploads={!!bucket} />
+              </>
+            )}
           </section>
         ))}
       </EditorForm>
