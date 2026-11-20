@@ -23,7 +23,7 @@ export function SectionCard({
   uploads: boolean;
 }) {
   const toggle = section.toggle ? section.fields.find((f) => f.key === section.toggle) : undefined;
-  const shown = toggle ? (saved[toggle.key] ?? toggle.default) === "1" : true;
+  const shown = toggle ? saved[toggle.key] !== "0" : true;
 
   // The card's fields in the order they appear on the site: its own and the Site settings ones.
   const own = section.fields.filter((f) => f.key !== section.toggle);

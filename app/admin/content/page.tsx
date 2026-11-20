@@ -25,8 +25,8 @@ export default async function ContentAdmin({ searchParams }: { searchParams: Pro
       <PageHeader title="Website content" />
       <p className="-mt-3 mb-4 max-w-3xl text-sm text-muted">
         Everything the website&apos;s pages say and show, page by page and section by section, in the order visitors see
-        them. A text left empty shows the default wording in grey. Write <code>{"{company}"}</code> for the company name.
-        Edits on several tabs are saved together.
+        them. A text left empty is not shown on the website. Write <code>{"{company}"}</code> for the company name. Edits
+        on several tabs are saved together.
       </p>
       <Flash searchParams={params} />
 

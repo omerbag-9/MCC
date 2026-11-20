@@ -24,15 +24,19 @@ import {
  * directly), so after each deploy every page renders from D1 on its first visit.
  */
 
+/**
+ * Empty settings: used while building, and if the database can't be read. Everything the site says
+ * comes from the database (Admin → Website content and Site settings); the code holds no copy.
+ */
 export const DEFAULT_SETTINGS: Settings = {
   id: 1,
-  companyName: "MCC Construction",
-  tagline: "Building with integrity",
-  heroTitle: "We build what lasts",
-  heroSubtitle: "Residential, commercial and industrial construction delivered on time and on budget.",
+  companyName: "",
+  tagline: "",
+  heroTitle: "",
+  heroSubtitle: "",
   heroImageKey: null,
   heroVideoKey: null,
-  aboutTitle: "About us",
+  aboutTitle: "",
   aboutBody: "",
   strengths: "",
   content: {},
@@ -40,7 +44,7 @@ export const DEFAULT_SETTINGS: Settings = {
   phone: "",
   email: "",
   whatsappNumber: "",
-  whatsappMessage: "Hello, I'd like to get in touch.",
+  whatsappMessage: "",
   address: "",
   workingHours: "",
   mapEmbedUrl: "",

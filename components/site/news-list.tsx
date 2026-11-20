@@ -75,7 +75,7 @@ export async function NewsList({ page }: { page: number }) {
             </ol>
           </nav>
           <h1 className="mt-5 text-display font-semibold">{c.newsTitle}</h1>
-          <p className="mt-5 max-w-xl text-lead text-paper/90">{c.newsIntro}</p>
+          {c.newsIntro && <p className="mt-5 max-w-xl text-lead text-paper/90">{c.newsIntro}</p>}
         </Reveal>
       </section>
 

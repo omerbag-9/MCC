@@ -50,9 +50,7 @@ export default async function ProjectsPage() {
             </ol>
           </nav>
           <h1 className="mt-5 text-display font-semibold">{c.projectsTitle}</h1>
-          <p className="mt-5 max-w-xl text-lead text-paper/90">
-            {c.projectsIntro}
-          </p>
+          {c.projectsIntro && <p className="mt-5 max-w-xl text-lead text-paper/90">{c.projectsIntro}</p>}
         </Reveal>
         {record.length > 0 && projects.length > 0 && (
           <div className="bg-ink">

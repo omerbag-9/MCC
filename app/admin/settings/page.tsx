@@ -43,7 +43,15 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
               <TextField name="address" label="Address" defaultValue={s.address} />
             </div>
             <TextField name="workingHours" label="Working hours" defaultValue={s.workingHours} placeholder="Sat–Thu, 9:00–17:00" />
-            <TextField name="mapEmbedUrl" label="Google Maps embed URL" defaultValue={s.mapEmbedUrl} hint="Shown on the contact page; the address links to the same place. A search works (https://www.google.com/maps?q=MCC%20CONSTRUCTION&amp;output=embed), or for an exact pin: Google Maps → Share → Embed a map → copy the src=&quot;…&quot; link." />
+            <div className="sm:col-span-2">
+              <TextArea
+                name="mapEmbedUrl"
+                label="Map on the contact page"
+                defaultValue={s.mapEmbedUrl}
+                rows={3}
+                hint="In Google Maps, open MCC CONSTRUCTION → Share → Embed a map → Copy HTML, and paste it here as it is. The map shows at the foot of the contact page, and the address everywhere on the site opens the same place."
+              />
+            </div>
           </Card>
         </section>
 

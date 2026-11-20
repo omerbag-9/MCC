@@ -94,11 +94,13 @@ export default async function HomePage() {
                 <p className="mt-6 max-w-xl text-lead text-paper/90">{settings.heroSubtitle}</p>
               </Reveal>
             )}
-            <Reveal delay={0.5} className="mt-9 flex flex-wrap items-center gap-3">
-              <Link href="/projects" className="btn-light">
-                {c.projectsButton} <ArrowRightIcon width={18} height={18} />
-              </Link>
-            </Reveal>
+            {c.projectsButton && (
+              <Reveal delay={0.5} className="mt-9 flex flex-wrap items-center gap-3">
+                <Link href="/projects" className="btn-light">
+                  {c.projectsButton} <ArrowRightIcon width={18} height={18} />
+                </Link>
+              </Reveal>
+            )}
           </div>
         </div>
 
@@ -134,16 +136,18 @@ export default async function HomePage() {
             )}
           </Reveal>
           <Reveal className="lg:col-span-6">
-            <h2 className="text-head font-semibold">{settings.aboutTitle || `About ${settings.companyName}`}</h2>
+            {settings.aboutTitle && <h2 className="text-head font-semibold">{settings.aboutTitle}</h2>}
             {about.map((p, i) => (
               <p key={i} className={i === 0 ? "mt-6 text-lead" : "mt-4"}>
                 {p}
               </p>
             ))}
             <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
-              <Link href="/contact" className="btn-primary">
-                {c.aboutButton}
-              </Link>
+              {c.aboutButton && (
+                <Link href="/contact" className="btn-primary">
+                  {c.aboutButton}
+                </Link>
+              )}
               <Link href="/about" className="link-arrow">
                 More about us <ArrowRightIcon width={18} height={18} />
               </Link>
@@ -158,7 +162,7 @@ export default async function HomePage() {
           <div className="container-x grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
             <Reveal className="lg:col-span-5">
               <h2 id="why-title" className="text-head font-semibold">{c.whyTitle}</h2>
-              <p className="mt-5 max-w-md text-lead">{c.whyIntro}</p>
+              {c.whyIntro && <p className="mt-5 max-w-md text-lead">{c.whyIntro}</p>}
               <div className="mt-8 aspect-[16/10] overflow-hidden bg-ink">
                 <Photo mediaBase={mediaBase} src={whyPhoto} alt={`${settings.companyName} on site`} sizes="(min-width: 1024px) 40vw, 100vw" />
               </div>
@@ -183,9 +187,7 @@ export default async function HomePage() {
           <div className="container-x">
             <Reveal className="mb-12 grid gap-6 lg:grid-cols-12 lg:items-end">
               <h2 className="text-head font-semibold lg:col-span-5">{c.servicesTitle}</h2>
-              <p className="max-w-xl text-on-navy-muted lg:col-span-7">
-                {c.servicesIntro}
-              </p>
+              {c.servicesIntro && <p className="max-w-xl text-on-navy-muted lg:col-span-7">{c.servicesIntro}</p>}
             </Reveal>
             <Reveal>
               <ServicesExplorer
@@ -245,7 +247,7 @@ export default async function HomePage() {
           <div className="container-x">
             <Reveal className="mb-10 grid gap-6 lg:grid-cols-12 lg:items-end">
               <h2 id="facts-title" className="text-head font-semibold lg:col-span-5">{c.factsTitle}</h2>
-              <p className="max-w-xl text-on-navy-muted lg:col-span-7">{c.factsIntro}</p>
+              {c.factsIntro && <p className="max-w-xl text-on-navy-muted lg:col-span-7">{c.factsIntro}</p>}
             </Reveal>
             <Reveal>
               <ProjectFacts items={facts} />
@@ -298,9 +300,7 @@ export default async function HomePage() {
         <div className="container-x section-y grid gap-12 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-5">
             <h2 id="contact-title" className="text-head font-semibold">{c.contactTitle}</h2>
-            <p className="mt-5 max-w-md text-lead text-paper/90">
-              {c.contactIntro}
-            </p>
+            {c.contactIntro && <p className="mt-5 max-w-md text-lead text-paper/90">{c.contactIntro}</p>}
             <ul className="mt-10 grid gap-1">
               {settings.phone && (
                 <li>

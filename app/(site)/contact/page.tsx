@@ -41,9 +41,7 @@ export default async function ContactPage() {
         <div className="px-5 pt-14 pb-20 sm:px-8 lg:px-12 lg:pt-20 lg:pb-28">
           <Reveal className="lg:max-w-xl">
             <h1 className="text-display font-semibold">{c.contactPageTitle}</h1>
-            <p className="mt-5 text-lead">
-              {c.contactPageIntro}
-            </p>
+            {c.contactPageIntro && <p className="mt-5 text-lead">{c.contactPageIntro}</p>}
             <div className="mt-8 flex flex-wrap gap-2 lg:hidden">
               {settings.phone && (
                 <a href={`tel:${settings.phone.replace(/\s/g, "")}`} className="btn-primary">

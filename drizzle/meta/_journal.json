@@ -183,6 +183,20 @@
       "when": 1795207166183,
       "tag": "0025_project_fact_tabs",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1795207266183,
+      "tag": "0026_content_in_database",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1795207366183,
+      "tag": "0027_mcc_map_pin",
+      "breakpoints": true
     }
   ]
 }
