@@ -19,7 +19,7 @@ import {
   settings,
 } from "@/lib/db/schema";
 import { getMediaBase, getMediaBucket } from "@/lib/env";
-import { CONTENT_GROUPS } from "@/lib/content";
+import { CONTENT_SECTIONS } from "@/lib/content";
 import { slugify } from "@/lib/format";
 import { MEDIA_KEY_PATTERN, mediaUrl } from "@/lib/media";
 import { FACT_LINK_PAGES } from "@/lib/facts";
@@ -140,68 +140,73 @@ const settingsSchema = z.object({
   seoDescription: str(300),
 });
 
+/** Saves Admin → Site settings. Only the fields on the form change (see saveSiteFields). */
 export async function saveSettings(formData: FormData): Promise<ActionResult> {
-  await requireAdmin();
-  const raw = form(formData);
-  const parsed = settingsSchema.safeParse(raw);
-  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  return saveSiteFields(formData);
+}
 
-  const stats: { value: string; label: string }[] = [];
-  for (let i = 0; i < 3; i++) {
-    const value = String(raw[`stat_value_${i}`] ?? "").trim().slice(0, 20);
-    const label = String(raw[`stat_label_${i}`] ?? "").trim().slice(0, 60);
-    if (value && label) stats.push({ value, label });
-  }
-
-  const data = { ...parsed.data, stats };
-  const db = await getDb();
-  const previous = await db.query.settings.findFirst({ where: eq(settings.id, 1) });
-  await db
-    .insert(settings)
-    .values({ id: 1, ...data })
-    .onConflictDoUpdate({ target: settings.id, set: { ...data, updatedAt: new Date() } });
-
-  if (previous?.heroImageKey && previous.heroImageKey !== data.heroImageKey) {
-    await deleteObjects([previous.heroImageKey, thumbOf(previous.heroImageKey)]);
-  }
-  if (previous?.heroVideoKey && previous.heroVideoKey !== data.heroVideoKey) {
-    await deleteObjects([previous.heroVideoKey]);
-  }
-  revalidateSite();
-  return { ok: true };
+/** Saves Admin → Website content and the section fields of Admin → Project facts. */
+export async function saveContent(formData: FormData): Promise<ActionResult> {
+  return saveSiteFields(formData);
 }
 
 /**
- * Saves fields of lib/content.ts into one JSON object. Only the groups that were on the form
- * (named by their hidden c__groups inputs) change, so Website content and the pages that edit a
- * section beside its items (Admin → Project facts) never overwrite each other.
+ * Saves whatever site-wide fields a form holds, and nothing else, so each admin page can edit its
+ * part without touching the rest:
+ * - Site settings columns (company, contact, the home page's hero, about text, points…), by name
+ * - the figures under the hero, when their stat_value_<n> inputs are on the form
+ * - lib/content.ts fields of the sections named by the form's hidden c__groups inputs
  */
-export async function saveContent(formData: FormData): Promise<ActionResult> {
+async function saveSiteFields(formData: FormData): Promise<ActionResult> {
   await requireAdmin();
+  const raw = form(formData);
+
+  const present = Object.fromEntries(Object.keys(settingsSchema.shape).filter((k) => k in raw).map((k) => [k, raw[k]]));
+  const parsed = settingsSchema.partial().safeParse(present);
+  if (!parsed.success) return { ok: false, error: firstError(parsed.error) };
+  const columns: Partial<typeof settings.$inferInsert> = { ...parsed.data };
+  if ("stat_value_0" in raw) {
+    const stats: { value: string; label: string }[] = [];
+    for (let i = 0; i < 3; i++) {
+      const value = String(raw[`stat_value_${i}`] ?? "").trim().slice(0, 20);
+      const label = String(raw[`stat_label_${i}`] ?? "").trim().slice(0, 60);
+      if (value && label) stats.push({ value, label });
+    }
+    columns.stats = stats;
+  }
+
   const db = await getDb();
   const previous = await db.query.settings.findFirst({ where: eq(settings.id, 1) });
   const onForm = new Set(formData.getAll("c__groups").map(String));
-  const fields = CONTENT_GROUPS.filter((g) => onForm.has(g.id)).flatMap((g) => g.fields);
-  if (fields.length === 0) return { ok: false, error: "Nothing to save" };
-  const content: Record<string, string> = { ...(previous?.content ?? {}) };
-  for (const f of fields) {
-    const raw = String(formData.get(`c_${f.key}`) ?? "").trim();
-    if (f.kind === "toggle") content[f.key] = formData.get(`c_${f.key}`) === "on" ? "1" : "0";
-    else if (f.kind === "image") {
-      if (raw && !MEDIA_KEY_PATTERN.test(raw)) return { ok: false, error: `${f.label}: invalid image` };
-      content[f.key] = raw;
-    } else content[f.key] = raw.slice(0, f.kind === "textarea" ? 600 : 160);
+  const fields = CONTENT_SECTIONS.filter((g) => onForm.has(g.id)).flatMap((g) => g.fields);
+  if (fields.length > 0) {
+    const content: Record<string, string> = { ...(previous?.content ?? {}) };
+    for (const f of fields) {
+      const value = String(formData.get(`c_${f.key}`) ?? "").trim();
+      if (f.kind === "toggle") content[f.key] = formData.get(`c_${f.key}`) === "on" ? "1" : "0";
+      else if (f.kind === "image") {
+        if (value && !MEDIA_KEY_PATTERN.test(value)) return { ok: false, error: `${f.label}: invalid image` };
+        content[f.key] = value;
+      } else content[f.key] = value.slice(0, f.kind === "textarea" ? 600 : 160);
+    }
+    columns.content = content;
   }
+  if (Object.keys(columns).length === 0) return { ok: false, error: "Nothing to save" };
 
   await db
     .insert(settings)
-    .values({ id: 1, content })
-    .onConflictDoUpdate({ target: settings.id, set: { content, updatedAt: new Date() } });
+    .values({ id: 1, ...columns })
+    .onConflictDoUpdate({ target: settings.id, set: { ...columns, updatedAt: new Date() } });
 
-  // Photos that were replaced or removed go to the bucket's trash.
-  const replaced = fields.filter((f) => f.kind === "image")
-    .map((f) => previous?.content?.[f.key])
-    .filter((k): k is string => !!k && !Object.values(content).includes(k));
+  // Photos and videos that were replaced or removed go to the bucket's trash.
+  const replaced = [
+    "heroImageKey" in columns && previous?.heroImageKey !== columns.heroImageKey ? previous?.heroImageKey : null,
+    "heroVideoKey" in columns && previous?.heroVideoKey !== columns.heroVideoKey ? previous?.heroVideoKey : null,
+    ...fields
+      .filter((f) => f.kind === "image")
+      .map((f) => previous?.content?.[f.key])
+      .filter((k) => !!k && !Object.values(columns.content ?? {}).includes(k as string)),
+  ].filter((k): k is string => !!k);
   if (replaced.length) await deleteObjects(replaced.flatMap((k) => [k, thumbOf(k)]));
   revalidateSite();
   return { ok: true };

@@ -8,7 +8,7 @@ import { SortableList } from "@/components/admin/sortable-list";
 import { Badge, Card, Flash, PageHeader } from "@/components/admin/ui";
 import { deleteFactTab, saveContent, saveFactTab } from "@/lib/actions/admin";
 import { ensureAdmin } from "@/lib/auth";
-import { CONTENT_GROUPS } from "@/lib/content";
+import { CONTENT_SECTIONS } from "@/lib/content";
 import { getDb } from "@/lib/db/client";
 import { factTabs, projects, type FactTab, type Project } from "@/lib/db/schema";
 import { getMediaBase, getMediaBucket } from "@/lib/env";
@@ -146,7 +146,7 @@ export default async function FactsAdmin({ searchParams }: { searchParams: Promi
   ]);
   const uploads = !!bucket;
   const byId = new Map(projectList.map((p) => [p.id, p]));
-  const section = CONTENT_GROUPS.find((g) => g.id === "facts")!;
+  const section = CONTENT_SECTIONS.find((g) => g.id === "facts")!;
 
   return (
     <>
@@ -161,7 +161,9 @@ export default async function FactsAdmin({ searchParams }: { searchParams: Promi
       <section className="mb-10 max-w-3xl">
         <h2 className="mb-3 font-semibold">Section</h2>
         <EditorForm action={saveContent}>
-          <ContentFields group={section} saved={row?.content ?? {}} mediaBase={mediaBase} uploads={uploads} />
+          <Card>
+            <ContentFields section={section} saved={row?.content ?? {}} mediaBase={mediaBase} uploads={uploads} />
+          </Card>
         </EditorForm>
       </section>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -53,6 +53,8 @@ function Row({ item }: { item: SortableItem }) {
 /** Drag-and-drop ordering (mouse, touch and keyboard). The new order saves at once. */
 export function SortableList({ kind, items: initial, noun = "Order" }: { kind: Reorderable; items: SortableItem[]; noun?: string }) {
   const router = useRouter();
+  // A stable id, so dnd-kit's accessibility ids match between the server and the browser.
+  const dndId = useId();
   const [items, setItems] = useState(initial);
   const [prevInitial, setPrevInitial] = useState(initial);
   if (initial !== prevInitial) {
@@ -82,7 +84,7 @@ export function SortableList({ kind, items: initial, noun = "Order" }: { kind: R
   };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+    <DndContext id={dndId} sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         <ul className="divide-y divide-line overflow-hidden bg-white ring-1 ring-line">
           {items.map((item) => (
