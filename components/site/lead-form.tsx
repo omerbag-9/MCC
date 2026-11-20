@@ -16,7 +16,8 @@ export function LeadForm({
   turnstileSiteKey: string;
   dark?: boolean;
   /** Texts from Admin → Website content. */
-  labels?: { button: string; successTitle: string; successText: string };
+  /** The button and the thank-you lines, from Admin → Website content → Contact page → Contact form. */
+  labels: { button: string; successTitle: string; successText: string };
 }) {
   const [state, action, pending] = useActionState(submitLead, initialState);
   const turnstile = useRef<TurnstileHandle>(null);
@@ -34,8 +35,8 @@ export function LeadForm({
             <path d="m5 12 5 5 9-10" />
           </svg>
         </div>
-        <p className="mt-4 text-lg font-semibold">{labels?.successTitle ?? "Thank you! We received your message."}</p>
-        <p className={`mt-1 ${dark ? "text-on-navy-muted" : "text-muted"}`}>{labels?.successText ?? "Our team will get back to you shortly."}</p>
+        {labels.successTitle && <p className="mt-4 text-lg font-semibold">{labels.successTitle}</p>}
+        <p className={`mt-1 ${dark ? "text-on-navy-muted" : "text-muted"}`}>{labels.successText}</p>
       </div>
     );
   }
@@ -91,7 +92,7 @@ export function LeadForm({
 
       <div className="sm:col-span-2">
         <button type="submit" className="btn-primary w-full sm:w-auto" disabled={pending}>
-          {pending ? "Sending…" : (labels?.button ?? "Send message")}
+          {pending ? "Sending…" : labels.button}
         </button>
       </div>
     </form>

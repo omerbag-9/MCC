@@ -11,16 +11,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const c = await getContent();
   return {
     title: "About us",
-    description: c.aboutPageIntro,
+    description: c.aboutPageIntro || undefined,
     alternates: { canonical: "/about" },
   };
 }
 
-// The company's own facts from its profile, shown along the foot of the header.
-const RECORD = [
-  { value: "2015", label: "Established" },
-  { value: "10+ years", label: "Most of our engineers with us" },
-];
 
 export default async function AboutPage() {
   const [settings, c, featured, mediaBase] = await Promise.all([getSettings(), getContent(), getFeaturedProjects(), getMediaBase()]);
@@ -31,6 +26,11 @@ export default async function AboutPage() {
   const valuesPhoto = c.aboutValuesImage || (pool.next() ?? storyPhoto);
   const closingPhoto = c.aboutClosingImage || pool.any(3);
 
+  // The figures along the foot of the header (Admin → Website content → About page → Header).
+  const record = [
+    { value: c.aboutFact1Value, label: c.aboutFact1Label },
+    { value: c.aboutFact2Value, label: c.aboutFact2Label },
+  ].filter((r) => r.value && r.label);
   const story = paragraphs(c.aboutStory);
   const company = [
     { label: "Company", value: c.aboutLegal },
@@ -62,27 +62,35 @@ export default async function AboutPage() {
             </ol>
           </nav>
           <h1 className="mt-5 max-w-4xl text-display font-semibold">{c.aboutPageTitle}</h1>
-          <p className="mt-5 max-w-xl text-lead text-paper/90">{c.aboutPageIntro}</p>
-          <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
-            <Link href="/contact" className="btn-light">
-              {c.aboutPageButton} <ArrowRightIcon width={18} height={18} />
-            </Link>
-            <Link href="/projects" className="link-arrow text-paper">
-              {c.projectsButton} <ArrowRightIcon width={18} height={18} />
-            </Link>
-          </div>
+          {c.aboutPageIntro && <p className="mt-5 max-w-xl text-lead text-paper/90">{c.aboutPageIntro}</p>}
+          {(c.aboutPageButton || c.projectsButton) && (
+            <div className="mt-9 flex flex-wrap items-center gap-x-8 gap-y-4">
+              {c.aboutPageButton && (
+                <Link href="/contact" className="btn-light">
+                  {c.aboutPageButton} <ArrowRightIcon width={18} height={18} />
+                </Link>
+              )}
+              {c.projectsButton && (
+                <Link href="/projects" className="link-arrow text-paper">
+                  {c.projectsButton} <ArrowRightIcon width={18} height={18} />
+                </Link>
+              )}
+            </div>
+          )}
         </Reveal>
-        <div className="bg-ink">
-          <Reveal className="container-x flex flex-wrap gap-x-16 gap-y-6 py-6 lg:gap-x-28 lg:py-8" stagger={0.06} onLoad delay={0.3}>
-            {RECORD.map((r) => (
-              <dl key={r.label} className="min-w-0">
-                <dt className="sr-only">{r.label}</dt>
-                <dd className="text-[clamp(1.25rem,0.9rem+1.8vw,2.5rem)] leading-none font-semibold tracking-tight tabular-nums">{r.value}</dd>
-                <dd className="mt-2 text-small text-on-navy-muted sm:text-body">{r.label}</dd>
-              </dl>
-            ))}
-          </Reveal>
-        </div>
+        {record.length > 0 && (
+          <div className="bg-ink">
+            <Reveal className="container-x flex flex-wrap gap-x-16 gap-y-6 py-6 lg:gap-x-28 lg:py-8" stagger={0.06} onLoad delay={0.3}>
+              {record.map((r) => (
+                <dl key={r.label} className="min-w-0">
+                  <dt className="sr-only">{r.label}</dt>
+                  <dd className="text-[clamp(1.25rem,0.9rem+1.8vw,2.5rem)] leading-none font-semibold tracking-tight tabular-nums">{r.value}</dd>
+                  <dd className="mt-2 text-small text-on-navy-muted sm:text-body">{r.label}</dd>
+                </dl>
+              ))}
+            </Reveal>
+          </div>
+        )}
       </section>
 
       {/* Who we are: the story and the company's make-up, beside a photograph */}
@@ -167,11 +175,13 @@ export default async function AboutPage() {
         <div className="absolute inset-0 -z-10 bg-ink/85" />
         <Reveal className="container-x section-y grid gap-8 lg:grid-cols-12 lg:items-end lg:gap-16">
           <p className="max-w-3xl text-[1.5rem] leading-tight font-semibold text-balance sm:text-head lg:col-span-8">{c.aboutClosing}</p>
-          <div className="lg:col-span-4 lg:justify-self-end">
-            <Link href="/contact" className="btn-light">
-              {c.aboutPageButton} <ArrowRightIcon width={18} height={18} />
-            </Link>
-          </div>
+          {c.aboutPageButton && (
+            <div className="lg:col-span-4 lg:justify-self-end">
+              <Link href="/contact" className="btn-light">
+                {c.aboutPageButton} <ArrowRightIcon width={18} height={18} />
+              </Link>
+            </div>
+          )}
         </Reveal>
       </section>
     </>

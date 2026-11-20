@@ -21,6 +21,7 @@ import {
 import { getMediaBase, getMediaBucket } from "@/lib/env";
 import { CONTENT_SECTIONS } from "@/lib/content";
 import { slugify } from "@/lib/format";
+import { mapEmbedFromInput } from "@/lib/maps";
 import { MEDIA_KEY_PATTERN, mediaUrl } from "@/lib/media";
 import { FACT_LINK_PAGES } from "@/lib/facts";
 import { defaultNewsTitle, KIND_TO_STATUS, PROJECT_KINDS } from "@/lib/news";
@@ -52,9 +53,30 @@ function fail(path: string, message: string): never {
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
+/** Names the admin shows for fields whose form name is not a word ("mapEmbedUrl: …" reads as "Map: …"). */
+const FIELD_NAMES: Record<string, string> = {
+  companyName: "Company name",
+  mapEmbedUrl: "Map",
+  workingHours: "Working hours",
+  facebookUrl: "Facebook",
+  instagramUrl: "Instagram",
+  linkedinUrl: "LinkedIn",
+  youtubeUrl: "YouTube",
+  tiktokUrl: "TikTok",
+  seoTitle: "Site title",
+  seoDescription: "Site description",
+  heroTitle: "Title",
+  heroSubtitle: "Text under the title",
+  aboutTitle: "About heading",
+  aboutBody: "About text",
+  strengths: "Why choose us points",
+};
+
 function firstError(error: z.ZodError) {
   const issue = error.issues[0];
-  return issue ? `${issue.path.join(".") || "form"}: ${issue.message}` : "Invalid input";
+  if (!issue) return "Invalid input";
+  const path = issue.path.join(".");
+  return `${FIELD_NAMES[path] ?? (path || "form")}: ${issue.message}`;
 }
 
 /**
@@ -130,7 +152,21 @@ const settingsSchema = z.object({
   email: z.union([z.literal(""), z.string().trim().email().max(200)]),
   address: str(300),
   workingHours: str(200),
-  mapEmbedUrl: z.union([z.literal(""), z.string().trim().url().max(2000)]),
+  /** Google Maps' "Embed a map" code or its address (see mapEmbedFromInput). */
+  mapEmbedUrl: z
+    .string()
+    .max(4000)
+    .transform((v, ctx) => {
+      const url = mapEmbedFromInput(v);
+      if (url === null) {
+        ctx.addIssue({
+          code: "custom",
+          message: "paste the map from Google Maps → Share → Embed a map → Copy HTML (a share link like maps.app.goo.gl can't be shown inside the page)",
+        });
+        return z.NEVER;
+      }
+      return url;
+    }),
   facebookUrl: z.union([z.literal(""), z.string().trim().url().max(300)]),
   instagramUrl: z.union([z.literal(""), z.string().trim().url().max(300)]),
   linkedinUrl: z.union([z.literal(""), z.string().trim().url().max(300)]),
@@ -183,11 +219,12 @@ async function saveSiteFields(formData: FormData): Promise<ActionResult> {
     const content: Record<string, string> = { ...(previous?.content ?? {}) };
     for (const f of fields) {
       const value = String(formData.get(`c_${f.key}`) ?? "").trim();
+      if (f.required && f.kind !== "toggle" && f.kind !== "image" && !value) return { ok: false, error: `${f.label}: write it, the website needs it` };
       if (f.kind === "toggle") content[f.key] = formData.get(`c_${f.key}`) === "on" ? "1" : "0";
       else if (f.kind === "image") {
         if (value && !MEDIA_KEY_PATTERN.test(value)) return { ok: false, error: `${f.label}: invalid image` };
         content[f.key] = value;
-      } else content[f.key] = value.slice(0, f.kind === "textarea" ? 600 : 160);
+      } else content[f.key] = value.slice(0, f.kind === "textarea" ? 5000 : 300);
     }
     columns.content = content;
   }

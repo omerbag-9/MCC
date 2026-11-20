@@ -1,6 +1,6 @@
 import { ImageField } from "@/components/admin/image-field";
 import { Checkbox, TextArea, TextField } from "@/components/admin/ui";
-import { isRetiredDefault, type ContentField, type ContentSection } from "@/lib/content";
+import type { ContentField, ContentSection } from "@/lib/content";
 import { slugify } from "@/lib/format";
 
 /** One field of a form grid: short texts and photos can sit two to a row, the rest take a row. */
@@ -26,11 +26,11 @@ export function FieldGrid({ items }: { items: FieldItem[] }) {
   );
 }
 
-/** A Website content field as a form control. An empty text shows the default wording in grey. */
+/** A Website content field as a form control, holding the value saved in the database. */
 export function contentItem(f: ContentField, saved: Record<string, string>, mediaBase: string, uploads: boolean): FieldItem {
   const name = `c_${f.key}`;
-  const value = isRetiredDefault(f.key, saved[f.key]) ? undefined : saved[f.key];
-  if (f.kind === "toggle") return { key: f.key, kind: "wide", node: <Checkbox name={name} label={f.label} defaultChecked={(value ?? f.default) === "1"} /> };
+  const value = saved[f.key];
+  if (f.kind === "toggle") return { key: f.key, kind: "wide", node: <Checkbox name={name} label={f.label} defaultChecked={value !== "0"} /> };
   if (f.kind === "image")
     return {
       key: f.key,
@@ -48,11 +48,11 @@ export function contentItem(f: ContentField, saved: Record<string, string>, medi
       ),
     };
   if (f.kind === "textarea") {
-    const text = value || f.default;
+    const text = value ?? "";
     const rows = Math.min(10, Math.max(3, Math.ceil(text.length / 90) + text.split("\n").length));
-    return { key: f.key, kind: "wide", node: <TextArea name={name} label={f.label} defaultValue={value ?? ""} placeholder={f.default} rows={rows} hint={f.hint} /> };
+    return { key: f.key, kind: "wide", node: <TextArea name={name} label={f.label} defaultValue={text} rows={rows} hint={f.hint} required={f.required} /> };
   }
-  return { key: f.key, kind: "text", node: <TextField name={name} label={f.label} defaultValue={value ?? ""} placeholder={f.default} hint={f.hint} /> };
+  return { key: f.key, kind: "text", node: <TextField name={name} label={f.label} defaultValue={value ?? ""} hint={f.hint} required={f.required} /> };
 }
 
 /**

@@ -189,7 +189,7 @@ export default async function ProjectPage({ params }: Props) {
           <div className="container-x grid gap-10 lg:grid-cols-12 lg:gap-16">
             <Reveal className="lg:col-span-4">
               <h2 id="highlights-title" className="text-head font-semibold">{c.projectHighlightsTitle}</h2>
-              <p className="mt-4 max-w-sm text-muted">{c.projectHighlightsIntro}</p>
+              {c.projectHighlightsIntro && <p className="mt-4 max-w-sm text-muted">{c.projectHighlightsIntro}</p>}
             </Reveal>
             <Reveal className="grid gap-1 sm:grid-cols-2 lg:col-span-8" stagger={0.05}>
               {highlights.map((h) => (
