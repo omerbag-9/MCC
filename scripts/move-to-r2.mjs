@@ -4,11 +4,15 @@
 //   news/<post>/<file>   clients/<client>/<file>   site/hero/<file>   site/services/<service>/<file>
 //   site/pages/<section>/<file>
 //
-// Two kinds of file are moved:
-//   1. Images bundled in media-import/ (the company's real project photos and client logos, added
-//      by migrations 0013-0015 as "/clients/..." and "/project-photos/..." paths): uploaded.
-//   2. Older uploads stored flat as <area>/<year>/<uuid>.<ext>: copied to their folder, and the
-//      old copy is moved to trash/<date>/<old key> (kept 30 days, like a delete in the admin).
+// Older uploads stored flat as <area>/<year>/<uuid>.<ext> are copied to their folder, and the old
+// copy is moved to trash/<date>/<old key> (kept 30 days, like a delete in the admin).
+//
+// Images are never kept in the repository: every photo and logo is uploaded in the admin and lives
+// only in the bucket. Migrations 0013-0019 once pointed rows at images bundled with the site
+// ("/clients/..." and "/project-photos/..." paths); every live environment uploaded those to its
+// bucket long ago and the files were then removed from the repository. A fresh database (local,
+// staging) still gets those paths from the migrations: they are listed with a warning and left for
+// the admin to replace.
 //
 // Then files under projects/, news/, clients/ and site/ that nothing uses any more (left over from
 // the demo content, for example) are moved to the trash the same way. Only files older than a day
@@ -19,8 +23,7 @@
 //   node scripts/move-to-r2.mjs <bucket> [--env <name>] [--local --persist-to <dir>]
 //
 // Runs from scripts/deploy.mjs after the migrations, on every environment. It only touches rows
-// that still hold a bundled path or an old key, so once an environment is organised it does
-// nothing. New keys follow from the old ones, so a rerun after a failure overwrites the same
+// that still hold an old key, so once an environment is organised it does nothing. New keys follow from the old ones, so a rerun after a failure overwrites the same
 // objects. The database is only updated after every upload has succeeded, and old copies are only
 // removed after that; on any error it exits non-zero and the deploy stops.
 import { spawnSync } from "node:child_process";
@@ -92,16 +95,14 @@ try {
   /** old key -> { file (local copy), ext, to (new key), old (true for a bucket object) } */
   const moves = new Map();
 
-  // 1. Bundled files: /project-photos/<project>/001.webp -> projects/<project>/photos/001.webp,
-  //    /clients/<client>.png -> clients/<client>/logo.png
-  for (const key of homes.keys()) {
-    if (!BUNDLED.test(key)) continue;
-    const file = join("media-import", key.slice(1));
-    if (!existsSync(file)) fail(`${key} is in the database but ${file} is missing.`);
-    const ext = key.split(".").pop();
-    const [, area, a, b] = key.split("/");
-    const to = area === "clients" ? `clients/${a.replace(/\.\w+$/, "")}/logo.${ext}` : `projects/${a}/photos/${b}`;
-    moves.set(key, { file, ext, to, old: false });
+  // 1. Paths to images that were once bundled with the site: not in the repository any more, so
+  //    they are only listed (a fresh local or staging database; the live ones have none left).
+  const bundled = [...homes.keys()].filter((key) => BUNDLED.test(key));
+  if (bundled.length > 0) {
+    console.warn(
+      `⚠️  ${bundled.length} picture(s) point to files that are not in the repository (for example ${bundled[0]}). ` +
+        "They show empty until replaced in the admin.",
+    );
   }
 
   // 2. Old uploads: <area>/<year>/<uuid>.<ext> -> <folder>/<year>-<id>.<ext>. Photos also have a
@@ -152,8 +153,7 @@ try {
       upload(trash, "Moving old copies to trash/: uploading");
       for (const { from } of trash) wrangler(["r2", "object", "delete", `${bucket}/${from}`, ...target, ...envFlag], { capture: true });
     }
-    const counts = [...moves.values()].reduce((c, m) => ((c[m.old ? "old" : "bundled"] += 1), c), { bundled: 0, old: 0 });
-    console.log(`Moved ${counts.bundled} bundled file(s) and ${counts.old} older upload(s) into their folders.`);
+    console.log(`Moved ${moves.size} older upload(s) into their folders.`);
   }
 
   // 3. Unused files: everything in a media folder that no row uses (a photo's thumbnail counts as used).

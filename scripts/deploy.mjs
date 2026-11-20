@@ -29,7 +29,7 @@ const SECRET_NAMES = ["TURNSTILE_SECRET_KEY", "RESEND_API_KEY", "R2_ACCESS_KEY_I
 // 1. wrangler.jsonc must have real ids for this environment
 const config = parseJsonc(readFileSync("wrangler.jsonc", "utf8"));
 const section = env === "dev" ? config : (config.env?.[env] ?? {});
-// The bucket uploads go to; the bundled real photos and logos are moved into it.
+// The bucket uploads go to: every photo and logo lives there, never in the repository.
 const mediaBucket = (section.r2_buckets ?? []).find((b) => b.binding === "MEDIA")?.bucket_name;
 const placeholders = (section.d1_databases ?? []).filter((d) => /^0{8}/.test(d.database_id ?? "0"));
 if (placeholders.length > 0) {
@@ -56,9 +56,9 @@ if (env === "dev") {
   run("node", ["scripts/demo-photos.mjs", "dev"]);
 }
 
-step("Put the bundled photos and logos (media-import/) and older uploads into the media bucket's folders");
+step("Put older uploads into the media bucket's folders and move unused files to the trash");
 if (mediaBucket) run("node", ["scripts/move-to-r2.mjs", mediaBucket, ...envFlag]);
-else console.warn(`⚠️  No MEDIA bucket for ${env} in wrangler.jsonc: the bundled photos were not moved and will not show.`);
+else console.warn(`⚠️  No MEDIA bucket for ${env} in wrangler.jsonc: uploads were not organised.`);
 
 // `wrangler deploy` directly (not `opennextjs-cloudflare deploy`): we skip uploading the build-time
 // pages into the cache, so every page renders from D1 on its first visit after a deploy.

@@ -37,3 +37,14 @@ next-env.d.ts
 
 # taste-skill working files (screenshots)
 .taste-skill/inspect*/
+
+# Photos, logos and videos live in Cloudflare R2 (uploaded in the admin), never in the repository.
+# The site's own logo and icon are SVGs in public/.
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.avif
+*.gif
+*.mp4
+*.webm
