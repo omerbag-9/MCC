@@ -69,7 +69,7 @@ export default async function SettingsAdmin({ searchParams }: { searchParams: Pr
               <TextField name="address" label="Address" defaultValue={s.address} />
             </div>
             <TextField name="workingHours" label="Working hours" defaultValue={s.workingHours} placeholder="Sat–Thu, 9:00–17:00" />
-            <TextField name="mapEmbedUrl" label="Google Maps embed URL" defaultValue={s.mapEmbedUrl} hint="Google Maps → Share → Embed a map → copy the src=&quot;…&quot; link." />
+            <TextField name="mapEmbedUrl" label="Google Maps embed URL" defaultValue={s.mapEmbedUrl} hint="Shown on the contact page; the address links to the same place. A search works (https://www.google.com/maps?q=MCC%20CONSTRUCTION&amp;output=embed), or for an exact pin: Google Maps → Share → Embed a map → copy the src=&quot;…&quot; link." />
           </Card>
         </section>
 

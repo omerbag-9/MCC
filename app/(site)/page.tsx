@@ -23,6 +23,7 @@ import {
 import { getMediaBase, getSiteUrl, getVar } from "@/lib/env";
 import { lines, paragraphs, specRows } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
+import { mapsLink } from "@/lib/maps";
 import { jsonLdScript, organizationJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
@@ -335,12 +336,19 @@ export default async function HomePage() {
                 </li>
               )}
               {settings.address && (
-                <li className="flex items-center gap-4 bg-navy-2 px-5 py-4">
-                  <PinIcon width={20} height={20} />
-                  <span>
-                    <span className="block text-small text-on-navy-muted">Office</span>
-                    <span className="font-semibold">{settings.address}</span>
-                  </span>
+                <li>
+                  <a
+                    href={mapsLink(settings) ?? undefined}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 bg-navy-2 px-5 py-4 transition-colors hover:bg-ink-soft"
+                  >
+                    <PinIcon width={20} height={20} />
+                    <span>
+                      <span className="block text-small text-on-navy-muted">Office</span>
+                      <span className="font-semibold">{settings.address}</span>
+                    </span>
+                  </a>
                 </li>
               )}
             </ul>

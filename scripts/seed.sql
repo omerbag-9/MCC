@@ -52,7 +52,7 @@ INSERT INTO clients (name, logo_key, url, sort_order) VALUES
   ('Redcon Properties', '/clients/redcon-properties.png', '', 9),
   ('New Giza', '/clients/new-giza.png', '', 10),
   ('Crimson Bar and Grill', '/clients/crimson.png', '', 11),
-  ('Specialty Coffee', '/clients/specialty-coffee.png', '', 12),
+  ('Brown Nose', '/clients/specialty-coffee.png', '', 12),
   ('Shanawany Group', '/clients/shanawany-group.png', '', 13),
   ('Italian Hospital Umberto I Cairo', '/clients/italian-hospital-cairo.png', '', 14),
   ('SECON', '/clients/secon.png', '', 15),

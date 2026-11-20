@@ -5,6 +5,7 @@ import { Photo, photoPool } from "@/components/site/photo";
 import { Reveal } from "@/components/site/reveal";
 import { getContent, getFeaturedProjects, getSettings } from "@/lib/db/queries";
 import { getMediaBase, getVar } from "@/lib/env";
+import { mapsLink, safeMapUrl } from "@/lib/maps";
 
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
@@ -13,16 +14,6 @@ export async function generateMetadata(): Promise<Metadata> {
     description: `Contact ${settings.companyName}. Send a message, call or email us.`,
     alternates: { canonical: "/contact" },
   };
-}
-
-/** Only Google Maps embeds are allowed in the iframe. */
-function safeMapUrl(url: string) {
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:" && /(^|\.)google\.[a-z.]+$/.test(u.hostname) && u.pathname.startsWith("/maps") ? u.toString() : null;
-  } catch {
-    return null;
-  }
 }
 
 export default async function ContactPage() {
@@ -39,9 +30,9 @@ export default async function ContactPage() {
   const items = [
     settings.phone && { label: "Phone", value: settings.phone, href: `tel:${settings.phone.replace(/\s/g, "")}` },
     settings.email && { label: "Email", value: settings.email, href: `mailto:${settings.email}` },
-    settings.address && { label: "Office", value: settings.address },
+    settings.address && { label: "Office", value: settings.address, href: mapsLink(settings) ?? undefined, external: true },
     settings.workingHours && { label: "Working hours", value: settings.workingHours },
-  ].filter(Boolean) as { label: string; value: string; href?: string }[];
+  ].filter(Boolean) as { label: string; value: string; href?: string; external?: boolean }[];
 
   return (
     <>
@@ -75,12 +66,18 @@ export default async function ContactPage() {
             <h2 className="text-lead font-semibold">{c.contactDetailsTitle}</h2>
             {items.length > 0 && (
               <dl className="mt-6 space-y-5">
-                {items.map(({ label, value, href }) => (
+                {items.map(({ label, value, href, external }) => (
                   <div key={label}>
                     <dt className="text-small text-on-navy-muted">{label}</dt>
                     <dd className="mt-0.5">
                       {href ? (
-                        <a href={href} className="font-semibold break-words hover:underline">{value}</a>
+                        <a
+                          href={href}
+                          className="font-semibold break-words hover:underline"
+                          {...(external && { target: "_blank", rel: "noopener noreferrer" })}
+                        >
+                          {value}
+                        </a>
                       ) : (
                         <span className="font-semibold">{value}</span>
                       )}
