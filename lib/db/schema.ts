@@ -13,6 +13,10 @@ const updatedAt = () =>
     .$onUpdate(() => new Date());
 
 /** Single-row table (id = 1) with company-wide content and contact details. */
+/** What the home page hero shows behind the title. */
+export const HERO_MODES = ["photo", "video", "slideshow"] as const;
+export type HeroMode = (typeof HERO_MODES)[number];
+
 export const settings = sqliteTable("settings", {
   id: integer("id").primaryKey(),
   companyName: text("company_name").notNull().default("Your Construction Co."),
@@ -22,6 +26,15 @@ export const settings = sqliteTable("settings", {
   heroImageKey: text("hero_image_key"),
   /** Muted looping video behind the hero (mp4/webm); the hero image is its poster. */
   heroVideoKey: text("hero_video_key"),
+  /**
+   * What fills the hero, chosen in the admin: one photo, the video, or a slideshow of photos. Null
+   * (never chosen) keeps the earlier rule: the video when there is one, else the photo.
+   */
+  heroMode: text("hero_mode", { enum: HERO_MODES }),
+  /** The slideshow's photos, in order (media keys). Empty: the hero photo and featured projects' covers. */
+  heroSlides: text("hero_slides", { mode: "json" }).$type<string[]>().notNull().default(sql`'[]'`),
+  /** Seconds each slideshow photo stays before the next one slides in. */
+  heroSlideSeconds: integer("hero_slide_seconds").notNull().default(6),
   aboutTitle: text("about_title").notNull().default(""),
   aboutBody: text("about_body").notNull().default(""),
   /** "Why choose us" points on the home page, one per line. */

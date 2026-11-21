@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { contentItem, FieldGrid, type FieldItem } from "@/components/admin/content-fields";
-import { settingsItem } from "@/components/admin/settings-fields";
+import { settingsItem, type SettingsItemData } from "@/components/admin/settings-fields";
 import type { ContentSection, SettingsFieldKey } from "@/lib/content";
 import type { Settings } from "@/lib/db/schema";
 
@@ -15,12 +15,14 @@ export function SectionCard({
   saved,
   mediaBase,
   uploads,
+  data,
 }: {
   section: ContentSection;
   settings: Settings;
   saved: Record<string, string>;
   mediaBase: string;
   uploads: boolean;
+  data?: SettingsItemData;
 }) {
   const toggle = section.toggle ? section.fields.find((f) => f.key === section.toggle) : undefined;
   const shown = toggle ? saved[toggle.key] !== "0" : true;
@@ -31,7 +33,7 @@ export function SectionCard({
   const all = [...(section.settings ?? []), ...own.map((f) => f.key)];
   const order = section.layout ? [...section.layout, ...all.filter((k) => !section.layout!.includes(k))] : all;
   const items: FieldItem[] = order.flatMap((key) => {
-    if (section.settings?.includes(key as SettingsFieldKey)) return [settingsItem(key as SettingsFieldKey, settings, mediaBase, uploads)];
+    if (section.settings?.includes(key as SettingsFieldKey)) return [settingsItem(key as SettingsFieldKey, settings, mediaBase, uploads, data)];
     const f = own.find((x) => x.key === key);
     return f ? [contentItem(f, saved, mediaBase, uploads)] : [];
   });

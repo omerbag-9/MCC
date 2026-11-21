@@ -140,6 +140,46 @@
   animation: hero-settle 2.4s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* The hero slideshow (components/site/hero-slideshow.tsx): each photo fades in over the last one
+   and drifts slowly while it shows; the line under the text fills in the photo's time. */
+@keyframes hero-drift {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+@keyframes hero-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.hero-slide {
+  opacity: 0;
+  transition: opacity 1.2s ease-in-out;
+}
+.hero-slide[data-active] {
+  z-index: 1;
+  opacity: 1;
+}
+.hero-slide[data-active] img {
+  animation: hero-drift var(--hero-slide-ms, 7.2s) linear both;
+}
+.hero-slide-progress {
+  animation: hero-progress linear both;
+}
+
+/* Admin -> Website content: only the fields of the hero choice that is ticked (settings-fields.tsx). */
+form:has(input[name="heroMode"][value="photo"]:checked) div:has(> [data-hero-only]:not([data-hero-only~="photo"])),
+form:has(input[name="heroMode"][value="video"]:checked) div:has(> [data-hero-only]:not([data-hero-only~="video"])),
+form:has(input[name="heroMode"][value="slideshow"]:checked) div:has(> [data-hero-only]:not([data-hero-only~="slideshow"])) {
+  display: none;
+}
+
 /* Horizontal project strip */
 .no-scrollbar {
   scrollbar-width: none;

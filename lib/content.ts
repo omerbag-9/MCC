@@ -19,7 +19,17 @@ export type ContentField = {
 };
 
 /** Site settings columns that Website content edits beside a section's own fields. */
-export type SettingsFieldKey = "heroTitle" | "heroSubtitle" | "heroImageKey" | "heroVideoKey" | "stats" | "aboutTitle" | "aboutBody" | "strengths";
+export type SettingsFieldKey =
+  | "heroTitle"
+  | "heroSubtitle"
+  | "heroMode"
+  | "heroImageKey"
+  | "heroVideoKey"
+  | "heroSlides"
+  | "stats"
+  | "aboutTitle"
+  | "aboutBody"
+  | "strengths";
 
 /** One section of a page, as one card in Admin → Website content. */
 export type ContentSection = {
@@ -61,10 +71,10 @@ export const CONTENT_PAGES: ContentPage[] = [
       {
         id: "hero",
         title: "Top of the page",
-        description: "The first thing visitors see: the title, the photo or video behind it, the button, and the three figures along its foot.",
+        description: "The first thing visitors see: the title, the photo, video or slideshow behind it, the button, and the three figures along its foot.",
         anchor: "/",
-        settings: ["heroTitle", "heroSubtitle", "heroImageKey", "heroVideoKey", "stats"],
-        layout: ["heroTitle", "heroSubtitle", "projectsButton", "stats", "heroImageKey", "heroVideoKey"],
+        settings: ["heroTitle", "heroSubtitle", "heroMode", "heroImageKey", "heroVideoKey", "heroSlides", "stats"],
+        layout: ["heroTitle", "heroSubtitle", "projectsButton", "stats", "heroMode", "heroImageKey", "heroVideoKey", "heroSlides"],
         fields: [
           text("projectsButton", "Button text"),
         ],
