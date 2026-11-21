@@ -8,6 +8,7 @@ import { getDb } from "@/lib/db/client";
 import {
   clients,
   factTabs,
+  HERO_MODES,
   LEAD_STATUSES,
   leads,
   NEWS_KINDS,
@@ -67,6 +68,9 @@ const FIELD_NAMES: Record<string, string> = {
   seoDescription: "Site description",
   heroTitle: "Title",
   heroSubtitle: "Text under the title",
+  heroMode: "Behind the title",
+  heroSlides: "Slideshow",
+  heroSlideSeconds: "Time per photo",
   aboutTitle: "About heading",
   aboutBody: "About text",
   strengths: "Why choose us points",
@@ -108,7 +112,9 @@ async function deleteObjects(keys: (string | null | undefined)[]) {
         db
           .select({ id: settings.id })
           .from(settings)
-          .where(sql`${settings.heroImageKey} = ${key} or ${settings.heroVideoKey} = ${key} or instr(${settings.content}, ${JSON.stringify(key)}) > 0`)
+          .where(
+            sql`${settings.heroImageKey} = ${key} or ${settings.heroVideoKey} = ${key} or instr(${settings.heroSlides}, ${JSON.stringify(key)}) > 0 or instr(${settings.content}, ${JSON.stringify(key)}) > 0`,
+          )
           .limit(1),
       ]);
       if (found.some((rows) => rows.length > 0)) inUse.add(key);
@@ -138,6 +144,8 @@ function thumbOf(key: string | null) {
 
 /* ----------------------------------------------------------------------------- Settings */
 
+const HERO_SLIDES_MAX = 12;
+
 const settingsSchema = z.object({
   companyName: str(120).min(1, "Company name is required"),
   tagline: str(200),
@@ -145,6 +153,22 @@ const settingsSchema = z.object({
   heroSubtitle: str(500),
   heroImageKey: mediaKey,
   heroVideoKey: mediaKey,
+  heroMode: z.enum(HERO_MODES),
+  /** The slideshow's photos as a JSON array of media keys, in order. */
+  heroSlides: z.preprocess(
+    (v) => {
+      try {
+        return JSON.parse(String(v || "[]"));
+      } catch {
+        return null;
+      }
+    },
+    z
+      .array(z.string().regex(MEDIA_KEY_PATTERN, "invalid photo"))
+      .max(HERO_SLIDES_MAX, `at most ${HERO_SLIDES_MAX} photos`)
+      .transform((keys) => Array.from(new Set(keys))),
+  ),
+  heroSlideSeconds: z.coerce.number().int().min(3).max(20),
   aboutTitle: str(200),
   aboutBody: str(5000),
   strengths: str(2000),
@@ -239,6 +263,7 @@ async function saveSiteFields(formData: FormData): Promise<ActionResult> {
   const replaced = [
     "heroImageKey" in columns && previous?.heroImageKey !== columns.heroImageKey ? previous?.heroImageKey : null,
     "heroVideoKey" in columns && previous?.heroVideoKey !== columns.heroVideoKey ? previous?.heroVideoKey : null,
+    ...("heroSlides" in columns ? (previous?.heroSlides ?? []).filter((k) => !columns.heroSlides?.includes(k)) : []),
     ...fields
       .filter((f) => f.kind === "image")
       .map((f) => previous?.content?.[f.key])

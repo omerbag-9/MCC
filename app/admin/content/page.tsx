@@ -6,8 +6,9 @@ import { saveContent } from "@/lib/actions/admin";
 import { ensureAdmin } from "@/lib/auth";
 import { CONTENT_PAGES } from "@/lib/content";
 import { getDb } from "@/lib/db/client";
-import { DEFAULT_SETTINGS } from "@/lib/db/queries";
+import { DEFAULT_SETTINGS, getFeaturedProjects } from "@/lib/db/queries";
 import { getMediaBase, getMediaBucket } from "@/lib/env";
+import { heroFallbackSlides } from "@/lib/hero";
 
 export const metadata = { title: "Website content" };
 
@@ -15,10 +16,11 @@ export default async function ContentAdmin({ searchParams }: { searchParams: Pro
   await ensureAdmin();
   const params = await searchParams;
   const db = await getDb();
-  const [row, mediaBase, bucket] = await Promise.all([db.query.settings.findFirst(), getMediaBase(), getMediaBucket()]);
+  const [row, mediaBase, bucket, featured] = await Promise.all([db.query.settings.findFirst(), getMediaBase(), getMediaBucket(), getFeaturedProjects()]);
   const settings = row ?? DEFAULT_SETTINGS;
   const saved = settings.content ?? {};
   const uploads = !!bucket;
+  const data = { heroFallback: heroFallbackSlides(settings, featured) };
 
   return (
     <div className="max-w-5xl">
@@ -57,7 +59,7 @@ export default async function ContentAdmin({ searchParams }: { searchParams: Pro
                   </nav>
                 )}
                 {page.sections.map((s) => (
-                  <SectionCard key={s.id} section={s} settings={settings} saved={saved} mediaBase={mediaBase} uploads={uploads} />
+                  <SectionCard key={s.id} section={s} settings={settings} saved={saved} mediaBase={mediaBase} uploads={uploads} data={data} />
                 ))}
               </div>
             ),

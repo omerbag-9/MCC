@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SplitText from "@/components/reactbits/SplitText";
 import { ClientsLoop } from "@/components/site/clients-loop";
+import { HeroSlideshow } from "@/components/site/hero-slideshow";
 import { HeroVideo } from "@/components/site/hero-video";
 import { ArrowRightIcon, MailIcon, PhoneIcon, PinIcon, StrengthIcon } from "@/components/site/icons";
 import { LeadForm } from "@/components/site/lead-form";
@@ -22,6 +23,7 @@ import {
 } from "@/lib/db/queries";
 import { getMediaBase, getSiteUrl, getVar } from "@/lib/env";
 import { lines, paragraphs } from "@/lib/format";
+import { heroModeOf, heroSlides } from "@/lib/hero";
 import { mediaUrl } from "@/lib/media";
 import { mapsLink } from "@/lib/maps";
 import { jsonLdScript, organizationJsonLd } from "@/lib/seo";
@@ -51,7 +53,11 @@ export default async function HomePage() {
   const about = paragraphs(settings.aboutBody);
   const stats = settings.stats.slice(0, 3);
   const [firstStat] = stats;
-  const heroVideo = mediaUrl(settings.heroVideoKey, mediaBase);
+  // Behind the hero: what the admin chose; a video or slideshow with nothing to show falls back to the photo.
+  const heroMode = heroModeOf(settings);
+  const heroVideo = heroMode === "video" ? mediaUrl(settings.heroVideoKey, mediaBase) : null;
+  const slideKeys = heroMode === "slideshow" ? heroSlides(settings, featured) : [];
+  const slides = slideKeys.map((key) => ({ src: mediaUrl(key, mediaBase)!, thumb: mediaUrl(thumbOf(key), mediaBase) }));
   const showcase = featured.slice(0, 3);
   const strengths = lines(settings.strengths);
   const whyPhoto = c.whyImage || (pool.next() ?? aboutPhoto);
@@ -60,49 +66,61 @@ export default async function HomePage() {
     photo: <Photo mediaBase={mediaBase} src={imageKey} alt={t.title} sizes="(min-width: 1024px) 50vw, 100vw" />,
   }));
 
+  const heroText = (
+    <div className="container-x flex flex-1 flex-col justify-center py-8 sm:py-14 lg:py-16">
+      <div className="max-w-5xl">
+        <SplitText
+          tag="h1"
+          text={settings.heroTitle || settings.companyName}
+          className="text-[clamp(2.25rem,1rem+4.6vw,5.25rem)] leading-[1.02] font-semibold tracking-[-0.03em]"
+          splitType="words"
+          delay={60}
+          duration={0.9}
+          from={{ opacity: 0, y: 28 }}
+          to={{ opacity: 1, y: 0 }}
+          trigger="load"
+          textAlign="left"
+        />
+        {settings.heroSubtitle && (
+          <Reveal delay={0.35}>
+            <p className="mt-6 max-w-xl text-lead text-paper/90">{settings.heroSubtitle}</p>
+          </Reveal>
+        )}
+        {c.projectsButton && (
+          <Reveal delay={0.5} className="mt-9 flex flex-wrap items-center gap-3">
+            <Link href="/projects" className="btn-light">
+              {c.projectsButton} <ArrowRightIcon width={18} height={18} />
+            </Link>
+          </Reveal>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(organizationJsonLd(settings, siteUrl, mediaBase))} />
 
-      {/* Hero: video (or the photograph) under a veil, the claim, two actions; the figures close the
-          first screen, so hero and figures together fill exactly one screen. */}
+      {/* Hero: the photograph, video or slideshow under a veil, the claim, two actions; the figures
+          close the first screen, so hero and figures together fill exactly one screen. */}
       <section className="relative isolate flex min-h-[calc(100svh-72px)] flex-col overflow-hidden bg-ink text-paper lg:min-h-[calc(100svh-112px)]">
-        <div className="absolute inset-0 -z-20">
-          {heroVideo ? (
-            <HeroVideo src={heroVideo} poster={mediaUrl(heroPhoto, mediaBase)} />
-          ) : (
-            <Photo mediaBase={mediaBase} src={heroPhoto} alt={settings.companyName} sizes="100vw" priority className="hero-photo" />
-          )}
-        </div>
+        {slides.length > 1 ? (
+          <HeroSlideshow slides={slides} seconds={settings.heroSlideSeconds} alt={settings.companyName}>
+            {heroText}
+          </HeroSlideshow>
+        ) : (
+          <>
+            <div className="absolute inset-0 -z-20">
+              {heroVideo ? (
+                <HeroVideo src={heroVideo} poster={mediaUrl(heroPhoto, mediaBase)} />
+              ) : (
+                <Photo mediaBase={mediaBase} src={slideKeys[0] ?? heroPhoto} alt={settings.companyName} sizes="100vw" priority className="hero-photo" />
+              )}
+            </div>
+            {heroText}
+          </>
+        )}
         <div className="absolute inset-0 -z-10 bg-ink/60" />
-        <div className="container-x flex flex-1 flex-col justify-center py-8 sm:py-14 lg:py-16">
-          <div className="max-w-5xl">
-            <SplitText
-              tag="h1"
-              text={settings.heroTitle || settings.companyName}
-              className="text-[clamp(2.25rem,1rem+4.6vw,5.25rem)] leading-[1.02] font-semibold tracking-[-0.03em]"
-              splitType="words"
-              delay={60}
-              duration={0.9}
-              from={{ opacity: 0, y: 28 }}
-              to={{ opacity: 1, y: 0 }}
-              trigger="load"
-              textAlign="left"
-            />
-            {settings.heroSubtitle && (
-              <Reveal delay={0.35}>
-                <p className="mt-6 max-w-xl text-lead text-paper/90">{settings.heroSubtitle}</p>
-              </Reveal>
-            )}
-            {c.projectsButton && (
-              <Reveal delay={0.5} className="mt-9 flex flex-wrap items-center gap-3">
-                <Link href="/projects" className="btn-light">
-                  {c.projectsButton} <ArrowRightIcon width={18} height={18} />
-                </Link>
-              </Reveal>
-            )}
-          </div>
-        </div>
 
         {stats.length > 0 && (
           <div className="bg-ink">

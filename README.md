@@ -230,6 +230,7 @@ projects/<project>/videos/<file>.mp4
 news/<post>/<file>.webp
 clients/<client>/<file>.png
 site/hero/<file>                          hero photo and video
+site/hero/slides/<file>.webp              hero slideshow photos uploaded in Admin → Website content
 site/services/<service>/<file>
 site/pages/<section>/<file>               photos set in Admin → Website content and Admin → Project facts
 ```
