@@ -141,21 +141,13 @@
 }
 
 /* The hero slideshow (components/site/hero-slideshow.tsx): each photo fades in over the last one
-   and drifts slowly while it shows; the line under the text fills in the photo's time. */
+   and drifts slowly while it shows. */
 @keyframes hero-drift {
   from {
     transform: scale(1.08);
   }
   to {
     transform: scale(1);
-  }
-}
-@keyframes hero-progress {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
   }
 }
 .hero-slide {
@@ -168,9 +160,6 @@
 }
 .hero-slide[data-active] img {
   animation: hero-drift var(--hero-slide-ms, 7.2s) linear both;
-}
-.hero-slide-progress {
-  animation: hero-progress linear both;
 }
 
 /* Admin -> Website content: only the fields of the hero choice that is ticked (settings-fields.tsx). */

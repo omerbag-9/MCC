@@ -52,7 +52,6 @@ export default async function HomePage() {
   const ctaPhoto = c.contactImage || pool.any(3);
   const about = paragraphs(settings.aboutBody);
   const stats = settings.stats.slice(0, 3);
-  const [firstStat] = stats;
   // Behind the hero: what the admin chose; a video or slideshow with nothing to show falls back to the photo.
   const heroMode = heroModeOf(settings);
   const heroVideo = heroMode === "video" ? mediaUrl(settings.heroVideoKey, mediaBase) : null;
@@ -66,37 +65,6 @@ export default async function HomePage() {
     photo: <Photo mediaBase={mediaBase} src={imageKey} alt={t.title} sizes="(min-width: 1024px) 50vw, 100vw" />,
   }));
 
-  const heroText = (
-    <div className="container-x flex flex-1 flex-col justify-center py-8 sm:py-14 lg:py-16">
-      <div className="max-w-5xl">
-        <SplitText
-          tag="h1"
-          text={settings.heroTitle || settings.companyName}
-          className="text-[clamp(2.25rem,1rem+4.6vw,5.25rem)] leading-[1.02] font-semibold tracking-[-0.03em]"
-          splitType="words"
-          delay={60}
-          duration={0.9}
-          from={{ opacity: 0, y: 28 }}
-          to={{ opacity: 1, y: 0 }}
-          trigger="load"
-          textAlign="left"
-        />
-        {settings.heroSubtitle && (
-          <Reveal delay={0.35}>
-            <p className="mt-6 max-w-xl text-lead text-paper/90">{settings.heroSubtitle}</p>
-          </Reveal>
-        )}
-        {c.projectsButton && (
-          <Reveal delay={0.5} className="mt-9 flex flex-wrap items-center gap-3">
-            <Link href="/projects" className="btn-light">
-              {c.projectsButton} <ArrowRightIcon width={18} height={18} />
-            </Link>
-          </Reveal>
-        )}
-      </div>
-    </div>
-  );
-
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(organizationJsonLd(settings, siteUrl, mediaBase))} />
@@ -104,22 +72,43 @@ export default async function HomePage() {
       {/* Hero: the photograph, video or slideshow under a veil, the claim, two actions; the figures
           close the first screen, so hero and figures together fill exactly one screen. */}
       <section className="relative isolate flex min-h-[calc(100svh-72px)] flex-col overflow-hidden bg-ink text-paper lg:min-h-[calc(100svh-112px)]">
-        {slides.length > 1 ? (
-          <HeroSlideshow slides={slides} seconds={settings.heroSlideSeconds} alt={settings.companyName}>
-            {heroText}
-          </HeroSlideshow>
-        ) : (
-          <>
-            <div className="absolute inset-0 -z-20">
-              {heroVideo ? (
-                <HeroVideo src={heroVideo} poster={mediaUrl(heroPhoto, mediaBase)} />
-              ) : (
-                <Photo mediaBase={mediaBase} src={slideKeys[0] ?? heroPhoto} alt={settings.companyName} sizes="100vw" priority className="hero-photo" />
-              )}
-            </div>
-            {heroText}
-          </>
-        )}
+        <div className="absolute inset-0 -z-20 overflow-hidden">
+          {slides.length > 1 ? (
+            <HeroSlideshow slides={slides} seconds={settings.heroSlideSeconds} alt={settings.companyName} />
+          ) : heroVideo ? (
+            <HeroVideo src={heroVideo} poster={mediaUrl(heroPhoto, mediaBase)} />
+          ) : (
+            <Photo mediaBase={mediaBase} src={slideKeys[0] ?? heroPhoto} alt={settings.companyName} sizes="100vw" priority className="hero-photo" />
+          )}
+        </div>
+        <div className="container-x flex flex-1 flex-col justify-center py-8 sm:py-14 lg:py-16">
+          <div className="max-w-5xl">
+            <SplitText
+              tag="h1"
+              text={settings.heroTitle || settings.companyName}
+              className="text-[clamp(2.25rem,1rem+4.6vw,5.25rem)] leading-[1.02] font-semibold tracking-[-0.03em]"
+              splitType="words"
+              delay={60}
+              duration={0.9}
+              from={{ opacity: 0, y: 28 }}
+              to={{ opacity: 1, y: 0 }}
+              trigger="load"
+              textAlign="left"
+            />
+            {settings.heroSubtitle && (
+              <Reveal delay={0.35}>
+                <p className="mt-6 max-w-xl text-lead text-paper/90">{settings.heroSubtitle}</p>
+              </Reveal>
+            )}
+            {c.projectsButton && (
+              <Reveal delay={0.5} className="mt-9 flex flex-wrap items-center gap-3">
+                <Link href="/projects" className="btn-light">
+                  {c.projectsButton} <ArrowRightIcon width={18} height={18} />
+                </Link>
+              </Reveal>
+            )}
+          </div>
+        </div>
         <div className="absolute inset-0 -z-10 bg-ink/60" />
 
         {stats.length > 0 && (
@@ -139,19 +128,13 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* About: photograph with the first figure set on it, and the story beside it */}
+      {/* About: photograph, and the story beside it */}
       <section id="about" className="section-y">
         <div className="container-x grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
           <Reveal className="relative lg:col-span-6">
             <div className="aspect-[4/3] overflow-hidden bg-ink">
               <Photo mediaBase={mediaBase} src={aboutPhoto} alt={`${settings.companyName} at work`} sizes="(min-width: 1024px) 50vw, 100vw" />
             </div>
-            {firstStat && (
-              <div className="bg-ink px-7 py-6 text-paper sm:absolute sm:right-0 sm:bottom-0 sm:w-56">
-                <p className="text-head font-semibold">{firstStat.value}</p>
-                <p className="mt-1 text-small text-on-navy-muted">{firstStat.label}</p>
-              </div>
-            )}
           </Reveal>
           <Reveal className="lg:col-span-6">
             {settings.aboutTitle && <h2 className="text-head font-semibold">{settings.aboutTitle}</h2>}
