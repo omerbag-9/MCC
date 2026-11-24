@@ -81,7 +81,7 @@ Dev deploys automatically from the `dev` branch to `https://mcc-dev.<your-subdom
    | `CLOUDFLARE_ACCOUNT_ID` | the account id from step 4 |
    | `ADMIN_PASSWORD` | the dev admin password, at least 8 characters |
    | `TURNSTILE_SECRET_KEY`, `RESEND_API_KEY` | optional, when you have them |
-   | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | optional: direct browser uploads for videos over 25 MB (see "Media uploads") |
+   | `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | optional: faster direct browser uploads for large videos (see "Media uploads") |
 
 6. **Push to `dev`** (or Actions → Deploy → Run workflow). The workflow creates the tables, loads the demo content (only while the database is empty), deploys, and copies the secrets to the Worker. The dev address is printed at the end of the deploy log.
 
@@ -239,7 +239,7 @@ Uploaded files are named `<date>-<id>`; the first real photos keep their order a
 
 The admin's browser resizes photos before uploading them: a 1920 px WebP plus a 640 px WebP thumbnail. This keeps storage small and avoids paid image resizing.
 
-Without extra setup, files go through the Worker (up to 25 MB each). That covers photos and short clips. For larger videos (up to 100 MB), let the browser upload straight to R2:
+Without extra setup, files go through the Worker: in one request up to 25 MB, and larger videos (up to 100 MB) in 10 MB parts as an R2 multipart upload (`app/api/admin/uploads/multipart/route.ts`). Optionally, let the browser upload straight to R2 instead, which is faster for large videos:
 
 1. R2 → **Manage R2 API tokens → Create API token** → *Object Read & Write*, limited to that environment's media bucket (e.g. `mcc-media`).
 2. Set `R2_ACCOUNT_ID` for that environment in `wrangler.jsonc` and store the keys:

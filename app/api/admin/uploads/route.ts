@@ -9,12 +9,14 @@ const bodySchema = z.object({
   size: z.number().int().positive(),
 });
 
-export type UploadTarget = { key: string; url: string };
+/** multipart: send the file in parts of UPLOAD_PART_BYTES to url (see ./multipart/route.ts). */
+export type UploadTarget = { key: string; url: string; multipart?: boolean };
 export type UploadPlan = { file: UploadTarget; thumb: UploadTarget | null };
 
 /**
  * Step 1 of an upload: the admin UI asks where to send a file. We answer with object keys and
- * either presigned R2 URLs (direct browser → R2) or our own /direct endpoint as a fallback.
+ * either presigned R2 URLs (direct browser → R2) or, as a fallback, our own /direct endpoint
+ * (one request, up to DIRECT_UPLOAD_MAX_BYTES) or /multipart endpoint (larger files, in parts).
  */
 export async function POST(request: Request) {
   if (!(await getAdmin())) return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -37,20 +39,14 @@ export async function POST(request: Request) {
   }
 
   const { key, thumbKey } = newObjectKeys(path, contentType);
-  const target = async (k: string): Promise<UploadTarget | null> => {
+  const target = async (k: string): Promise<UploadTarget> => {
     const presigned = await presignUpload(k);
     if (presigned) return { key: k, url: presigned };
-    if (size > DIRECT_UPLOAD_MAX_BYTES) return null;
+    if (size > DIRECT_UPLOAD_MAX_BYTES) return { key: k, url: `/api/admin/uploads/multipart?key=${encodeURIComponent(k)}`, multipart: true };
     return { key: k, url: `/api/admin/uploads/direct?key=${encodeURIComponent(k)}` };
   };
 
-  const file = await target(key);
-  if (!file) {
-    return Response.json(
-      { error: "Large files need R2 upload credentials to be configured (see README, 'Media uploads')." },
-      { status: 400 },
-    );
-  }
-  const plan: UploadPlan = { file, thumb: thumbKey ? await target(thumbKey) : null };
+  // A photo's thumbnail is always small (it is resized in the browser).
+  const plan: UploadPlan = { file: await target(key), thumb: thumbKey ? await target(thumbKey) : null };
   return Response.json(plan);
 }
