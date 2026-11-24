@@ -17,8 +17,9 @@ export const ALLOWED_TYPES: Record<string, { ext: string; kind: "image" | "video
   "video/webm": { ext: "webm", kind: "video", maxBytes: 100 * 1024 * 1024 },
 };
 
-/** Files sent through the Worker itself (when R2 S3 credentials are not configured). */
+/** Files sent through the Worker itself in one request (when R2 S3 credentials are not configured). */
 export const DIRECT_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+export { UPLOAD_PART_BYTES } from "./upload-limits";
 
 /**
  * Generates object keys under the upload's path: <path>/<date>-<id>.<ext>, with project files split
