@@ -12,7 +12,7 @@ import { getMediaBase, getSiteUrl } from "@/lib/env";
 import { paragraphs } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
 import { linkedinShareUrl, PROJECT_STATUS_LABEL } from "@/lib/news";
-import { jsonLdScript } from "@/lib/seo";
+import { jsonLdScript, shareImage } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -41,8 +41,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: post.summary,
       url: `${siteUrl}/news/${post.slug}`,
       publishedTime: post.postedAt.toISOString(),
-      ...(image && { images: [{ url: image, alt: post.title }] }),
+      images: [image ? { url: image, alt: post.title } : shareImage(post.title)],
     },
+    twitter: { card: "summary_large_image", images: [image ?? shareImage(post.title).url] },
   };
 }
 

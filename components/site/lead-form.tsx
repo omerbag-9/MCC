@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { submitLead, type LeadFormState } from "@/lib/actions/lead";
 import { Turnstile, type TurnstileHandle } from "./turnstile";
 
@@ -94,6 +95,10 @@ export function LeadForm({
         <button type="submit" className="btn-primary w-full sm:w-auto" disabled={pending}>
           {pending ? "Sending…" : labels.button}
         </button>
+        <p className={`mt-4 text-small ${dark ? "text-on-navy-muted" : "text-muted"}`}>
+          We only use your details to reply to you. See our{" "}
+          <Link href="/privacy" className="underline underline-offset-4 hover:text-current">privacy policy</Link>.
+        </p>
       </div>
     </form>
   );

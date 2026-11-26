@@ -134,6 +134,7 @@ export function Footer({
       <div className="bg-brand-dark">
         <div className="container-x flex flex-wrap items-center justify-between gap-3 py-5 text-small text-on-navy-muted">
           <p>© {new Date().getFullYear()} {settings.companyName}. All rights reserved.</p>
+          <Link href="/privacy" className="transition-colors hover:text-paper">Privacy policy</Link>
         </div>
       </div>
     </footer>
