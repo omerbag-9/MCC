@@ -1,10 +1,13 @@
 // Smoke test: checks that the site's key pages work. Used by scripts/deploy.mjs before a deploy
 // (against the built Worker running locally) and after it (against the live site).
 //
-//   node scripts/smoke.mjs <base-url>
+//   node scripts/smoke.mjs <base-url> [--media]
 //
+// --media also loads one photo from the home page (only meaningful against the live site, whose
+// photos exist; a local check runs on a throwaway database).
 // Exits non-zero with a list of failures.
 const base = (process.argv[2] ?? "").replace(/\/+$/, "");
+const checkMedia = process.argv.includes("--media");
 if (!/^https?:\/\//.test(base)) {
   console.error("Usage: node scripts/smoke.mjs <base-url>");
   process.exit(2);
@@ -38,6 +41,21 @@ check("home page has a heading", /<h1[\s>]/.test(home.body));
 check("Content-Security-Policy header", (home.headers.get("content-security-policy") ?? "").includes("frame-ancestors 'none'"));
 check("X-Frame-Options header", home.headers.get("x-frame-options") === "DENY");
 check("Strict-Transport-Security header", (home.headers.get("strict-transport-security") ?? "").includes("max-age="));
+
+if (checkMedia) {
+  const src = home.body.match(/<img[^>]+src="([^"]+\.(?:webp|jpg|png|avif))"/)?.[1];
+  if (src) {
+    const url = new URL(src.replace(/&amp;/g, "&"), base + "/").href;
+    const res = await fetch(url, { headers: { "user-agent": "mcc-smoke-test" } }).catch((e) => ({ ok: false, status: 0, error: e }));
+    const type = res.headers?.get("content-type") ?? "";
+    check(`a photo loads (${url})`, res.ok && type.startsWith("image/"), `HTTP ${res.status} ${type}`);
+  } else {
+    console.log("  - no photo on the home page to load; skipped");
+  }
+}
+
+const privacy = await get("/privacy");
+check("privacy page returns 200", privacy.status === 200, `HTTP ${privacy.status}`);
 
 const projects = await get("/projects");
 check("projects page returns 200", projects.status === 200, `HTTP ${projects.status}`);

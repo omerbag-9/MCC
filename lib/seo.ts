@@ -1,6 +1,11 @@
 import type { Project, Settings } from "@/lib/db/schema";
 import { mediaUrl } from "@/lib/media";
 
+/** Link preview (WhatsApp, LinkedIn, Facebook…) for pages without a photo of their own: the logo on navy. */
+export function shareImage(alt: string) {
+  return { url: "/og.png", width: 1200, height: 630, alt };
+}
+
 export function siteTitle(settings: Settings) {
   return settings.seoTitle || settings.companyName;
 }

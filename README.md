@@ -132,6 +132,8 @@ npm run db:migrate:staging
 
 R2 → `mcc-media` → **Settings → Custom Domains → Connect domain** → `media.example.com`. Then set `MEDIA_URL` to `https://media.example.com` for that environment. Files are then served straight from R2 and never touch the Worker. If `MEDIA_URL` is empty, files are served through the app's `/media/*` route instead, which also works but counts against Worker requests. Dev and staging can stay on the `/media/*` route.
 
+A custom domain makes **every** file in the bucket public. Add a WAF custom rule on the zone that blocks requests to that host whose path starts with `/trash/` or `/backups/` (Security → WAF → Custom rules → Block).
+
 ### 5. Turnstile (spam protection)
 
 Dashboard → **Turnstile → Add widget** → add all hostnames (`example.com`, `staging.example.com`, the dev `workers.dev` host) → choose **Managed**. Put the site key in each environment's `TURNSTILE_SITE_KEY` and add the secret key as the GitHub environment secret `TURNSTILE_SECRET_KEY` (the deploy copies it to the Worker), or set it directly:
@@ -206,9 +208,9 @@ Set for every page in `next.config.ts`: a Content Security Policy that allows on
 
 ## Backups and restore
 
-**Database.** `.github/workflows/backup.yml` runs every day at 02:17 UTC (or on demand from the Actions tab) and stores a full export of the D1 database (schema first, then data) as `backups/d1/<env>/<date-time>.sql.gz` in that environment's media bucket. The bucket is private and the site never serves `backups/`. Backups are kept 90 days (an R2 lifecycle rule the backup script creates). They are deliberately **not** stored as GitHub artifacts: the repository is public and leads contain personal data. On top of this, D1 keeps its own point-in-time history (Time Travel: 7 days on the free plan, 30 on Workers Paid).
+**Database.** `.github/workflows/backup.yml` runs every day at 02:17 UTC (or on demand from the Actions tab) and stores a full export of the D1 database (schema first, then data) as `backups/d1/<env>/<date-time>.sql.gz` in that environment's own backup bucket (`mcc-backups`, `mcc-backups-staging`, `mcc-backups-dev`), which the script creates on first use. Never connect a domain to a backup bucket: that would make it public. (Backups used to go into the media bucket; the script moves any it finds there.) Backups are kept 90 days (an R2 lifecycle rule the backup script creates). They are deliberately **not** stored as GitHub artifacts: the repository is public and leads contain personal data. On top of this, D1 keeps its own point-in-time history (Time Travel: 7 days on the free plan, 30 on Workers Paid).
 
-To restore, download a backup from the bucket (Cloudflare dashboard → R2 → bucket → `backups/d1/...`), unzip it, then load it into an **empty** database. Never load it over existing data:
+To restore, download a backup from the backup bucket (Cloudflare dashboard → R2 → `mcc-backups` → `backups/d1/...`), unzip it, then load it into an **empty** database. Never load it over existing data:
 
 ```bash
 gunzip 2026-11-09-02-17.sql.gz
@@ -218,7 +220,7 @@ npx wrangler d1 execute mcc-db-restore --remote --file 2026-11-09-02-17.sql
 
 Check the restored data, then point the environment's two D1 entries in `wrangler.jsonc` at the new database id and deploy. To recover a recent mistake instead, D1 Time Travel can restore the existing database to a point in time: `npx wrangler d1 time-travel restore <database> --timestamp <ISO time>`.
 
-**Photos and videos.** Deleting a photo or video in the admin moves the file to `trash/<date>/<original path>` in the same bucket instead of destroying it, and the database record is removed. Trash is kept 30 days, then removed automatically, and is never served by the site. To recover a file, copy it back to its original path (R2 dashboard, or `wrangler r2 object get` then `put`) and upload it again in the admin, or ask a developer to restore the record.
+**Photos and videos.** Deleting a photo or video in the admin moves the file to `trash/<date>/<original path>` in the same bucket instead of destroying it, and the database record is removed. Trash is kept 30 days, then removed automatically. The site never links to it; once the media bucket has a custom domain, block `/trash/` there with a WAF rule so it can't be fetched directly. To recover a file, copy it back to its original path (R2 dashboard, or `wrangler r2 object get` then `put`) and upload it again in the admin, or ask a developer to restore the record.
 
 ## Media uploads
 

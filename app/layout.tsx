@@ -3,7 +3,7 @@ import "@fontsource-variable/hanken-grotesk";
 import "./globals.css";
 import { getSettings } from "@/lib/db/queries";
 import { getAppEnv, getSiteUrl } from "@/lib/env";
-import { siteDescription, siteTitle } from "@/lib/seo";
+import { shareImage, siteDescription, siteTitle } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const [settings, siteUrl, appEnv] = await Promise.all([getSettings(), getSiteUrl(), getAppEnv()]);
@@ -12,8 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase: new URL(siteUrl),
     title: { default: title, template: `%s | ${settings.companyName}` },
     description: siteDescription(settings),
-    openGraph: { type: "website", siteName: settings.companyName, locale: "en_US" },
-    twitter: { card: "summary_large_image" },
+    openGraph: { type: "website", siteName: settings.companyName, locale: "en_US", images: [shareImage(settings.companyName)] },
+    twitter: { card: "summary_large_image", images: [shareImage(settings.companyName)] },
     icons: { icon: "/icon.svg" },
     // Only production may be indexed; dev and staging are noindex.
     ...(appEnv !== "production" && { robots: { index: false, follow: false } }),

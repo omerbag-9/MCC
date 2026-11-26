@@ -11,7 +11,7 @@ import { getContent, getProjectNews, getPublishedProjectBySlug, getPublishedProj
 import { getMediaBase, getSiteUrl } from "@/lib/env";
 import { lines, paragraphs, specRows } from "@/lib/format";
 import { mediaUrl } from "@/lib/media";
-import { jsonLdScript, projectJsonLd } from "@/lib/seo";
+import { jsonLdScript, projectJsonLd, shareImage } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -32,7 +32,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: project.seoTitle || project.title,
     description,
     alternates: { canonical: `/projects/${project.slug}` },
-    openGraph: { title: project.title, description, type: "article", ...(image && { images: [image] }) },
+    openGraph: { title: project.title, description, type: "article", images: [image ? { url: image, alt: project.title } : shareImage(project.title)] },
+    twitter: { card: "summary_large_image", images: [image ?? shareImage(project.title).url] },
   };
 }
 

@@ -48,3 +48,5 @@ next-env.d.ts
 *.gif
 *.mp4
 *.webm
+# Exception: the link-preview image (the logo on navy). Social sites can't read SVG.
+!public/og.png

@@ -111,7 +111,8 @@
       "vars": {
         "APP_ENV": "production",
         "SITE_URL": "https://mccltd-eg.com",
-        "MEDIA_URL": "",
+        // The mcc-media bucket's custom domain: photos and videos load straight from R2.
+        "MEDIA_URL": "https://media.mccltd-eg.com",
         "EMAIL_FROM": "MCC Website <noreply@mccltd-eg.com>",
         "LEADS_NOTIFY_TO": "info@mccltd-eg.com",
         "CF_ACCESS_TEAM_DOMAIN": "mccltd-eg.cloudflareaccess.com",
