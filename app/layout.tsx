@@ -14,7 +14,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: siteDescription(settings),
     openGraph: { type: "website", siteName: settings.companyName, locale: "en_US", images: [shareImage(settings.companyName)] },
     twitter: { card: "summary_large_image", images: [shareImage(settings.companyName)] },
-    icons: { icon: "/icon.svg" },
+    icons: { icon: "/icon.svg", apple: "/apple-touch-icon.png" },
     // Only production may be indexed; dev and staging are noindex.
     ...(appEnv !== "production" && { robots: { index: false, follow: false } }),
   };
