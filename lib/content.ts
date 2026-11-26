@@ -222,7 +222,7 @@ export const CONTENT_PAGES: ContentPage[] = [
         fields: [
           text("aboutStoryTitle", "Heading"),
           area("aboutStory", "Text"),
-          image("aboutStoryImage", "Photo", "If empty, a featured project's photo is used."),
+          image("aboutStoryImage", "Photo", "If empty, the home page's About photo is used (or a featured project's photo)."),
           text("aboutLegal", "Company type"),
           text("aboutOwners", "Owners"),
           text("aboutScope", "What we do"),

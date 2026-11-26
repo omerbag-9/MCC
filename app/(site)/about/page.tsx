@@ -22,7 +22,8 @@ export default async function AboutPage() {
 
   const pool = photoPool(...featured.map((p) => p.coverKey), settings.heroImageKey);
   const heroPhoto = c.aboutPageImage || pool.next();
-  const storyPhoto = c.aboutStoryImage || (pool.next() ?? heroPhoto);
+  // Falls back to the home page's About photo, so one picture can serve both.
+  const storyPhoto = c.aboutStoryImage || c.aboutImage || (pool.next() ?? heroPhoto);
   const valuesPhoto = c.aboutValuesImage || (pool.next() ?? storyPhoto);
   const closingPhoto = c.aboutClosingImage || pool.any(3);
 
