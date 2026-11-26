@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "node --test --experimental-strip-types --no-warnings=ExperimentalWarning \"tests/**/*.test.ts\"",
     "preview": "opennextjs-cloudflare build && wrangler dev",
     "deploy:dev": "node scripts/deploy.mjs dev",
     "deploy:staging": "node scripts/deploy.mjs staging",

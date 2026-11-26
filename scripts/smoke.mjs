@@ -54,8 +54,15 @@ if (checkMedia) {
   }
 }
 
-const privacy = await get("/privacy");
-check("privacy page returns 200", privacy.status === 200, `HTTP ${privacy.status}`);
+for (const [path, what] of [["/about", "about page"], ["/news", "news page"], ["/privacy", "privacy page"]]) {
+  const page = await get(path);
+  check(`${what} returns 200`, page.status === 200, `HTTP ${page.status}`);
+  check(`${what} has a heading`, /<h1[\s>]/.test(page.body));
+}
+
+const manifest = await get("/manifest.webmanifest");
+check("manifest.webmanifest returns 200", manifest.status === 200, `HTTP ${manifest.status}`);
+check("manifest has icons", /"icons"\s*:\s*\[/.test(manifest.body));
 
 const projects = await get("/projects");
 check("projects page returns 200", projects.status === 200, `HTTP ${projects.status}`);
@@ -76,6 +83,12 @@ const slug = sitemap.body.match(/\/projects\/([a-z0-9-]+)<\/loc>/)?.[1];
 if (slug) {
   const project = await get(`/projects/${slug}`);
   check(`project page /projects/${slug} returns 200`, project.status === 200, `HTTP ${project.status}`);
+}
+
+const post = sitemap.body.match(/\/news\/([a-z0-9-]+)<\/loc>/)?.[1];
+if (post) {
+  const page = await get(`/news/${post}`);
+  check(`news post /news/${post} returns 200`, page.status === 200, `HTTP ${page.status}`);
 }
 
 const missing = await get("/projects/this-page-does-not-exist-smoke");

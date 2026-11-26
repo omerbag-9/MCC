@@ -2,11 +2,12 @@
 
 import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getDb } from "@/lib/db/client";
 import { leads } from "@/lib/db/schema";
-import { sendLeadNotification } from "@/lib/email";
+import { sendLeadConfirmation, sendLeadNotification } from "@/lib/email";
+import { getSettings } from "@/lib/db/queries";
+import { leadSchema } from "@/lib/lead";
 import { getSiteUrl } from "@/lib/env";
 import { verifyTurnstile } from "@/lib/turnstile";
 
@@ -15,20 +16,6 @@ export type LeadFormState = {
   message?: string;
   fieldErrors?: Partial<Record<"name" | "phone" | "email" | "message", string>>;
 };
-
-const leadSchema = z
-  .object({
-    name: z.string().trim().min(2, "Please enter your name").max(100),
-    phone: z.string().trim().max(30).regex(/^[+\d\s()-]*$/, "Please enter a valid phone number"),
-    email: z.union([z.literal(""), z.string().trim().email("Please enter a valid email").max(200)]),
-    serviceInterest: z.string().trim().max(100),
-    message: z.string().trim().max(3000, "Message is too long"),
-    pageSource: z.string().trim().max(200).regex(/^\/[\w\-/]*$/).catch("/"),
-  })
-  .refine((v) => v.phone.replace(/\D/g, "").length >= 6 || v.email !== "", {
-    message: "Please give us a phone number or an email so we can reply",
-    path: ["phone"],
-  });
 
 export async function submitLead(_prev: LeadFormState, formData: FormData): Promise<LeadFormState> {
   // Honeypot: real users never see or fill this field.
@@ -67,11 +54,19 @@ export async function submitLead(_prev: LeadFormState, formData: FormData): Prom
 
     // Send the notification after responding, so the visitor isn't kept waiting.
     const siteUrl = await getSiteUrl();
-    const notify = sendLeadNotification(data, `${siteUrl}/admin/leads/${row.id}`)
-      .then(async (sent) => {
-        if (sent) await db.update(leads).set({ emailSent: true }).where(eq(leads.id, row.id));
-      })
-      .catch((error) => console.error("Lead email failed", error));
+    const notify = Promise.all([
+      sendLeadNotification(data, `${siteUrl}/admin/leads/${row.id}`)
+        .then(async (sent) => {
+          if (sent) await db.update(leads).set({ emailSent: true }).where(eq(leads.id, row.id));
+        })
+        .catch((error) => console.error("Lead email failed", error)),
+      // A short "we received your message" to the visitor, when they gave an email.
+      data.email
+        ? getSettings()
+            .then((s) => sendLeadConfirmation(data.email, { companyName: s.companyName, phone: s.phone, email: s.email, siteUrl }))
+            .catch((error) => console.error("Lead confirmation email failed", error))
+        : null,
+    ]);
     try {
       getCloudflareContext().ctx.waitUntil(notify);
     } catch {

@@ -4,7 +4,7 @@ import type { Settings } from "@/lib/db/schema";
 export function safeMapUrl(url: string): string | null {
   try {
     const u = new URL(url);
-    return u.protocol === "https:" && /(^|\.)google\.[a-z.]+$/.test(u.hostname) && u.pathname.startsWith("/maps") ? u.toString() : null;
+    return u.protocol === "https:" && /(^|\.)google\.(?:[a-z]{2,3}|com?\.[a-z]{2})$/.test(u.hostname) && u.pathname.startsWith("/maps") ? u.toString() : null;
   } catch {
     return null;
   }

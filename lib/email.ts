@@ -1,5 +1,6 @@
 import "server-only";
 import { escapeHtml } from "@/lib/format";
+import { leadConfirmationEmail, type CompanyContact } from "@/lib/email-templates";
 import { getVar } from "@/lib/env";
 
 type Email = { to: string[]; subject: string; html: string; text: string; replyTo?: string };
@@ -81,4 +82,11 @@ export async function sendLeadNotification(lead: LeadEmailData, adminUrl: string
     text,
     replyTo: lead.email || undefined,
   });
+}
+
+/** Tells the visitor their message arrived (see leadConfirmationEmail for why it holds none of their text). */
+export async function sendLeadConfirmation(to: string, company: CompanyContact): Promise<boolean> {
+  const { subject, html, text } = leadConfirmationEmail(company);
+  const replyTo = company.email || (await getVar("LEADS_NOTIFY_TO")).split(",")[0]?.trim() || undefined;
+  return sendEmail({ to: [to], subject, html, text, replyTo });
 }
