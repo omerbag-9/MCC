@@ -93,7 +93,7 @@ if (!siteUrl || siteUrl.includes("example.")) {
     if (i === 0) console.log("Waiting until the site answers (up to 5 minutes)");
     await new Promise((r) => setTimeout(r, 5000));
   }
-  const live = spawnSync("node", ["scripts/smoke.mjs", siteUrl], { stdio: "inherit" });
+  const live = spawnSync("node", ["scripts/smoke.mjs", siteUrl, "--media"], { stdio: "inherit" });
   if (live.status !== 0) {
     if (previousVersion) {
       step(`Live check failed: rolling back to the previous version ${previousVersion}`);
