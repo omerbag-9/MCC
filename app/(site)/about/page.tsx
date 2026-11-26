@@ -95,7 +95,7 @@ export default async function AboutPage() {
 
       {/* Who we are: the story and the company's make-up, beside a photograph */}
       <section className="section-y" aria-labelledby="story-title">
-        <div className="container-x grid gap-12 lg:grid-cols-12 lg:gap-16">
+        <div className="container-x grid items-center gap-12 lg:grid-cols-12 lg:gap-16">
           <Reveal className="lg:col-span-6">
             <h2 id="story-title" className="text-head font-semibold">{c.aboutStoryTitle}</h2>
             {story.map((p, i) => (
@@ -115,7 +115,7 @@ export default async function AboutPage() {
             )}
           </Reveal>
           <Reveal className="lg:col-span-6">
-            <div className="aspect-[4/3] overflow-hidden bg-ink lg:aspect-auto lg:h-full lg:min-h-[480px]">
+            <div className="aspect-[4/3] overflow-hidden bg-ink">
               <Photo mediaBase={mediaBase} src={storyPhoto} alt={`${settings.companyName} on site`} sizes="(min-width: 1024px) 50vw, 100vw" />
             </div>
           </Reveal>
